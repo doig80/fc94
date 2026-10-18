@@ -106,6 +106,9 @@ later for purely cosmetic effects (net cloth, debris) that never feed back into 
 - Simulation is deterministic given seed + intent stream (enforced by a replay test in CI).
 - No gameplay logic in rendering code.
 - Match state is serialisable (snapshots for rollback / reconnection).
+- The simulation uses only `+ - * /` and `Math.sqrt` (all exactly specified by IEEE 754). Functions such as
+  `Math.sin`, `Math.atan2` or `Math.pow` can give slightly different results in different browsers, which would
+  make two players' games drift apart online. ESLint blocks them in `src/sim/`.
 
 ## 8. Risks
 

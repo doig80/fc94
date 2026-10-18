@@ -109,3 +109,18 @@ body {
 #error[hidden] {
   display: none;
 }
+.sandbox-help {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top));
+  left: 20px;
+  right: 20px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--panel-fg);
+}
+.sandbox-help kbd {
+  background: var(--btn-bg);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font: inherit;
+}

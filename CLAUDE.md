@@ -18,7 +18,10 @@ Use the Context7 MCP for current Babylon.js/Vite/Playwright APIs instead of rely
 ## Architecture rules (docs/specs/01 §3)
 
 - `src/sim/` is deterministic and engine-free: no `@babylonjs/*` imports, no `Math.random()`, no `Date.now()`
-  (enforced by ESLint). Use `Rng` from `src/sim/rng.ts`.
+  (enforced by ESLint). Use `Rng` from `src/sim/rng.ts`. Only `+ - * /` and `Math.sqrt` — no `Math.sin/atan2/pow/...`
+  or `**` (not bit-identical across browsers; also ESLint-enforced).
+- `step(state, intents, params)` in `src/sim/step.ts` advances one 60 Hz tick; all gameplay constants live in
+  `src/sim/params.ts` (the tuning panel edits them).
 - Input produces per-player intents; rendering only reads simulation state.
 - Every visual feature must work on WebGL2 and on the Low quality preset.
 
@@ -27,6 +30,7 @@ Use the Context7 MCP for current Babylon.js/Vite/Playwright APIs instead of rely
 - `pnpm dev` — dev server · `pnpm build` — typecheck + production build
 - `pnpm lint` · `pnpm typecheck` · `pnpm test` (Vitest)
 - `pnpm e2e e2e/smoke.spec.ts` — boots the game in headless Chromium
+- `?mode=physics` — top-down physics sandbox (debug view of `src/sim`); `pnpm e2e e2e/sandbox.spec.ts` tests it
 - `pnpm screenshots` — renders look-test screenshots into `screenshots/` (slow: software rendering)
 - Close-up for review: `SHOT_QUERY="look=toon&time=night&view=-2.6,1.2,14,48,0" SHOT_NAME=x pnpm e2e e2e/closeup.spec.ts`
 - In cloud sessions set `PW_CHROMIUM_PATH=/opt/pw-browsers/chromium` (the SessionStart hook does this).
