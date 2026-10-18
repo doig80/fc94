@@ -1,0 +1,56 @@
+# 30 — Milestones
+
+**Status:** Draft — awaiting review
+
+Every merged PR goes live on the Pages link straight away (https://doig80.github.io/fc94/), so there is
+always something to play. Milestones group the work; each ends with a playtest by the product owner.
+
+| #   | Milestone          | Goal                                 | Exit criterion                                                                                  |
+| --- | ------------------ | ------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| 0   | **Look-test** ✅   | Choose the art direction             | Stylised chosen                                                                                 |
+| 1   | **Vertical slice** | Prove the game is fun                | You enjoy a 5-a-side match vs CPU and ask for "one more"                                        |
+| 2   | **Full match**     | Scale to real football               | A full 11v11 match plays well with all rules                                                    |
+| 3   | **Alpha**          | Every v1 feature exists (rough)      | Everything in v1 scope is playable end to end                                                   |
+| 4   | **Beta**           | Real art, audio, polish, performance | Meets the budgets in [01 §4](01-platform-and-tech.md#4-performance-budgets) on laptop and phone |
+| 5   | **v1.0**           | Public release                       | Public name chosen, launch checklist done                                                       |
+| 6   | **v1.1**           | Variety                              | World tournament, preset formations, substitutes                                                |
+
+## 1. Vertical slice (5-a-side)
+
+- **Pitch:** small pitch (~40 × 25 m) with small goals, in the stadium from the look-test (Stylised look).
+- **Teams:** 5 v 5 (4 outfield players + goalkeeper), two placeholder teams.
+- **Control:** 1 player vs CPU, **keyboard only**.
+- **Gameplay:** full control scheme from [10 §3](10-gameplay-core.md#3-controls) (pass, shoot with power/curl,
+  lob, switch, tackle, slide, sprint), custom arcade physics, header/bicycle-kick context actions.
+- **Rules:** kick-off, goals, out of play (kick-ins, corners, goal kicks), fouls + free kicks + penalties,
+  half-time and full time. No cards, no offside.
+- **AI:** basic team shape, pressing, support runs, goalkeepers.
+- **Presentation:** score and clock on screen, goal replay (simple). No menus: settings via the URL.
+- **Tuning panel** (`?tune=1`) for all feel values, with copy/paste JSON (see [02](02-tooling-and-workflow.md#tuning-panel)).
+- **Tests:** determinism test (same seed + inputs → same match), physics unit tests, smoke test.
+
+## 2. Full match (11 v 11)
+
+Full-size pitch and goals, 11 v 11 with a 4-4-2 shape, offside, cards, advantage, extra time + shoot-out
+option, full AI (shape, offside line, crosses), gamepad support, ref character.
+
+## 3. Alpha
+
+Menus and match settings ([12](12-modes.md)), local multiplayer 2–4, touch controls (1P vs CPU),
+Practice/tutorial, all 24 nations with placeholder kits and flags, weather and time of day affecting the
+match, quality presets, celebrations.
+
+## 4. Beta
+
+Final player models and animations, stadium art, kits and flags, crowd and stadium audio, UI polish,
+accessibility pass, performance work (including [#6](https://github.com/doig80/fc94/issues/6)), phone testing.
+
+## 5. v1.0 launch checklist
+
+Public name chosen and checked (D3) · credits and licences screen · privacy note · tested on the supported
+browsers ([01 §1](01-platform-and-tech.md#1-platform)) · README and Pages link updated.
+
+## 6. v1.1
+
+World tournament ([12](12-modes.md)), **preset formations** to choose from (e.g. 4-4-2, 4-3-3, 3-5-2, 5-3-2),
+**substitutes** (bench, manual and automatic subs, sent-off players not replaced).

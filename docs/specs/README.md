@@ -19,7 +19,7 @@ when an issue settles a question, the outcome is written back into the relevant 
 | 20  | Art direction & style guide                      | Not started — look decided: Stylised (see decision log)            |
 | 21  | Audio (sfx, crowd, music)                        | Not started — scope decided: crowd + stadium sounds, no commentary |
 | 22  | UI / UX (menus, HUD, onboarding, accessibility)  | Not started                                                        |
-| 30  | Milestones                                       | Not started                                                        |
+| 30  | [Milestones](30-milestones.md)                   | Draft — awaiting review                                            |
 
 Status values: `Not started` → `Draft` → `Approved` → (`Revised` when a later decision changes it).
 
@@ -54,3 +54,6 @@ Status values: `Not started` → `Draft` → `Approved` → (`Revised` when a la
 | 2026-10-18 | v1 modes: Friendly + Practice/tutorial; World tournament in v1.1                                                                                                    |
 | 2026-10-18 | Audio: crowd and stadium sounds, no commentary                                                                                                                      |
 | 2026-10-18 | Flair in v1: bicycle kicks, diving headers, curl/power shots, goal replays, celebrations                                                                            |
+| 2026-10-18 | v1.1 adds preset formations (v1 uses a fixed 4-4-2) and substitutes                                                                                                 |
+| 2026-10-18 | Milestones: Vertical slice (5-a-side, small pitch, keyboard, 1P vs CPU) → Full match (11v11) → Alpha → Beta → v1.0 → v1.1                                           |
+| 2026-10-18 | Every merged PR deploys to Pages for playtesting; v1 launches on GitHub Pages                                                                                       |

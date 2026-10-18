@@ -99,5 +99,6 @@ Can be switched to "no ref" for arcade chaos (no fouls or offside at all).
 
 ## Out of scope for v1
 
-Substitutions, tactics/formation editor (one sensible default 4-4-2 per team), injuries, skill-move
-combos, manual goalkeeper control (keepers are always AI).
+Substitutions and preset formations (both planned for **v1.1**, see [30](30-milestones.md); v1 uses one
+4-4-2 for every team), a free-form tactics editor, injuries, skill-move combos, manual goalkeeper control
+(keepers are always AI).

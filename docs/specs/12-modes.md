@@ -4,13 +4,14 @@
 
 ## 1. Modes
 
-| Mode                         | Release | Players                                                         | Notes                                                                                                               |
-| ---------------------------- | ------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| **Friendly**                 | v1      | 1P vs CPU; 2–4 local (same or opposite teams); touch: 1P vs CPU | Pick teams, difficulty, length, weather, time of day, rules                                                         |
-| **Practice / tutorial**      | v1      | 1                                                               | Empty pitch with goalkeeper; step-by-step on-screen hints for every control                                         |
-| **World tournament**         | v1.1    | 1–4 (human teams)                                               | 24 nations: 6 groups of 4 → round of 16 → final; extra time + shoot-outs in knockouts; save progress in the browser |
-| Penalty shoot-out party mode | Later   | 1–4                                                             | Candidate for after v1.1                                                                                            |
-| Online play                  | v2      | 2+                                                              | Architecture ready (see [01 §7](01-platform-and-tech.md#7-online-v2-readiness-constraints-for-v1-code))             |
+| Mode                            | Release | Players                                                         | Notes                                                                                                               |
+| ------------------------------- | ------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **Friendly**                    | v1      | 1P vs CPU; 2–4 local (same or opposite teams); touch: 1P vs CPU | Pick teams, difficulty, length, weather, time of day, rules                                                         |
+| **Practice / tutorial**         | v1      | 1                                                               | Empty pitch with goalkeeper; step-by-step on-screen hints for every control                                         |
+| **World tournament**            | v1.1    | 1–4 (human teams)                                               | 24 nations: 6 groups of 4 → round of 16 → final; extra time + shoot-outs in knockouts; save progress in the browser |
+| Preset formations + substitutes | v1.1    | —                                                               | Choose from e.g. 4-4-2, 4-3-3, 3-5-2, 5-3-2; bench with manual/auto subs                                            |
+| Penalty shoot-out party mode    | Later   | 1–4                                                             | Candidate for after v1.1                                                                                            |
+| Online play                     | v2      | 2+                                                              | Architecture ready (see [01 §7](01-platform-and-tech.md#7-online-v2-readiness-constraints-for-v1-code))             |
 
 **Local multiplayer:** each player picks a side on the controller-assignment screen (left team / CPU /
 right team). Multiple humans on one team each control a different player.
