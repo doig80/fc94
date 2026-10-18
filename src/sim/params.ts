@@ -93,6 +93,67 @@ export interface DribbleParams {
   loseDistance: number;
 }
 
+export interface ActionParams {
+  /** A ground pass is hit so it still has this speed when it reaches the receiver. */
+  passArrivalSpeed: number;
+  passMinSpeed: number;
+  passMaxSpeed: number;
+  /** Teammates within this cone (cosine of the half-angle) of the aim direction are pass candidates. */
+  passConeCos: number;
+  /** Pass-lead assist: how far ahead of a running receiver to aim (1 = exactly where they'll be). */
+  passLead: number;
+  /** Through balls lead the receiver this much more. */
+  throughLead: number;
+  /** Upward speed of a lob and of a cross. */
+  lobLift: number;
+  crossLift: number;
+  /** Lofted balls are hit a bit harder to make up for air drag. */
+  loftDragComp: number;
+  /** Shoot button: ticks to reach full power. */
+  shotChargeTicks: number;
+  shotMinSpeed: number;
+  shotMaxSpeed: number;
+  shotMinLift: number;
+  shotMaxLift: number;
+  /** Above this power the shot rises extra (risk of going over the bar). */
+  overpowerAt: number;
+  overpowerLift: number;
+  /** Spin from steering sideways at the moment of the shot. */
+  curlSpin: number;
+  /** A curled shot is aimed this far outside the target so the curl brings it back. */
+  curlAimOffset: number;
+  /** Power of first-time shots, volleys and headers. */
+  contextShotPower: number;
+  /** A ball this close and this high can be headed or volleyed. */
+  contactReach: number;
+  volleyMinHeight: number;
+  headerMinHeight: number;
+  headerMaxHeight: number;
+  /** How long buttons pressed just before the ball arrives are remembered (first-time passes and shots). */
+  bufferTicks: number;
+  /** A second pass press within this many ticks starts a one-two. */
+  oneTwoWindowTicks: number;
+  oneTwoRunTicks: number;
+  /** Standing tackle. */
+  tackleRange: number;
+  tackleSuccess: number;
+  tackleTicks: number;
+  /** Ball speed when a tackle pokes it away. */
+  tacklePokeSpeed: number;
+  stumbleTicks: number;
+  /** Slide tackle. */
+  slideTicks: number;
+  slideSpeed: number;
+  slideReach: number;
+  slideKnockSpeed: number;
+  slideRecoveryTicks: number;
+  /** Buttons act as attacking buttons when the ball is loose and this close. */
+  attackContextRadius: number;
+  /** Auto-switch only when another teammate is this much closer to the ball. */
+  switchHysteresis: number;
+  switchLockTicks: number;
+}
+
 export interface WeatherParams {
   /** Rolling friction multipliers (docs/specs/10 §5: rain skids, snow slows). */
   rainRollingFactor: number;
@@ -103,6 +164,7 @@ export interface SimParams {
   ball: BallParams;
   player: PlayerParams;
   dribble: DribbleParams;
+  action: ActionParams;
   weather: WeatherParams;
 }
 
@@ -144,6 +206,47 @@ export const DEFAULT_PARAMS: SimParams = {
     stiffness: 12,
     kickCooldownTicks: 15,
     loseDistance: 1.6,
+  },
+  action: {
+    passArrivalSpeed: 4.5,
+    passMinSpeed: 7,
+    passMaxSpeed: 24,
+    passConeCos: 0.45,
+    passLead: 0.8,
+    throughLead: 1.4,
+    lobLift: 8,
+    crossLift: 6.5,
+    loftDragComp: 1.12,
+    shotChargeTicks: 45,
+    shotMinSpeed: 17,
+    shotMaxSpeed: 31,
+    shotMinLift: 1,
+    shotMaxLift: 4,
+    overpowerAt: 0.92,
+    overpowerLift: 3.5,
+    curlSpin: 14,
+    curlAimOffset: 1.2,
+    contextShotPower: 0.6,
+    contactReach: 1.4,
+    volleyMinHeight: 0.45,
+    headerMinHeight: 1.2,
+    headerMaxHeight: 2.6,
+    bufferTicks: 18,
+    oneTwoWindowTicks: 20,
+    oneTwoRunTicks: 120,
+    tackleRange: 1.4,
+    tackleSuccess: 0.6,
+    tackleTicks: 18,
+    tacklePokeSpeed: 4,
+    stumbleTicks: 24,
+    slideTicks: 30,
+    slideSpeed: 9,
+    slideReach: 0.9,
+    slideKnockSpeed: 8,
+    slideRecoveryTicks: 24,
+    attackContextRadius: 3.5,
+    switchHysteresis: 2.5,
+    switchLockTicks: 20,
   },
   weather: {
     rainRollingFactor: 0.65,

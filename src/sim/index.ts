@@ -1,4 +1,7 @@
+export { attackSign, choosePassTarget, groundPassSpeed } from "./actions";
+export { controlledPlayers } from "./control";
 export { IDLE, idleIntents, type Intent } from "./intent";
+export { stepMatch } from "./match";
 export {
   cloneParams,
   DEFAULT_PARAMS,
@@ -11,9 +14,13 @@ export { kickBall } from "./physics/dribble";
 export { isInGoal } from "./physics/goal";
 export { Rng } from "./rng";
 export {
+  Button,
   cloneState,
   createMatch,
+  NORMAL_ASSISTS,
+  type Assists,
   type BallState,
+  type Controller,
   type MatchConfig,
   type MatchState,
   type PlayerState,

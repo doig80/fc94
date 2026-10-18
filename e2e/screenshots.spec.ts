@@ -17,7 +17,7 @@ for (const look of ["stylised", "toon"]) {
 for (const shot of SHOTS) {
   test(`screenshot ${shot.name}`, async ({ page }) => {
     const quality = process.env.SHOT_QUALITY ?? "high";
-    await page.goto(`./?${shot.query}&quality=${quality}&renderer=webgl&freeze=1&hideui=1`);
+    await page.goto(`./?mode=looktest&${shot.query}&quality=${quality}&renderer=webgl&freeze=1&hideui=1`);
     await page.waitForFunction(() => window.__looktest?.ready === true, null, { timeout: 80_000 });
     await page.waitForTimeout(300);
     await page.screenshot({ path: `screenshots/${shot.name}.png` });

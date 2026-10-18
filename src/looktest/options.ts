@@ -84,6 +84,7 @@ function parseView(raw: string | null): LookTestOptions["view"] {
 /** Query string for the user-facing settings, so a view can be shared as a link. */
 export function toSearch(o: LookTestOptions): string {
   const params = new URLSearchParams({
+    mode: "looktest",
     look: o.look,
     time: o.time,
     weather: o.weather,

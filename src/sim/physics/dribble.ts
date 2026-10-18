@@ -1,4 +1,4 @@
-import type { SimParams } from "../params";
+import { DEFAULT_PARAMS, type SimParams } from "../params";
 import type { MatchState } from "../state";
 import type { Vec3 } from "../vec";
 
@@ -22,20 +22,24 @@ export function updatePossession(state: MatchState, params: SimParams): void {
   let best = -1;
   let bestDistSq = d.controlRadius * d.controlRadius;
   state.players.forEach((pl, i) => {
-    if (i === ball.lastTouch && state.tick - ball.lastKickTick < d.kickCooldownTicks) return;
+    if (i === ball.lastTouch && state.tick < ball.touchBlockUntil) return;
+    if (pl.action.kind === "slide" || pl.action.kind === "stumble") return;
     const dx = ball.pos.x - pl.pos.x;
     const dz = ball.pos.z - pl.pos.z;
     const distSq = dx * dx + dz * dz;
     if (distSq >= bestDistSq) return;
     const rvx = ball.vel.x - pl.vel.x;
     const rvz = ball.vel.z - pl.vel.z;
-    if (rvx * rvx + rvz * rvz > d.controlMaxRelSpeed * d.controlMaxRelSpeed) return;
+    // The intended receiver of a pass always controls it; anyone else only a slow-enough ball.
+    const maxRel = i === ball.intendedReceiver ? d.controlMaxRelSpeed * 2 : d.controlMaxRelSpeed;
+    if (rvx * rvx + rvz * rvz > maxRel * maxRel) return;
     best = i;
     bestDistSq = distSq;
   });
   if (best >= 0) {
     ball.owner = best;
     ball.lastTouch = best;
+    ball.intendedReceiver = -1;
   }
 }
 
@@ -56,17 +60,26 @@ export function stepDribble(state: MatchState, params: SimParams, sprinting: boo
   ball.spin.x = ball.spin.y = ball.spin.z = 0;
 }
 
-/** Release the ball from `kicker` with the given velocity and spin (passes, shots, clearances). */
+export interface KickOptions {
+  /** Ticks before the kicker may touch the ball again. */
+  blockTicks?: number;
+  /** The teammate the ball is meant for (passes). */
+  receiver?: number;
+}
+
+/** Release the ball from `kicker` with the given velocity and spin (passes, shots, clearances, tackles). */
 export function kickBall(
   state: MatchState,
   kicker: number,
   vel: Vec3,
   spin: Vec3 = { x: 0, y: 0, z: 0 },
+  options: KickOptions = {},
 ): void {
   const ball = state.ball;
   ball.owner = -1;
   ball.lastTouch = kicker;
-  ball.lastKickTick = state.tick;
+  ball.touchBlockUntil = state.tick + (options.blockTicks ?? DEFAULT_PARAMS.dribble.kickCooldownTicks);
+  ball.intendedReceiver = options.receiver ?? -1;
   ball.vel = { ...vel };
   ball.spin = { ...spin };
 }
