@@ -7,28 +7,27 @@ when an issue settles a question, the outcome is written back into the relevant 
 
 ## Index
 
-| #   | Spec                                                            | Status                                                  |
-| --- | --------------------------------------------------------------- | ------------------------------------------------------- |
-| 00  | [Vision](00-vision.md)                                          | Draft — awaiting review                                 |
-| 01  | [Platform & tech](01-platform-and-tech.md)                      | Draft — awaiting review                                 |
-| 02  | [Tooling & workflow](02-tooling-and-workflow.md)                | Draft — awaiting review                                 |
-| 03  | [Legal & IP](03-legal-and-ip.md)                                | Draft — awaiting review                                 |
-| 10  | Gameplay core (controls, rules, camera, match flow)             | Not started — next interview round                      |
-| 11  | AI (teammates, opponents, difficulty)                           | Not started                                             |
-| 12  | Game modes (friendly, tournament, local multiplayer, online v2) | Not started                                             |
-| 20  | Art direction & style guide                                     | Not started — look decided: Stylised (see decision log) |
-| 21  | Audio (sfx, crowd, music, commentary)                           | Not started                                             |
-| 22  | UI / UX (menus, HUD, onboarding, accessibility)                 | Not started                                             |
-| 30  | Milestones                                                      | Not started                                             |
+| #   | Spec                                             | Status                                                             |
+| --- | ------------------------------------------------ | ------------------------------------------------------------------ |
+| 00  | [Vision](00-vision.md)                           | Draft — awaiting review                                            |
+| 01  | [Platform & tech](01-platform-and-tech.md)       | Draft — awaiting review                                            |
+| 02  | [Tooling & workflow](02-tooling-and-workflow.md) | Draft — awaiting review                                            |
+| 03  | [Legal & IP](03-legal-and-ip.md)                 | Draft — awaiting review                                            |
+| 10  | [Gameplay core](10-gameplay-core.md)             | Draft — awaiting review                                            |
+| 11  | [AI](11-ai.md)                                   | Draft — awaiting review                                            |
+| 12  | [Game modes & teams](12-modes.md)                | Draft — awaiting review                                            |
+| 20  | Art direction & style guide                      | Not started — look decided: Stylised (see decision log)            |
+| 21  | Audio (sfx, crowd, music)                        | Not started — scope decided: crowd + stadium sounds, no commentary |
+| 22  | UI / UX (menus, HUD, onboarding, accessibility)  | Not started                                                        |
+| 30  | Milestones                                       | Not started                                                        |
 
 Status values: `Not started` → `Draft` → `Approved` → (`Revised` when a later decision changes it).
 
 ## Open decisions
 
-| ID  | Question         | Options                        | Decide by                             | Where                                                       |
-| --- | ---------------- | ------------------------------ | ------------------------------------- | ----------------------------------------------------------- |
-| D2  | Gameplay physics | Havok vs custom arcade physics | Before gameplay code (vertical slice) | [01 §6](01-platform-and-tech.md#6-physics-open-decision-d2) |
-| D3  | Public name      | TBD                            | Before public release                 | [03](03-legal-and-ip.md)                                    |
+| ID  | Question    | Options | Decide by             | Where                    |
+| --- | ----------- | ------- | --------------------- | ------------------------ |
+| D3  | Public name | TBD     | Before public release | [03](03-legal-and-ip.md) |
 
 ## Decision log
 
@@ -46,3 +45,12 @@ Status values: `Not started` → `Draft` → `Approved` → (`Revised` when a la
 | 2026-10-18 | Codename changed from "FC94" to **Nutmeg** (FC94 evoked EA Sports FC / FIFA 94)                                                                                     |
 | 2026-10-18 | Only collaborators can open issues                                                                                                                                  |
 | 2026-10-18 | **Art direction: Stylised** — low-poly cartoon shapes with physically based lighting, reflections, wet surfaces and bloom (look-test, #2). Toon/cel shading dropped |
+| 2026-10-18 | **Gameplay physics: custom arcade physics** in `src/sim/` (#4); Havok only for cosmetic effects, if ever                                                            |
+| 2026-10-18 | Camera: Classic '94 diagonal by default; Broadcast in settings                                                                                                      |
+| 2026-10-18 | Controls: 3 context buttons ('94 style) + sprint; remappable                                                                                                        |
+| 2026-10-18 | Default match length 2 × 5 min                                                                                                                                      |
+| 2026-10-18 | Rules: offside, fouls/free kicks/penalties, cards, extra time + shoot-out — all toggleable; fair visible referee                                                    |
+| 2026-10-18 | 24 fictional nations with 1–5 star ratings; AI: 3 difficulty levels + optional assists                                                                              |
+| 2026-10-18 | v1 modes: Friendly + Practice/tutorial; World tournament in v1.1                                                                                                    |
+| 2026-10-18 | Audio: crowd and stadium sounds, no commentary                                                                                                                      |
+| 2026-10-18 | Flair in v1: bicycle kicks, diving headers, curl/power shots, goal replays, celebrations                                                                            |
