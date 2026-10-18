@@ -105,6 +105,9 @@ export class Atmosphere {
     this.hemi = new HemisphericLight("hemi", new Vector3(0, 1, 0), scene);
     this.sun = new DirectionalLight("sun", new Vector3(0.45, -1, 0.55), scene);
     this.sun.position = new Vector3(-60, 120, -80);
+    // Materials limited to a few lights (toon) must get the key light and sky fill first.
+    this.sun.renderPriority = 2;
+    this.hemi.renderPriority = 1;
 
     if (quality === "high") {
       const csm = new CascadedShadowGenerator(2048, this.sun);
@@ -187,15 +190,16 @@ export class Atmosphere {
     // At night the key light is a stand-in for the floodlights: no single "sun" highlight on a wet pitch.
     this.sun.specular = p.sunColor.scale(time === "night" ? 0.08 : 1 - 0.7 * overcast);
     // Toon (cel) materials use classic lighting, which saturates much earlier than physically based materials.
-    const lightScale = look === "toon" ? 0.38 : 1;
+    const lightScale = look === "toon" ? (time === "night" ? 1.0 : 0.5) : 1;
     this.sun.intensity = lightScale * p.sunIntensity * (time === "night" ? 1 : 1 - 0.55 * overcast);
-    this.hemi.intensity = (look === "toon" ? 0.8 : 1) * p.hemiIntensity * (1 + 0.3 * overcast);
+    this.hemi.intensity = (look === "toon" ? 1.4 : 1) * p.hemiIntensity * (1 + 0.3 * overcast);
     this.hemi.diffuse = Color3.Lerp(horizon, Color3.White(), 0.5);
     this.hemi.groundColor = p.hemiGround;
 
     this.floodPower = p.flood;
     for (const s of this.spots) {
-      s.intensity = p.flood * (look === "toon" ? 0.45 : 1.4);
+      s.intensity = p.flood * (look === "toon" ? 0.2 : 1.4);
+      s.specular = s.diffuse.scale(0.5);
       s.setEnabled(p.flood > 0);
     }
 

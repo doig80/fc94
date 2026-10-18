@@ -120,9 +120,19 @@ export class SurfaceLibrary {
   }
 
   private toon(id: string, spec: SurfaceSpec): Material {
+    if (spec.texture?.hasAlpha) {
+      // The cel material has no alpha cut-out, so see-through surfaces (nets) use a matte standard material.
+      const m = new StandardMaterial(`toon:${id}`, this.scene);
+      m.diffuseColor = spec.color.clone();
+      m.diffuseTexture = spec.texture;
+      m.specularColor = Color3.Black();
+      m.backFaceCulling = false;
+      m.useAlphaFromDiffuseTexture = true;
+      m.transparencyMode = spec.blend ? Material.MATERIAL_ALPHABLEND : Material.MATERIAL_ALPHATEST;
+      return m;
+    }
     if (spec.emissive) {
-      // Lamps and screens: unlit, so they read as glowing in both looks.
-      // Unlit: output = texture × emissive colour.
+      // Lamps and LED boards are unlit, so they read as glowing: output = texture × emissive colour.
       const m = new StandardMaterial(`toon:${id}`, this.scene);
       m.disableLighting = true;
       m.diffuseColor = Color3.Black();
@@ -132,12 +142,11 @@ export class SurfaceLibrary {
     }
     const m = new CellMaterial(`toon:${id}`, this.scene);
     m.diffuseColor = spec.color.clone();
-    if (spec.texture) {
-      m.diffuseTexture = spec.texture;
-      m.backFaceCulling = !spec.texture.hasAlpha;
-    }
+    if (spec.texture) m.diffuseTexture = spec.texture;
     m.computeHighLevel = true;
-    m.maxSimultaneousLights = MAX_LIGHTS;
+    // The cel shader lights every surface at least 20% per light, so extra lights wash everything out.
+    // Only the first two lights (sky fill + key light) are used; floodlight pools would need a custom toon shader.
+    m.maxSimultaneousLights = 2;
     return m;
   }
 
@@ -149,7 +158,7 @@ export class SurfaceLibrary {
       material.roughness = spec.roughness * (1 - 0.65 * wet);
       material.clearCoat.isEnabled = wet > 0.05;
       material.clearCoat.intensity = wet * 0.6;
-      material.clearCoat.roughness = 0.32;
+      material.clearCoat.roughness = 0.45;
     } else if (material instanceof CellMaterial) {
       material.diffuseColor = spec.color.scale(darken);
     }
