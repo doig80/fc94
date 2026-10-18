@@ -144,9 +144,9 @@ export class SurfaceLibrary {
     m.diffuseColor = spec.color.clone();
     if (spec.texture) m.diffuseTexture = spec.texture;
     m.computeHighLevel = true;
-    // The cel shader lights every surface at least 20% per light, so extra lights wash everything out.
-    // Only the first two lights (sky fill + key light) are used; floodlight pools would need a custom toon shader.
-    m.maxSimultaneousLights = 2;
+    // The cel shader lights every surface at least 20% per light, so many lights wash everything out.
+    // Atmosphere therefore switches the floodlight spots off in the toon look (only key + sky fill remain).
+    m.maxSimultaneousLights = 4;
     return m;
   }
 

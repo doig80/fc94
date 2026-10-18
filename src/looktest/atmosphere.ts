@@ -190,9 +190,11 @@ export class Atmosphere {
     // At night the key light is a stand-in for the floodlights: no single "sun" highlight on a wet pitch.
     this.sun.specular = p.sunColor.scale(time === "night" ? 0.08 : 1 - 0.7 * overcast);
     // Toon (cel) materials use classic lighting, which saturates much earlier than physically based materials.
-    const lightScale = look === "toon" ? (time === "night" ? 1.0 : 0.5) : 1;
+    const lightScale = look === "toon" ? { day: 0.5, dusk: 1.0, night: 1.0 }[time] : 1;
     this.sun.intensity = lightScale * p.sunIntensity * (time === "night" ? 1 : 1 - 0.55 * overcast);
-    this.hemi.intensity = (look === "toon" ? 1.4 : 1) * p.hemiIntensity * (1 + 0.3 * overcast);
+    // A low dusk sun lands in the darkest cel band, so the toon look leans on the sky fill instead.
+    const toonFill = { day: 1.4, dusk: 2.6, night: 1.4 }[time];
+    this.hemi.intensity = (look === "toon" ? toonFill : 1) * p.hemiIntensity * (1 + 0.3 * overcast);
     this.hemi.diffuse = Color3.Lerp(horizon, Color3.White(), 0.5);
     this.hemi.groundColor = p.hemiGround;
 
@@ -200,7 +202,8 @@ export class Atmosphere {
     for (const s of this.spots) {
       s.intensity = p.flood * (look === "toon" ? 0.2 : 1.4);
       s.specular = s.diffuse.scale(0.5);
-      s.setEnabled(p.flood > 0);
+      // Toon materials cannot show floodlight pools (see materials.ts), so the spots are off in that look.
+      s.setEnabled(p.flood > 0 && look !== "toon");
     }
 
     const scene = this.scene;
