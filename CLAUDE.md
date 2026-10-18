@@ -1,6 +1,8 @@
-# FC94 — notes for Claude
+# Nutmeg — notes for Claude
 
-Arcade football for the web (codename FC94 — never use it as a public name, see docs/specs/03).
+Arcade football for the web. "Nutmeg" is a codename (the repo is still called `fc94`); the public name is
+decided before launch (docs/specs/03). Never use "FC94", "FIFA" or "EA" in the game.
+The repo is public and the code is MIT-licensed: never commit secrets, and only commit assets whose licence allows it.
 The product owner is not a programmer: explain decisions in plain language, show screenshots for visual changes.
 
 ## Source of truth

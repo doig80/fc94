@@ -229,7 +229,7 @@ function adTexture(scene: Scene): DynamicTexture {
   const tex = new DynamicTexture("adTex", { width: w, height: h }, scene, true);
   const ctx = tex.getContext() as CanvasRenderingContext2D;
   const ads = [
-    { bg: "#d7263d", fg: "#ffffff", text: "FC94" },
+    { bg: "#d7263d", fg: "#ffffff", text: "NUTMEG" },
     { bg: "#ffd23f", fg: "#14213d", text: "ARCADE COLA" },
     { bg: "#14213d", fg: "#ffffff", text: "PLAY FAIR" },
     { bg: "#2bb24c", fg: "#ffffff", text: "PIXEL BOOTS" },
@@ -241,7 +241,11 @@ function adTexture(scene: Scene): DynamicTexture {
     ctx.fillStyle = ad.bg;
     ctx.fillRect(i * segment, 0, segment, h);
     ctx.fillStyle = ad.fg;
-    ctx.font = "bold 40px sans-serif";
+    // Shrink long slogans so they fit their panel.
+    let size = 40;
+    do {
+      ctx.font = `bold ${size}px sans-serif`;
+    } while (ctx.measureText(ad.text).width > segment * 0.88 && --size > 12);
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(ad.text, i * segment + segment / 2, h / 2 + 2);

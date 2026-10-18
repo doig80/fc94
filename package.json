@@ -1,8 +1,9 @@
 {
-  "name": "fc94",
+  "name": "nutmeg",
   "private": true,
+  "license": "MIT",
   "version": "0.0.1",
-  "description": "Arcade football for the browser (codename FC94)",
+  "description": "Arcade football for the browser (codename Nutmeg)",
   "type": "module",
   "packageManager": "pnpm@10.28.0",
   "scripts": {

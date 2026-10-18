@@ -6,7 +6,8 @@
 
 ## Naming (open decision D3)
 
-- **"FC94" is an internal codename only.** "FC" plus "94" evokes both _EA Sports FC_ and
+- **"Nutmeg" is the project codename.** The repository keeps its original name `fc94`, which is never
+  shown in the game. The old codename "FC94" was dropped because "FC" plus "94" evokes both _EA Sports FC_ and
   _FIFA International Soccer (1994)_, which are trademarks of EA / FIFA.
 - Before public release we pick a distinctive name and check it against trademark databases
   (EUIPO, USPTO, WIPO) and app/game stores.
@@ -37,7 +38,8 @@ Fonts: SIL Open Font License or similar only. Audio: CC0/CC-BY or self-made.
 
 ## Code
 
-- Repository licence: to decide (suggestion: MIT for code, assets per their own licences).
+- The repository is **public**. Code is licensed **MIT** (`LICENSE`); third-party assets keep their own
+  licences (`assets/LICENSES.md`). Never commit secrets or assets whose licence forbids redistribution.
 - Dependencies must use permissive licences (MIT, Apache-2.0, BSD). Babylon.js is Apache-2.0.
 
 ## Privacy

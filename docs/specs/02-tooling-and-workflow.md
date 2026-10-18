@@ -32,7 +32,8 @@ e2e/                 Playwright smoke tests + screenshot scripts
 2. Claude picks an issue, works on a branch, opens a **pull request** that says `Fixes #n`.
 3. CI runs on the PR: lint, typecheck, unit tests, build, Playwright smoke test + screenshots.
 4. You review the PR description and screenshots, then merge (or ask for changes).
-5. Merging to `main` deploys to **GitHub Pages** automatically. You playtest from the link.
+5. Merging to `main` deploys to **GitHub Pages** automatically (https://doig80.github.io/fc94/). You playtest from the link.
+   There are no per-PR preview links; PRs show screenshots instead.
 6. Feedback goes into new issues (template: _Playtest feedback_).
 
 ## GitHub Issues & Projects

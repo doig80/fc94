@@ -1,4 +1,4 @@
-# FC94 (codename)
+# Nutmeg (codename)
 
 Simple, accessible arcade football for the browser, inspired by the 1990s classics,
 with cartoon low-poly players under modern lighting and weather.
@@ -6,7 +6,7 @@ with cartoon low-poly players under modern lighting and weather.
 **Status:** pre-production. Specs are being written, and the first build is an art-direction look-test.
 
 - 📄 Specs: [docs/specs](docs/specs/README.md)
-- 🎮 Playable build: GitHub Pages (published from `main`)
+- 🎮 Play the latest build: https://doig80.github.io/fc94/ (published from `main`)
 - 🐞 Feedback: open an issue (Bug / Playtest feedback / Idea)
 
 ## Look-test
@@ -24,3 +24,7 @@ pnpm build        # production build in dist/
 ```
 
 See [CLAUDE.md](CLAUDE.md) for all commands and architecture rules.
+
+## Licence
+
+Code: [MIT](LICENSE). Third-party assets keep their own licences, listed in [assets/LICENSES.md](assets/LICENSES.md).

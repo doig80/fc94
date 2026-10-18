@@ -1,6 +1,6 @@
-# FC94 specs
+# Nutmeg specs
 
-> **FC94 is an internal codename.** The public name is decided before release (see [03-legal-and-ip](03-legal-and-ip.md)).
+> **Nutmeg is a codename** (the repository is still called `fc94`). The public name is decided before release (see [03-legal-and-ip](03-legal-and-ip.md)).
 
 These documents are the **single source of truth** for what we build. GitHub Issues track the work;
 when an issue settles a question, the outcome is written back into the relevant spec.
@@ -33,13 +33,16 @@ Status values: `Not started` → `Draft` → `Approved` → (`Revised` when a la
 
 ## Decision log
 
-| Date       | Decision                                                           |
-| ---------- | ------------------------------------------------------------------ |
-| 2026-10-18 | Web browser target; Babylon.js + TypeScript; free public release   |
-| 2026-10-18 | Input: keyboard + gamepad (local MP 2–4); touch = 1P vs CPU in v1  |
-| 2026-10-18 | Local multiplayer in v1, architecture ready for online in v2       |
-| 2026-10-18 | Cartoon low-poly art with high-end lighting, materials and weather |
-| 2026-10-18 | Weather/time of day: mostly visual, light gameplay effects         |
-| 2026-10-18 | CC0 + Mixamo assets, adapted to one style guide                    |
-| 2026-10-18 | GitHub Pages hosting; GitHub Issues + Projects board for tracking  |
-| 2026-10-18 | In-browser tuning panel so the product owner tunes game feel       |
+| Date       | Decision                                                                                   |
+| ---------- | ------------------------------------------------------------------------------------------ |
+| 2026-10-18 | Web browser target; Babylon.js + TypeScript; free public release                           |
+| 2026-10-18 | Input: keyboard + gamepad (local MP 2–4); touch = 1P vs CPU in v1                          |
+| 2026-10-18 | Local multiplayer in v1, architecture ready for online in v2                               |
+| 2026-10-18 | Cartoon low-poly art with high-end lighting, materials and weather                         |
+| 2026-10-18 | Weather/time of day: mostly visual, light gameplay effects                                 |
+| 2026-10-18 | CC0 + Mixamo assets, adapted to one style guide                                            |
+| 2026-10-18 | GitHub Pages hosting; GitHub Issues + Projects board for tracking                          |
+| 2026-10-18 | In-browser tuning panel so the product owner tunes game feel                               |
+| 2026-10-19 | Repository is public; code licensed MIT; hosting on GitHub Pages (no per-PR preview links) |
+| 2026-10-19 | Codename changed from "FC94" to **Nutmeg** (FC94 evoked EA Sports FC / FIFA 94)            |
+| 2026-10-19 | Only collaborators can open issues                                                         |
