@@ -1,6 +1,12 @@
 import { expect, test } from "@playwright/test";
 
 test("match boots, the keyboard moves the player, and a shot leaves the foot", async ({ page }) => {
+  // Software rendering on CI runners is slow; this test drives several seconds of play.
+  test.setTimeout(180_000);
+  // Review screenshots are for local runs; on CI each one waits for a slow software-rendered frame.
+  const snap = async (path: string) => {
+    if (!process.env.CI) await page.screenshot({ path });
+  };
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   page.on("console", (m) => {
@@ -41,7 +47,7 @@ test("match boots, the keyboard moves the player, and a shot leaves the foot", a
     const s = window.__match!.state();
     return s.ball.owner === s.controllers[0].player;
   });
-  await page.screenshot({ path: "screenshots/match-dribble.png" });
+  await snap("screenshots/match-dribble.png");
   const t1 = await page.evaluate(() => window.__match!.state().tick);
   await page.keyboard.down("KeyK");
   await ticks(t1 + 20);
@@ -50,6 +56,6 @@ test("match boots, the keyboard moves the player, and a shot leaves the foot", a
   const ball = await page.evaluate(() => window.__match!.state().ball);
   expect(ball.owner).toBe(-1);
   expect(Math.hypot(ball.vel.x, ball.vel.z)).toBeGreaterThan(8);
-  await page.screenshot({ path: "screenshots/match-shot.png" });
+  await snap("screenshots/match-shot.png");
   expect(errors).toEqual([]);
 });
