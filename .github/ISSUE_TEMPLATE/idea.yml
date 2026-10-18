@@ -1,0 +1,19 @@
+name: Idea
+description: A new feature or improvement
+labels: [idea]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: The idea
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why would it make the game better?
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options: [Gameplay, Graphics, Audio, UI / menus, Other]
