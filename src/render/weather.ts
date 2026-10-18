@@ -1,5 +1,5 @@
 import { Color4, DynamicTexture, ParticleSystem, Scene, Texture, Vector3 } from "@babylonjs/core";
-import type { Quality, Weather } from "./options";
+import type { Quality, Weather } from "./types";
 
 /** Rain (streaks + ground splashes) and snow, emitted in a box that follows the camera target. */
 export class WeatherFx {

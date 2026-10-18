@@ -1,5 +1,5 @@
 import "./style.css";
-import { createEngine } from "./looktest/engine";
+import { createEngine } from "./render/engine";
 import { LookTest } from "./looktest/lookTest";
 import { parseOptions, toSearch, type LookTestOptions } from "./looktest/options";
 import { buildPanel } from "./looktest/ui";
@@ -55,8 +55,14 @@ async function main(): Promise<void> {
   }
 }
 
+// `?mode=match` is the vertical-slice match, `?mode=physics` the top-down physics sandbox.
 const mode = new URLSearchParams(window.location.search).get("mode");
-const start = mode === "physics" ? import("./sandbox/sandbox").then((m) => m.startSandbox()) : main();
+const start =
+  mode === "physics"
+    ? import("./sandbox/sandbox").then((m) => m.startSandbox())
+    : mode === "match"
+      ? import("./game/matchApp").then((m) => m.startMatch())
+      : main();
 
 start.catch((err) => {
   console.error(err);

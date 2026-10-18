@@ -27,7 +27,7 @@ jobs:
       - run: pnpm test
       - run: pnpm build
       - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm e2e e2e/smoke.spec.ts e2e/sandbox.spec.ts
+      - run: pnpm e2e e2e/smoke.spec.ts e2e/sandbox.spec.ts e2e/match.spec.ts
         env:
           CI: "true"
       - uses: actions/upload-artifact@v4

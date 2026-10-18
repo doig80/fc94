@@ -13,11 +13,13 @@
 docs/specs/          specs (source of truth)
 src/
   sim/               deterministic simulation (no Babylon)
+  game/              match app: wires input, simulation and rendering together
   input/             keyboard, gamepad, touch -> intents
-  render/            Babylon.js scenes, materials, effects
+  render/            Babylon.js scenes, materials, effects, camera
   audio/  ui/        sound, menus, HUD
   tuning/            gameplay constants + tuning panel
   looktest/          art-direction look-test (temporary)
+  sandbox/           top-down physics debug view (?mode=physics)
 public/assets/       runtime assets (GLB, KTX2, audio)
 assets/LICENSES.md   licence register for every third-party asset
 tests/               Vitest unit tests

@@ -1,17 +1,21 @@
 /** Look-test settings. All of them can be set from the URL, e.g. `?look=toon&time=night&weather=rain`. */
-export const LOOKS = ["stylised", "toon"] as const;
-export const TIMES = ["day", "dusk", "night"] as const;
-export const WEATHERS = ["clear", "rain", "snow"] as const;
-export const QUALITIES = ["low", "high"] as const;
-export const CAMERAS = ["classic", "broadcast", "orbit"] as const;
-export const RENDERERS = ["auto", "webgpu", "webgl"] as const;
+import {
+  LOOKS,
+  QUALITIES,
+  RENDERERS,
+  TIMES,
+  WEATHERS,
+  type Look,
+  type Quality,
+  type RendererPref,
+  type TimeOfDay,
+  type Weather,
+} from "../render/types";
 
-export type Look = (typeof LOOKS)[number];
-export type TimeOfDay = (typeof TIMES)[number];
-export type Weather = (typeof WEATHERS)[number];
-export type Quality = (typeof QUALITIES)[number];
+export { LOOKS, QUALITIES, RENDERERS, TIMES, WEATHERS };
+export type { Look, Quality, RendererPref, TimeOfDay, Weather };
+export const CAMERAS = ["classic", "broadcast", "orbit"] as const;
 export type CameraMode = (typeof CAMERAS)[number];
-export type RendererPref = (typeof RENDERERS)[number];
 
 export interface LookTestOptions {
   look: Look;

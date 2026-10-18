@@ -1,6 +1,6 @@
 import { Color3, Material, Mesh, PBRMaterial, Scene, StandardMaterial, Texture } from "@babylonjs/core";
 import { CellMaterial } from "@babylonjs/materials";
-import type { Look } from "./options";
+import type { Look } from "./types";
 
 /**
  * A look-independent description of a surface. Meshes carry a spec id in their metadata and
