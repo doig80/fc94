@@ -91,6 +91,24 @@ describe("passing", () => {
     expect(angle(true)).toBeGreaterThan(0.3);
   });
 
+  it("meets the pass feel targets (docs/specs/10 §8: short ≤ 1 s, long ≤ 2 s)", () => {
+    const travelTime = (d: number) => {
+      const s = setup();
+      s.ball.pos = { x: -18, y: DEFAULT_PARAMS.ball.radius, z: 0 };
+      s.ball.owner = -1;
+      const v = groundPassSpeed(d, s, DEFAULT_PARAMS);
+      s.ball.vel = { x: v, y: 0, z: 0 };
+      let t = 0;
+      while (s.ball.pos.x < -18 + d && t < 600) {
+        run(s, 1);
+        t++;
+      }
+      return t / 60;
+    };
+    expect(travelTime(10)).toBeLessThanOrEqual(1);
+    expect(travelTime(20)).toBeLessThanOrEqual(2);
+  });
+
   it("hits the pass hard enough for the distance and the weather", () => {
     const s = setup();
     const p = DEFAULT_PARAMS;

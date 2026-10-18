@@ -208,7 +208,8 @@ export const DEFAULT_PARAMS: SimParams = {
     loseDistance: 1.6,
   },
   action: {
-    passArrivalSpeed: 4.5,
+    // 8 m/s meets the feel target in docs/specs/10 §8: 10 m in ≤ 1 s, 20 m in ≤ 2 s.
+    passArrivalSpeed: 8,
     passMinSpeed: 7,
     passMaxSpeed: 24,
     passConeCos: 0.45,
