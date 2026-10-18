@@ -73,7 +73,7 @@ AI reaction time, sprint boost, …) as sliders grouped by category. You can:
 
 | Tool                  | Purpose                                                                          | Set up in                                                 |
 | --------------------- | -------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| **Context7 MCP**      | Up-to-date docs for Babylon.js 9, Vite, Playwright, etc. Avoids outdated APIs    | `.mcp.json`                                               |
+| **Context7 MCP**      | Up-to-date docs for Babylon.js 9, Vite, Playwright, etc. Avoids outdated APIs    | claude.ai Context7 connector (account level)              |
 | **SessionStart hook** | Installs dependencies in each cloud session so Claude can build/test immediately | `.claude/settings.json`, `.claude/hooks/session-start.sh` |
 | **Playwright**        | Claude launches the game headless, takes screenshots, and "sees" what it built   | `e2e/`, `pnpm screenshots`                                |
 | **GitHub connector**  | Read/create issues, open PRs, react to CI and review comments                    | already connected                                         |
