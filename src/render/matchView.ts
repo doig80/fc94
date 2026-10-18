@@ -13,7 +13,7 @@ import { Atmosphere } from "./atmosphere";
 import { CameraRig, type MatchCamera } from "./cameraRig";
 import { SurfaceLibrary } from "./materials";
 import { buildPitch } from "./pitch";
-import { buildBall, KITS, Player } from "./players";
+import { buildBall, KITS, Player, type PoseAction } from "./players";
 import { buildStadium } from "./stadium";
 import type { Quality, TimeOfDay, Weather } from "./types";
 import { WeatherFx } from "./weather";
@@ -27,6 +27,8 @@ export interface MatchViewOptions {
 
 /** The ball is drawn larger than its collision size so it is easy to follow (docs/specs/10 §5). */
 const BALL_VISUAL_RADIUS = 0.18;
+/** Length of the render-only kick swing. */
+const KICK_SECONDS = 0.22;
 /** Run-cycle phase per metre travelled. */
 const STRIDE = 2.6;
 /** Ring colours per human player (docs/specs/10 §4). */
@@ -45,6 +47,8 @@ export class MatchView {
   private readonly lib: SurfaceLibrary;
   private readonly players: Player[] = [];
   private readonly phases: number[] = [];
+  /** Render-only kick swings: seconds left per player (kicks are instant in the simulation). */
+  private readonly kickTimers: number[] = [];
   private readonly ball: Mesh;
   private readonly rings: Mesh[] = [];
   private readonly atmosphere: Atmosphere;
@@ -79,6 +83,7 @@ export class MatchView {
       );
       this.players.push(player);
       this.phases.push(i * 0.7);
+      this.kickTimers.push(0);
     });
     this.ball = buildBall(scene, this.lib);
     this.ball.rotationQuaternion = Quaternion.Identity();
@@ -129,6 +134,9 @@ export class MatchView {
     controlled: readonly number[] = [],
   ): void {
     const lerp = (a: number, b: number) => a + (b - a) * alpha;
+    // A kick happened this tick if the ball was released with a new touch block.
+    const kicked = curr.ball.owner < 0 && curr.ball.touchBlockUntil !== prev.ball.touchBlockUntil;
+    if (kicked && curr.ball.lastTouch >= 0) this.kickTimers[curr.ball.lastTouch] = KICK_SECONDS;
     curr.players.forEach((pl, i) => {
       const before = prev.players[i];
       const view = this.players[i];
@@ -142,6 +150,13 @@ export class MatchView {
       const speed = Math.hypot(pl.vel.x, pl.vel.z);
       if (!this.first) this.phases[i] += moved * STRIDE;
       view.pose(this.phases[i], Math.min(1, speed / DEFAULT_PARAMS.player.sprintSpeed));
+      const act = pl.action;
+      if (act.kind !== "none") {
+        view.poseAction(act.kind as PoseAction, 1 - act.ticks / act.total);
+      } else if (this.kickTimers[i] > 0) {
+        view.poseAction("kick", 1 - this.kickTimers[i] / KICK_SECONDS);
+        this.kickTimers[i] -= dt;
+      }
     });
 
     const b0 = prev.ball;

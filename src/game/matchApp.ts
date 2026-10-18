@@ -41,6 +41,7 @@ export async function startMatch(): Promise<void> {
   const stepper = new FixedStepper(DT);
   const banner = overlay("match-banner");
   const help = controlsHelp();
+  const meters = hudMeters();
   let restartIn = -1;
 
   window.__match = { ready: false, renderer, state: () => state };
@@ -82,6 +83,7 @@ export async function startMatch(): Promise<void> {
       }
     });
     view.render(prev, state, alpha, dt, controlledPlayers(state));
+    meters.update(state);
     view.scene.render();
     if (++frames === 30) {
       window.__match!.ready = true;
@@ -127,6 +129,28 @@ function overlay(className: string): HTMLElement {
   el.hidden = className === "match-banner";
   document.body.append(el);
   return el;
+}
+
+/** Shot power (fills while shoot is held, docs/specs/10 §3) and sprint stamina of the controlled player. */
+function hudMeters(): { update(s: MatchState): void } {
+  const el = document.createElement("div");
+  el.className = "hud-meters";
+  el.innerHTML = `<div class="meter power" hidden><span></span></div><div class="meter stamina"><span></span></div>`;
+  document.body.append(el);
+  const power = el.querySelector<HTMLElement>(".power")!;
+  const powerFill = power.querySelector("span")!;
+  const staminaFill = el.querySelector<HTMLElement>(".stamina span")!;
+  return {
+    update(s) {
+      const p = s.players[s.controllers[0].player];
+      power.hidden = p.charge < 0;
+      const level = Math.max(0, p.charge) / DEFAULT_PARAMS.action.shotChargeTicks;
+      powerFill.style.width = `${level * 100}%`;
+      power.classList.toggle("over", level > DEFAULT_PARAMS.action.overpowerAt);
+      staminaFill.style.width = `${p.stamina * 100}%`;
+      staminaFill.classList.toggle("low", p.stamina < 0.25);
+    },
+  };
 }
 
 function controlsHelp(): HTMLElement {

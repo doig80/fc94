@@ -169,3 +169,40 @@ body {
 .controls-help[hidden] {
   display: none;
 }
+.hud-meters {
+  position: fixed;
+  left: 50%;
+  bottom: max(18px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  display: grid;
+  gap: 6px;
+  width: min(260px, 60vw);
+  pointer-events: none;
+}
+.meter {
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+.meter.power {
+  height: 14px;
+}
+.meter[hidden] {
+  display: none;
+}
+.meter span {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: #2bb24c;
+}
+.meter.power span {
+  background: var(--accent);
+}
+.meter.power.over span {
+  background: #ff5a3c;
+}
+.meter span.low {
+  background: #ff5a3c;
+}

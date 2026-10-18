@@ -128,10 +128,63 @@ export class Player {
       this.arms[i].rotation.z = -s * swing * 0.8;
       this.arms[i].rotation.x = (i === 0 ? -1 : 1) * 0.12;
     }
-    this.body.position.y = Math.abs(Math.sin(phase)) * 0.06 * effort;
-    this.body.rotation.z = -0.12 * effort; // lean into the run
+    this.body.position.set(0, Math.abs(Math.sin(phase)) * 0.06 * effort, 0);
+    this.body.rotation.set(0, 0, -0.12 * effort); // lean into the run
+  }
+
+  /**
+   * Override the run cycle for an action (docs/specs/10 §3 and §7). `progress` runs 0 → 1.
+   * The body pivots at the feet: a positive z rotation tips it backwards, swinging the legs forwards.
+   */
+  poseAction(kind: PoseAction, progress: number): void {
+    const b = this.body;
+    const ease = Math.sin(Math.min(1, progress) * Math.PI); // 0 → 1 → 0
+    switch (kind) {
+      case "slide":
+        // Lying back with the legs out in front.
+        b.rotation.z = 1.15;
+        b.position.set(0.45, 0, 0);
+        this.legs[0].rotation.z = 0.15;
+        this.legs[1].rotation.z = -0.1;
+        this.arms[0].rotation.z = this.arms[1].rotation.z = -1.2;
+        break;
+      case "stumble":
+        b.rotation.z = -0.35 - 0.15 * Math.sin(progress * 25);
+        b.rotation.x = 0.18 * Math.sin(progress * 19);
+        b.position.y = -0.08;
+        this.arms[0].rotation.z = 1.4;
+        this.arms[1].rotation.z = -1.1;
+        break;
+      case "header":
+        // Diving forwards, flat, then landing.
+        b.rotation.z = -1.3 * ease;
+        b.position.set(0.3 * ease, 0.45 * ease, 0);
+        this.arms[0].rotation.z = this.arms[1].rotation.z = 2.4 * ease;
+        break;
+      case "bicycle":
+        // Flipped over backwards, the kicking leg high above the head.
+        b.rotation.z = 2.4 * ease;
+        b.position.set(0.6 * ease, 1.45 * ease, 0);
+        this.legs[0].rotation.z = -0.9 * ease;
+        this.legs[1].rotation.z = 0.5 * ease;
+        break;
+      case "volley":
+      case "kick":
+        // Kicking leg swings through, body leans back a little.
+        b.rotation.z = 0.15 * ease;
+        this.legs[1].rotation.z = -0.6 + 1.9 * Math.min(1, progress * 1.6);
+        this.legs[0].rotation.z = -0.2;
+        this.arms[0].rotation.z = 0.7 * ease;
+        break;
+      case "tackle":
+        b.rotation.z = -0.3 * ease;
+        this.legs[0].rotation.z = 1.0 * ease;
+        break;
+    }
   }
 }
+
+export type PoseAction = "slide" | "stumble" | "header" | "bicycle" | "volley" | "kick" | "tackle";
 
 export function buildBall(scene: Scene, lib: SurfaceLibrary): Mesh {
   const tex = new DynamicTexture("ballTex", { width: 256, height: 128 }, scene, true);
