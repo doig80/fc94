@@ -1,0 +1,31 @@
+name: Bug
+description: Something is broken or looks wrong
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you see, and what did you expect instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How can we reproduce it?
+      placeholder: "1. Open the link\n2. Switch to Night + Rain\n3. ..."
+  - type: input
+    id: link
+    attributes:
+      label: Link / settings
+      description: Paste the URL from your address bar (it contains the current settings).
+  - type: input
+    id: device
+    attributes:
+      label: Device and browser
+      placeholder: e.g. iPhone 15, Safari / Windows laptop, Chrome
+  - type: textarea
+    id: media
+    attributes:
+      label: Screenshots or video
+      description: Drag and drop images or short clips here.

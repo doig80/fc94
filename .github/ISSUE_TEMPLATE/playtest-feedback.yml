@@ -1,0 +1,28 @@
+name: Playtest feedback
+description: How did it feel? What would you change?
+labels: [feedback]
+body:
+  - type: input
+    id: build
+    attributes:
+      label: Which build / link did you play?
+  - type: textarea
+    id: liked
+    attributes:
+      label: What did you like?
+  - type: textarea
+    id: change
+    attributes:
+      label: What would you change?
+    validations:
+      required: true
+  - type: textarea
+    id: tuning
+    attributes:
+      label: Tuning settings (optional)
+      description: If you used the tuning panel, paste the copied settings here.
+      render: json
+  - type: input
+    id: device
+    attributes:
+      label: Device and browser

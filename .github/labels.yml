@@ -1,0 +1,36 @@
+- name: bug
+  color: "d73a4a"
+  description: Something is broken
+- name: feedback
+  color: "fbca04"
+  description: Playtest feedback
+- name: idea
+  color: "a2eeef"
+  description: New idea or feature request
+- name: spec
+  color: "5319e7"
+  description: Changes or questions about docs/specs
+- name: area:gameplay
+  color: "0e8a16"
+  description: Controls, rules, physics, AI
+- name: area:graphics
+  color: "1d76db"
+  description: Look, lighting, weather, models, animation
+- name: area:audio
+  color: "c5def5"
+  description: Sound, music, commentary
+- name: area:ui
+  color: "bfdadc"
+  description: Menus, HUD, settings, accessibility
+- name: area:infra
+  color: "6a737d"
+  description: Build, CI, hosting, tooling
+- name: priority:high
+  color: "b60205"
+  description: Do this soon
+- name: priority:low
+  color: "d4c5f9"
+  description: Nice to have
+- name: good-first-playtest
+  color: "7057ff"
+  description: Ready for the product owner to try
