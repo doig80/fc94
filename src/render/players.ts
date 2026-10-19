@@ -1,4 +1,5 @@
 import { Color3, DynamicTexture, Mesh, MeshBuilder, Scene, TransformNode, Vector3 } from "@babylonjs/core";
+import { DEFAULT_PARAMS } from "../sim/params";
 import type { SurfaceLibrary } from "./materials";
 
 export interface Kit {
@@ -230,7 +231,11 @@ export function buildBall(scene: Scene, lib: SurfaceLibrary): Mesh {
     wettable: 0.8,
   });
   // Arcade games draw the ball larger than life so it is easy to follow (real radius is 0.11 m).
-  const ball = MeshBuilder.CreateSphere("ball", { diameter: 0.36, segments: 6 }, scene);
+  const ball = MeshBuilder.CreateSphere(
+    "ball",
+    { diameter: DEFAULT_PARAMS.ball.drawRadius * 2, segments: 6 },
+    scene,
+  );
   ball.convertToFlatShadedMesh();
   lib.assign(ball, "ball");
   return ball;

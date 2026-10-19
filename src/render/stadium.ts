@@ -12,6 +12,7 @@ import {
 import { Rng } from "../sim/rng";
 import type { SurfaceLibrary } from "./materials";
 import type { PitchSpec } from "../sim/params";
+import { boxesHidingPlay, type Box, type CameraView } from "./occlusion";
 import { pitchMargin } from "./pitch";
 import type { Quality } from "./types";
 
@@ -22,8 +23,8 @@ export interface Stadium {
   lamps: Vector3[];
   /** Ad boards and lamp panels: glow at night. */
   setLampPower(power: number): void;
-  /** Fade out roofs on the camera's side of the pitch, so they never block the view of play. */
-  fadeOccluders(camera: Vector3, target: Vector3, dt: number): void;
+  /** Fade out roofs that stand between the camera and the pitch, so they never block the view of play. */
+  fadeOccluders(view: CameraView, dt: number): void;
 }
 
 const TIER_H = 0.75;
@@ -218,27 +219,25 @@ export function buildStadium(scene: Scene, lib: SurfaceLibrary, quality: Quality
     }
   }
 
-  // Roof centres on the ground plane, for deciding which roofs sit between the camera and the pitch.
-  const roofCentres = roofs.map((r) => {
+  // Roof outlines in world space, for testing which roofs hide the pitch from the camera.
+  const roofBoxes: Box[] = roofs.map((r) => {
+    (r.parent as Mesh).computeWorldMatrix(true);
     r.computeWorldMatrix(true);
-    const c = r.getBoundingInfo().boundingBox.centerWorld;
-    return new Vector3(c.x, 0, c.z);
+    const b = r.getBoundingInfo().boundingBox;
+    return { min: b.minimumWorld.clone(), max: b.maximumWorld.clone() };
   });
+  // The playing area plus the grass around it: a roof that hides any of it fades out.
+  const playX = pitch.length / 2 + margin;
+  const playZ = pitch.width / 2 + margin;
 
   return {
     shadowCasters: casters,
-    fadeOccluders(camera: Vector3, target: Vector3, dt: number) {
-      const cx = camera.x - target.x;
-      const cz = camera.z - target.z;
-      const cl = Math.hypot(cx, cz) || 1;
+    fadeOccluders(view: CameraView, dt: number) {
+      const hidden = boxesHidingPlay(view, roofBoxes, playX, playZ);
       const k = 1 - Math.exp(-dt * 6);
       roofs.forEach((roof, i) => {
-        const rx = roofCentres[i].x - target.x;
-        const rz = roofCentres[i].z - target.z;
-        const rl = Math.hypot(rx, rz) || 1;
-        // On the camera's side (the camera looks over it) → nearly invisible; elsewhere → solid.
-        const cameraSide = (rx * cx + rz * cz) / (rl * cl) > 0.35;
-        const goal = cameraSide ? 0.08 : 1;
+        // In the way → nearly invisible; otherwise solid.
+        const goal = hidden[i] ? 0.08 : 1;
         roof.visibility += (goal - roof.visibility) * k;
       });
     },

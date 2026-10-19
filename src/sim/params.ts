@@ -55,6 +55,11 @@ export const PITCH_FULL: PitchSpec = {
 export interface BallParams {
   /** Collision radius (the ball is drawn larger, see docs/specs/10 §5). */
   radius: number;
+  /**
+   * Radius the ball is drawn with: larger than life so it is easy to follow. The goal frame collides with
+   * the ball as drawn, so a shot that looks like it clips the post does hit it.
+   */
+  drawRadius: number;
   gravity: number;
   /** Quadratic air drag: deceleration = airDrag × speed². */
   airDrag: number;
@@ -196,6 +201,7 @@ export interface SimParams {
 export const DEFAULT_PARAMS: SimParams = {
   ball: {
     radius: 0.11,
+    drawRadius: 0.18,
     gravity: 9.81,
     airDrag: 0.012,
     magnus: 0.025,
@@ -249,8 +255,8 @@ export const DEFAULT_PARAMS: SimParams = {
     shotMinLift: 1,
     shotMaxLift: 4,
     overpowerAt: 0.92,
-    // With the 2 m small-sided goals, an overpowered shot from 8 m or further clears the bar.
-    overpowerLift: 5.5,
+    // With the 2 m small-sided goals, an overpowered shot from 8 m or further clears the bar (as drawn).
+    overpowerLift: 6.5,
     curlSpin: 14,
     curlAimOffset: 1.2,
     contextShotPower: 0.6,

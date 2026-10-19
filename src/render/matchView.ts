@@ -27,7 +27,7 @@ export interface MatchViewOptions {
 }
 
 /** The ball is drawn larger than its collision size so it is easy to follow (docs/specs/10 §5). */
-const BALL_VISUAL_RADIUS = 0.18;
+const BALL_VISUAL_RADIUS = DEFAULT_PARAMS.ball.drawRadius;
 /** Length of the render-only kick swing. */
 const KICK_SECONDS = 0.22;
 /** Run-cycle phase per metre travelled. */
@@ -197,7 +197,16 @@ export class MatchView {
 
     this.weather.follow(new Vector3(bx, 0, bz));
     this.rig.update({ x: bx, z: bz, vx: b1.vel.x, vz: b1.vel.z }, dt, this.first);
-    this.stadium.fadeOccluders(this.rig.camera.position, this.rig.camera.target, this.first ? 1 : dt);
+    const cam = this.rig.camera;
+    this.stadium.fadeOccluders(
+      {
+        eye: this.rig.eye,
+        target: cam.target,
+        fov: cam.fov,
+        aspect: this.scene.getEngine().getAspectRatio(cam),
+      },
+      this.first ? 1 : dt,
+    );
     this.first = false;
   }
 }

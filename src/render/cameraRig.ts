@@ -53,6 +53,17 @@ export class CameraRig {
     return this.camera.alpha + Math.PI;
   }
 
+  /** Where the camera is this frame (camera.position only catches up when the frame is rendered). */
+  get eye(): Vector3 {
+    const c = this.camera;
+    const flat = c.radius * Math.sin(c.beta);
+    return new Vector3(
+      c.target.x + flat * Math.cos(c.alpha),
+      c.target.y + c.radius * Math.cos(c.beta),
+      c.target.z + flat * Math.sin(c.alpha),
+    );
+  }
+
   /** @param snap jump straight to the framing (first frame, after a goal) instead of easing. */
   update(ball: { x: number; z: number; vx: number; vz: number }, dt: number, snap = false): void {
     const f = framing(this.mode, this.pitch);

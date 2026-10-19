@@ -1,6 +1,6 @@
 import { test } from "@playwright/test";
 
-// Visual review of playtest feedback #21 (not run in CI): `pnpm e2e e2e/feedback.spec.ts`.
+// Visual review of playtest feedback #21 (rounds 1 and 2) (not run in CI): `pnpm e2e e2e/feedback.spec.ts`.
 test("feedback views", async ({ page }) => {
   test.setTimeout(300_000);
   await page.goto("./?renderer=webgl&quality=high");
@@ -31,8 +31,11 @@ test("feedback views", async ({ page }) => {
       [x, y, z],
     );
   const views: [string, number, number, number][] = [
+    ["centre", 0, 0.11, 0],
     ["near-touchline", 0, 0.11, -11],
     ["near-corner", -18, 0.11, -11],
+    ["left-goal", -18, 0.11, 0],
+    ["near-right", 17, 0.11, -11],
     ["far-goal", 17, 0.11, 2],
     ["ball-in-air", 10, 2.2, 0],
   ];
