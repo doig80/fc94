@@ -9,6 +9,8 @@ The product owner is not a programmer: explain decisions in plain language, show
 
 - Specs live in `docs/specs/` (index + open decisions in `docs/specs/README.md`). Read the relevant spec before building.
 - Work is tracked in GitHub Issues; PRs say `Fixes #n`. Decisions made in issues are written back into the specs.
+- Every PR gets a playable preview (`preview.yml` comments the link: `/fc94/pr-preview/pr-<n>/`); the product owner
+  reviews by playing it. The main link serves `main` from the `gh-pages` branch.
 
 ## Stack
 

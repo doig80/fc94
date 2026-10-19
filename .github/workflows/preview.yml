@@ -1,0 +1,36 @@
+name: PR preview
+
+# Every pull request gets its own playable copy of the game at
+# https://doig80.github.io/fc94/pr-preview/pr-<number>/ (removed again when the PR closes).
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, closed]
+
+concurrency: preview-${{ github.ref }}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  preview:
+    # Forks get a read-only token and can't publish previews.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        if: github.event.action != 'closed'
+      - uses: actions/setup-node@v4
+        if: github.event.action != 'closed'
+        with:
+          node-version: 22
+          cache: pnpm
+      - if: github.event.action != 'closed'
+        run: pnpm install --frozen-lockfile && pnpm build
+      - uses: rossjrw/pr-preview-action@v1
+        with:
+          source-dir: ./dist/
+          preview-branch: gh-pages
+          umbrella-dir: pr-preview
+          qr-code: true
