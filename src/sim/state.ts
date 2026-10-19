@@ -23,7 +23,9 @@ export interface PlayerState {
   queued: QueuedAction | null;
 }
 
-export type ActionKind = "none" | "tackle" | "slide" | "stumble" | "header" | "bicycle" | "volley";
+/** `recover` is getting up after a slide; `stumble` is losing balance (failed tackle, being tackled). */
+export type ActionKind =
+  "none" | "tackle" | "slide" | "recover" | "stumble" | "header" | "bicycle" | "volley";
 
 export interface PlayerAction {
   kind: ActionKind;

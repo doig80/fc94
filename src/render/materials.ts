@@ -74,6 +74,19 @@ export class SurfaceLibrary {
     }
   }
 
+  /**
+   * Keep see-through surfaces (nets) out of the depth pre-pass. Screen-space effects such as ambient
+   * occlusion read that pass and would otherwise treat a net as a solid box and darken everything inside it.
+   * Call after the post-processing pipelines exist; materials built later are registered automatically.
+   */
+  syncPrePassExclusions(): void {
+    const pre = this.scene.prePassRenderer;
+    if (!pre) return;
+    for (const b of this.built.values()) {
+      if (b.spec.blend && !pre.excludedMaterials.includes(b.material)) pre.excludedMaterials.push(b.material);
+    }
+  }
+
   private apply(mesh: Mesh): void {
     const id = mesh.metadata.surface as string;
     const b = this.material(id);
@@ -94,6 +107,7 @@ export class SurfaceLibrary {
     const b = { material, spec };
     this.applyWetness(b);
     this.built.set(id, b);
+    this.syncPrePassExclusions();
     return b;
   }
 

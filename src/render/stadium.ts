@@ -22,6 +22,8 @@ export interface Stadium {
   lamps: Vector3[];
   /** Ad boards and lamp panels: glow at night. */
   setLampPower(power: number): void;
+  /** Fade out roofs on the camera's side of the pitch, so they never block the view of play. */
+  fadeOccluders(camera: Vector3, target: Vector3, dt: number): void;
 }
 
 const TIER_H = 0.75;
@@ -59,6 +61,7 @@ export function buildStadium(scene: Scene, lib: SurfaceLibrary, quality: Quality
   const halfW = pitch.width / 2 + margin + 1.5;
   const casters: Mesh[] = [];
   const receivers: Mesh[] = [];
+  const roofs: Mesh[] = [];
   const crowdMatrices: number[] = [];
   const crowdColors: number[] = [];
   const rng = new Rng(1994);
@@ -119,6 +122,7 @@ export function buildStadium(scene: Scene, lib: SurfaceLibrary, quality: Quality
     roof.parent = pivot;
     lib.assign(roof, "roof");
     casters.push(roof);
+    roofs.push(roof);
 
     // Crowd on every tier, as thin instances (one draw call per stand).
     const rot = Quaternion.RotationAxis(Vector3.Up(), side.rot + Math.PI);
@@ -214,8 +218,30 @@ export function buildStadium(scene: Scene, lib: SurfaceLibrary, quality: Quality
     }
   }
 
+  // Roof centres on the ground plane, for deciding which roofs sit between the camera and the pitch.
+  const roofCentres = roofs.map((r) => {
+    r.computeWorldMatrix(true);
+    const c = r.getBoundingInfo().boundingBox.centerWorld;
+    return new Vector3(c.x, 0, c.z);
+  });
+
   return {
     shadowCasters: casters,
+    fadeOccluders(camera: Vector3, target: Vector3, dt: number) {
+      const cx = camera.x - target.x;
+      const cz = camera.z - target.z;
+      const cl = Math.hypot(cx, cz) || 1;
+      const k = 1 - Math.exp(-dt * 6);
+      roofs.forEach((roof, i) => {
+        const rx = roofCentres[i].x - target.x;
+        const rz = roofCentres[i].z - target.z;
+        const rl = Math.hypot(rx, rz) || 1;
+        // On the camera's side (the camera looks over it) → nearly invisible; elsewhere → solid.
+        const cameraSide = (rx * cx + rz * cz) / (rl * cl) > 0.35;
+        const goal = cameraSide ? 0.08 : 1;
+        roof.visibility += (goal - roof.visibility) * k;
+      });
+    },
     receivers,
     lamps,
     setLampPower(power: number) {

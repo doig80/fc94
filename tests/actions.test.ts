@@ -161,14 +161,25 @@ describe("shooting", () => {
     );
   });
 
-  it("full power from distance flies over the bar", () => {
-    const s = shotFrom(L - 16, 60);
-    let heightAtLine = -1;
-    for (let t = 0; t < 120 && heightAtLine < 0; t++) {
+  const heightAtGoalLine = (s: MatchState) => {
+    let height = -1;
+    for (let t = 0; t < 120 && height < 0; t++) {
       run(s, 1);
-      if (s.ball.pos.x >= L) heightAtLine = s.ball.pos.y;
+      if (s.ball.pos.x >= L) height = s.ball.pos.y;
     }
-    expect(heightAtLine).toBeGreaterThan(s.pitch.goalHeight);
+    return height;
+  };
+
+  it("an overpowered shot from 8 m or further flies over the bar", () => {
+    expect(heightAtGoalLine(shotFrom(L - 8, 60))).toBeGreaterThan(PITCH_5_A_SIDE.goalHeight);
+    expect(heightAtGoalLine(shotFrom(L - 16, 60))).toBeGreaterThan(PITCH_5_A_SIDE.goalHeight);
+  });
+
+  it("a hard shot just short of overpower rises but stays under the bar from 12 m", () => {
+    const ticks = Math.floor(DEFAULT_PARAMS.action.shotChargeTicks * 0.85);
+    const h = heightAtGoalLine(shotFrom(L - 12, ticks));
+    expect(h).toBeGreaterThan(0.3);
+    expect(h).toBeLessThan(PITCH_5_A_SIDE.goalHeight);
   });
 
   it("steering at the moment of the shot curls it the opposite ways", () => {
@@ -312,7 +323,9 @@ describe("defending", () => {
       knocked = s.ball.lastTouch === 1 && s.ball.owner !== 9;
     }
     expect(knocked).toBe(true);
-    run(s, p.action.slideTicks + p.action.slideRecoveryTicks, intent(), p);
+    run(s, p.action.slideTicks, intent(), p);
+    expect(s.players[1].action.kind).toBe("recover");
+    run(s, p.action.slideRecoveryTicks, intent(), p);
     expect(s.players[1].action.kind).toBe("none");
   });
 

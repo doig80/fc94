@@ -1,6 +1,7 @@
 import {
   AbstractEngine,
   Color3,
+  DynamicTexture,
   Mesh,
   MeshBuilder,
   Quaternion,
@@ -14,7 +15,7 @@ import { CameraRig, type MatchCamera } from "./cameraRig";
 import { SurfaceLibrary } from "./materials";
 import { buildPitch } from "./pitch";
 import { buildBall, KITS, Player, type PoseAction } from "./players";
-import { buildStadium } from "./stadium";
+import { buildStadium, type Stadium } from "./stadium";
 import type { Quality, TimeOfDay, Weather } from "./types";
 import { WeatherFx } from "./weather";
 
@@ -50,8 +51,11 @@ export class MatchView {
   /** Render-only kick swings: seconds left per player (kicks are instant in the simulation). */
   private readonly kickTimers: number[] = [];
   private readonly ball: Mesh;
+  /** Soft dark spot on the grass under the ball: shows how high the ball is (classic arcade cue). */
+  private readonly ballShadow: Mesh;
   private readonly rings: Mesh[] = [];
   private readonly atmosphere: Atmosphere;
+  private readonly stadium: Stadium;
   private readonly weather: WeatherFx;
   private first = true;
 
@@ -63,6 +67,7 @@ export class MatchView {
 
     const pitch = buildPitch(scene, this.lib, initial.pitch);
     const stadium = buildStadium(scene, this.lib, options.quality, initial.pitch);
+    this.stadium = stadium;
 
     initial.players.forEach((pl, i) => {
       const kit =
@@ -86,6 +91,7 @@ export class MatchView {
       this.kickTimers.push(0);
     });
     this.ball = buildBall(scene, this.lib);
+    this.ballShadow = buildBallShadow(scene);
     this.ball.rotationQuaternion = Quaternion.Identity();
 
     PLAYER_COLOURS.forEach((hex, i) => {
@@ -104,11 +110,12 @@ export class MatchView {
     });
 
     this.atmosphere = new Atmosphere(scene, this.rig.camera, stadium.lamps, options.quality);
+    this.lib.syncPrePassExclusions();
     this.atmosphere.addShadowCasters([
       ...pitch.shadowCasters,
       ...stadium.shadowCasters,
+      // Not the ball: its spot on the grass (ballShadow) shows its height; a second, sun-angled shadow confuses.
       ...this.players.flatMap((p) => p.meshes),
-      this.ball,
     ]);
     for (const m of [...pitch.receivers, ...stadium.receivers]) m.receiveShadows = true;
     for (const p of this.players) for (const m of p.meshes) m.receiveShadows = true;
@@ -173,6 +180,11 @@ export class MatchView {
       roll.multiplyToRef(this.ball.rotationQuaternion!, this.ball.rotationQuaternion!);
     }
     this.ball.position.set(bx, by, bz);
+    // The spot stays on the grass and shrinks and fades as the ball climbs.
+    const height = Math.max(0, by - BALL_VISUAL_RADIUS);
+    this.ballShadow.position.set(bx, 0.02, bz);
+    this.ballShadow.scaling.setAll(Math.max(0.45, 1 - height * 0.12));
+    this.ballShadow.visibility = Math.max(0.25, 0.85 - height * 0.12);
 
     this.rings.forEach((ring, slot) => {
       const index = controlled[slot] ?? -1;
@@ -185,6 +197,31 @@ export class MatchView {
 
     this.weather.follow(new Vector3(bx, 0, bz));
     this.rig.update({ x: bx, z: bz, vx: b1.vel.x, vz: b1.vel.z }, dt, this.first);
+    this.stadium.fadeOccluders(this.rig.camera.position, this.rig.camera.target, this.first ? 1 : dt);
     this.first = false;
   }
+}
+
+function buildBallShadow(scene: Scene): Mesh {
+  const size = 64;
+  const tex = new DynamicTexture("ballShadowTex", { width: size, height: size }, scene, false);
+  const ctx = tex.getContext() as CanvasRenderingContext2D;
+  const g = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+  g.addColorStop(0, "rgba(0,0,0,0.75)");
+  g.addColorStop(0.55, "rgba(0,0,0,0.45)");
+  g.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, size, size);
+  tex.hasAlpha = true;
+  tex.update();
+  const mat = new StandardMaterial("ballShadowMat", scene);
+  mat.diffuseTexture = tex;
+  mat.useAlphaFromDiffuseTexture = true;
+  mat.disableLighting = true;
+  mat.emissiveColor = Color3.Black();
+  mat.zOffset = -2;
+  const disc = MeshBuilder.CreateGround("ballShadow", { width: 0.6, height: 0.6 }, scene);
+  disc.material = mat;
+  disc.isPickable = false;
+  return disc;
 }

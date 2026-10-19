@@ -23,7 +23,12 @@ export function stepPlayers(
     // Busy players (sliding, getting up, heading) don't follow the stick.
     const act = pl.action.kind;
     const busy =
-      act === "slide" || act === "stumble" || act === "header" || act === "bicycle" || act === "volley";
+      act === "slide" ||
+      act === "recover" ||
+      act === "stumble" ||
+      act === "header" ||
+      act === "bicycle" ||
+      act === "volley";
     if (busy) mx = mz = 0;
     const moving = mag > 0.05 && !busy;
 

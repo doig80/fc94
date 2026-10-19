@@ -8,23 +8,48 @@ export interface PitchSpec {
   goalWidth: number;
   goalHeight: number;
   goalDepth: number;
+  /** Penalty area, measured from the goal line (depth) and across the pitch (total width). */
+  penaltyAreaDepth: number;
+  penaltyAreaWidth: number;
+  /** Goal area ("six-yard box"). */
+  goalAreaDepth: number;
+  goalAreaWidth: number;
+  /** Penalty spot distance from the goal line. */
+  penaltySpot: number;
+  /** Radius of the centre circle; also the radius of the arc ("D") at the edge of the penalty area. */
+  centreCircle: number;
 }
 
-/** Vertical-slice pitch: 5-a-side (docs/specs/30 §1). */
+/**
+ * Vertical-slice pitch: 5-a-side (docs/specs/30 §1). The markings are a miniature of the full-size layout,
+ * so the penalty spot sits inside the box with a "D" beyond it.
+ */
 export const PITCH_5_A_SIDE: PitchSpec = {
   length: 40,
   width: 25,
   goalWidth: 3,
   goalHeight: 2,
   goalDepth: 1.2,
+  penaltyAreaDepth: 6.5,
+  penaltyAreaWidth: 14,
+  goalAreaDepth: 2.2,
+  goalAreaWidth: 6.5,
+  penaltySpot: 4.5,
+  centreCircle: 3.5,
 };
-/** Full-size pitch for 11 v 11 (docs/specs/10 §1). */
+/** Full-size pitch for 11 v 11 (docs/specs/10 §1), standard markings. */
 export const PITCH_FULL: PitchSpec = {
   length: 105,
   width: 68,
   goalWidth: 7.32,
   goalHeight: 2.44,
   goalDepth: 2,
+  penaltyAreaDepth: 16.5,
+  penaltyAreaWidth: 40.32,
+  goalAreaDepth: 5.5,
+  goalAreaWidth: 18.32,
+  penaltySpot: 11,
+  centreCircle: 9.15,
 };
 
 export interface BallParams {
@@ -224,7 +249,8 @@ export const DEFAULT_PARAMS: SimParams = {
     shotMinLift: 1,
     shotMaxLift: 4,
     overpowerAt: 0.92,
-    overpowerLift: 3.5,
+    // With the 2 m small-sided goals, an overpowered shot from 8 m or further clears the bar.
+    overpowerLift: 5.5,
     curlSpin: 14,
     curlAimOffset: 1.2,
     contextShotPower: 0.6,

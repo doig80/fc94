@@ -53,7 +53,7 @@ export function applyActions(
     const pressed = now & ~pl.held;
     const released = pl.held & ~now;
     pl.held = now;
-    if (pl.action.kind === "slide" || pl.action.kind === "stumble") {
+    if (pl.action.kind === "slide" || pl.action.kind === "recover" || pl.action.kind === "stumble") {
       pl.charge = -1;
       return;
     }
@@ -103,7 +103,7 @@ export function tickActions(state: MatchState, params: SimParams): void {
     if (act.kind === "slide") slideContact(state, i, params);
     act.ticks--;
     if (act.ticks > 0) return;
-    if (act.kind === "slide") startAction(pl, "stumble", a.slideRecoveryTicks, act.dir);
+    if (act.kind === "slide") startAction(pl, "recover", a.slideRecoveryTicks, act.dir);
     else act.kind = "none";
   });
 }

@@ -12,41 +12,6 @@ import type { PitchSpec } from "../sim/params";
 import { Rng } from "../sim/rng";
 import type { SurfaceLibrary } from "./materials";
 
-/** Line markings, derived from the pitch size (full size or 5-a-side). */
-interface Markings {
-  centreCircle: number;
-  /** Boxes in front of each goal: depth from the goal line and total width. */
-  boxes: { depth: number; width: number }[];
-  /** Penalty spot distance from the goal line. */
-  spot: number;
-  /** Draw the arc on the edge of the outermost box ("the D"). */
-  arc: boolean;
-  lineWidth: number;
-}
-
-function markingsFor(pitch: PitchSpec): Markings {
-  if (pitch.length >= 90) {
-    return {
-      centreCircle: 9.15,
-      boxes: [
-        { depth: 16.5, width: 40.32 },
-        { depth: 5.5, width: 18.32 },
-      ],
-      spot: 11,
-      arc: true,
-      lineWidth: 0.18,
-    };
-  }
-  // Small-sided: one penalty area, spot at 6 m.
-  return {
-    centreCircle: 3,
-    boxes: [{ depth: 6, width: pitch.goalWidth + 8 }],
-    spot: 6,
-    arc: false,
-    lineWidth: 0.1,
-  };
-}
-
 /** Grass around the lines, in metres. */
 export function pitchMargin(pitch: PitchSpec): number {
   return pitch.length >= 90 ? 7 : 3;
@@ -142,13 +107,14 @@ function buildGoal(scene: Scene, lib: SurfaceLibrary, pitch: PitchSpec, side: nu
     panel.position.copyFrom(pos);
     panel.rotation.copyFrom(rot);
     lib.assign(panel, "net");
-    meshes.push(panel);
+    // Nets are deliberately not shadow casters: the shadow map ignores transparency, so a net would
+    // cast a solid black shadow over the inside of the goal.
   }
   return meshes;
 }
 
 function grassTexture(scene: Scene, pitch: PitchSpec, totalL: number, totalW: number): Texture {
-  const m = markingsFor(pitch);
+  const lineWidth = pitch.length >= 90 ? 0.18 : 0.1;
   const tw = 2048;
   const th = Math.round((tw * totalW) / totalL);
   const tex = new DynamicTexture("grassTex", { width: tw, height: th }, scene, true);
@@ -181,7 +147,7 @@ function grassTexture(scene: Scene, pitch: PitchSpec, totalL: number, totalW: nu
   const white = "rgba(250,250,245,0.95)";
   ctx.strokeStyle = white;
   ctx.fillStyle = white;
-  ctx.lineWidth = m.lineWidth * sx;
+  ctx.lineWidth = lineWidth * sx;
   const rect = (x0: number, z0: number, x1: number, z1: number) =>
     ctx.strokeRect(px(x0), py(z0), (x1 - x0) * sx, (z1 - z0) * sy);
   const dot = (x: number) => {
@@ -195,24 +161,28 @@ function grassTexture(scene: Scene, pitch: PitchSpec, totalL: number, totalW: nu
   ctx.lineTo(px(0), py(W));
   ctx.stroke();
   ctx.beginPath();
-  ctx.ellipse(px(0), py(0), m.centreCircle * sx, m.centreCircle * sy, 0, 0, Math.PI * 2);
+  ctx.ellipse(px(0), py(0), pitch.centreCircle * sx, pitch.centreCircle * sy, 0, 0, Math.PI * 2);
   ctx.stroke();
   dot(0);
   for (const s of [-1, 1]) {
     const goalLine = s * L;
-    for (const box of m.boxes) {
+    const boxes = [
+      { depth: pitch.penaltyAreaDepth, width: pitch.penaltyAreaWidth },
+      { depth: pitch.goalAreaDepth, width: pitch.goalAreaWidth },
+    ];
+    for (const box of boxes) {
       const inner = goalLine - s * box.depth;
       rect(Math.min(goalLine, inner), -box.width / 2, Math.max(goalLine, inner), box.width / 2);
     }
-    const spot = goalLine - s * m.spot;
+    const spot = goalLine - s * pitch.penaltySpot;
     dot(spot);
-    if (m.arc) {
-      // The part of the 9.15 m circle around the spot that lies outside the box.
-      const outer = m.boxes[0].depth - m.spot;
-      const a = Math.acos(outer / m.centreCircle);
+    // The "D": the part of the circle around the spot that lies outside the penalty area.
+    const outside = pitch.penaltyAreaDepth - pitch.penaltySpot;
+    if (outside < pitch.centreCircle) {
+      const a = Math.acos(outside / pitch.centreCircle);
       ctx.beginPath();
       const start = s > 0 ? Math.PI - a : -a;
-      ctx.ellipse(px(spot), py(0), m.centreCircle * sx, m.centreCircle * sy, 0, start, start + 2 * a);
+      ctx.ellipse(px(spot), py(0), pitch.centreCircle * sx, pitch.centreCircle * sy, 0, start, start + 2 * a);
       ctx.stroke();
     }
   }

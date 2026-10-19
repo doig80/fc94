@@ -148,9 +148,20 @@ export class Player {
         this.legs[1].rotation.z = -0.1;
         this.arms[0].rotation.z = this.arms[1].rotation.z = -1.2;
         break;
+      case "recover": {
+        // Getting up from a slide: ease from lying back to standing.
+        const k = 1 - smoothstep(progress);
+        b.rotation.z = 1.15 * k;
+        b.position.set(0.45 * k, 0, 0);
+        this.legs[0].rotation.z = 0.15 * k;
+        this.legs[1].rotation.z = -0.1 * k;
+        this.arms[0].rotation.z = this.arms[1].rotation.z = -1.2 * k;
+        break;
+      }
       case "stumble":
-        b.rotation.z = -0.35 - 0.15 * Math.sin(progress * 25);
-        b.rotation.x = 0.18 * Math.sin(progress * 19);
+        // Thrown off balance: lurch forward and sway once, arms out.
+        b.rotation.z = -0.35 * ease - 0.08 * Math.sin(progress * Math.PI * 3);
+        b.rotation.x = 0.1 * Math.sin(progress * Math.PI * 2);
         b.position.y = -0.08;
         this.arms[0].rotation.z = 1.4;
         this.arms[1].rotation.z = -1.1;
@@ -184,7 +195,13 @@ export class Player {
   }
 }
 
-export type PoseAction = "slide" | "stumble" | "header" | "bicycle" | "volley" | "kick" | "tackle";
+export type PoseAction =
+  "slide" | "recover" | "stumble" | "header" | "bicycle" | "volley" | "kick" | "tackle";
+
+function smoothstep(t: number): number {
+  const x = t < 0 ? 0 : t > 1 ? 1 : t;
+  return x * x * (3 - 2 * x);
+}
 
 export function buildBall(scene: Scene, lib: SurfaceLibrary): Mesh {
   const tex = new DynamicTexture("ballTex", { width: 256, height: 128 }, scene, true);

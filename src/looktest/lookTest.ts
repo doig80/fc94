@@ -64,6 +64,7 @@ export class LookTest {
     this.ball = buildBall(scene, this.lib);
 
     this.atmosphere = new Atmosphere(scene, this.camera, this.stadium.lamps, options.quality);
+    this.lib.syncPrePassExclusions();
     this.atmosphere.addShadowCasters([
       ...pitch.shadowCasters,
       ...this.stadium.shadowCasters,
