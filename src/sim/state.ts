@@ -23,9 +23,12 @@ export interface PlayerState {
   queued: QueuedAction | null;
 }
 
-/** `recover` is getting up after a slide; `stumble` is losing balance (failed tackle, being tackled). */
+/**
+ * `recover` is getting up after a slide or dive; `stumble` is losing balance (failed tackle, being tackled);
+ * `dive` is a goalkeeper diving for a shot.
+ */
 export type ActionKind =
-  "none" | "tackle" | "slide" | "recover" | "stumble" | "header" | "bicycle" | "volley";
+  "none" | "tackle" | "slide" | "recover" | "stumble" | "header" | "bicycle" | "volley" | "dive";
 
 export interface PlayerAction {
   kind: ActionKind;
@@ -73,6 +76,27 @@ export const NORMAL_ASSISTS: Assists = {
   autoSprint: false,
 };
 
+/** What a CPU player is doing between decisions (its reaction time, docs/specs/11 §2). */
+export interface AiMemory {
+  /** A spot to run to (steered towards every tick), or null to follow `move`. */
+  target: Vec2 | null;
+  /** Slow down within this distance of `target`. */
+  slow: number;
+  /** Stick direction when there is no target (dribbling, aiming, diving). */
+  move: Vec2;
+  sprint: boolean;
+  /** Tick of the next decision. */
+  nextThink: number;
+  /** A button the CPU will press at `pressAt` and let go at `releaseAt` (a tap, a held shot, a wound-up tackle). */
+  plan: AiPlan | null;
+}
+
+export interface AiPlan {
+  kind: "pass" | "shot" | "lob" | "tackle" | "slide" | "dive";
+  pressAt: number;
+  releaseAt: number;
+}
+
 /** A give-and-go in progress: the receiver plays the ball straight back into the passer's run. */
 export interface OneTwo {
   passer: number;
@@ -101,6 +125,8 @@ export interface BallState {
   aftertouchStick: Vec2;
   /** Tick when `owner` took the ball; looser dribbling pushes it ahead a few ticks later. */
   ownedSince: number;
+  /** Tick of the last kick (pass, shot, clearance); keepers react to a shot this long after it's struck. */
+  kickedAt: number;
 }
 
 /**
@@ -120,6 +146,8 @@ export interface MatchState {
   /** Human players (keyboard, gamepad, touch). Everyone else is run by the AI. */
   controllers: Controller[];
   oneTwo: OneTwo | null;
+  /** One per player; used only for players the AI runs. */
+  ai: AiMemory[];
 }
 
 export interface MatchConfig {
@@ -133,7 +161,7 @@ export interface MatchConfig {
 }
 
 /** Kick-off formation for one team, as fractions of the half-length (x) and half-width (z), attacking +x. */
-const FORMATIONS: Record<number, [number, number][]> = {
+export const FORMATIONS: Record<number, [number, number][]> = {
   // 5-a-side: keeper, defender, two wide players, forward.
   5: [
     [-0.95, 0],
@@ -187,6 +215,7 @@ export function createMatch(config: MatchConfig, params: SimParams = DEFAULT_PAR
       aftertouchBy: -1,
       aftertouchStick: { x: 0, z: 0 },
       ownedSince: 0,
+      kickedAt: 0,
     },
     controllers: (config.humans ?? [0]).map((team) => ({
       team,
@@ -196,6 +225,14 @@ export function createMatch(config: MatchConfig, params: SimParams = DEFAULT_PAR
       assists: { ...NORMAL_ASSISTS },
     })),
     oneTwo: null,
+    ai: players.map((_, i) => ({
+      target: null,
+      slow: 1,
+      move: { x: 0, z: 0 },
+      sprint: false,
+      nextThink: i % 4,
+      plan: null,
+    })),
   };
 }
 

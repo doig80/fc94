@@ -2,6 +2,7 @@ import type { Intent } from "./intent";
 import type { SimParams } from "./params";
 import { stepBall } from "./physics/ball";
 import { stepDribble, touchAhead, updatePossession } from "./physics/dribble";
+import { keeperSaves } from "./physics/keeper";
 import { stepPlayers } from "./physics/players";
 import type { MatchState } from "./state";
 
@@ -20,7 +21,9 @@ export function step(state: MatchState, intents: readonly Intent[], params: SimP
   if (owner >= 0 && !touchAhead(state, params, !!intents[owner]?.sprint)) {
     stepDribble(state, params, !!intents[owner]?.sprint, DT);
   } else {
+    const prev = { ...state.ball.pos };
     stepBall(state, params, DT);
+    keeperSaves(state, prev, params);
   }
   state.tick++;
 }

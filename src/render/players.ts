@@ -192,12 +192,20 @@ export class Player {
         b.rotation.z = -0.3 * ease;
         this.legs[0].rotation.z = 1.0 * ease;
         break;
+      case "dive": {
+        // Goalkeeper dive: launched flat towards the ball, arms stretched out, then down on the grass.
+        const up = Math.min(1, progress * 3);
+        b.rotation.z = -1.45 * up;
+        b.position.set(0.35 * up, 0.55 * ease, 0);
+        this.arms[0].rotation.z = this.arms[1].rotation.z = 2.7 * up;
+        break;
+      }
     }
   }
 }
 
 export type PoseAction =
-  "slide" | "recover" | "stumble" | "header" | "bicycle" | "volley" | "kick" | "tackle";
+  "slide" | "recover" | "stumble" | "header" | "bicycle" | "volley" | "kick" | "tackle" | "dive";
 
 function smoothstep(t: number): number {
   const x = t < 0 ? 0 : t > 1 ? 1 : t;

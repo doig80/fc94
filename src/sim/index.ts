@@ -1,4 +1,6 @@
 export { attackSign, choosePassTarget, groundPassSpeed } from "./actions";
+export { aiIntents } from "./ai/ai";
+export { applyDifficulty, DIFFICULTIES, DIFFICULTY, type Difficulty } from "./ai/difficulty";
 export { controlledPlayers } from "./control";
 export { IDLE, idleIntents, type Intent } from "./intent";
 export { stepMatch } from "./match";
@@ -12,6 +14,7 @@ export {
 } from "./params";
 export { kickBall } from "./physics/dribble";
 export { isInGoal } from "./physics/goal";
+export { inOwnBox, keeperHolds } from "./physics/keeper";
 export { Rng } from "./rng";
 export {
   Button,

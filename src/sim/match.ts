@@ -21,7 +21,9 @@ export function stepMatch(
 
   const intents: Intent[] = aiIntents ? aiIntents(state) : state.players.map(() => ({ ...IDLE }));
   state.controllers.forEach((c, k) => {
-    intents[c.player] = humanIntents[k] ?? { ...IDLE };
+    const intent = { ...(humanIntents[k] ?? IDLE) };
+    if (c.assists.autoSprint && !intent.sprint) intent.sprint = openGround(state, c.player, intent);
+    intents[c.player] = intent;
   });
   oneTwoRun(state, intents);
 
@@ -32,6 +34,24 @@ export function stepMatch(
   step(state, intents, params);
   playQueued(state, params, assistsFor);
   oneTwoReturn(state, params);
+}
+
+/**
+ * Auto-sprint assist (docs/specs/11 §3): sprint when running hard into open ground, with stamina to spare.
+ */
+function openGround(state: MatchState, i: number, intent: Intent): boolean {
+  const pl = state.players[i];
+  const mag = Math.sqrt(intent.moveX * intent.moveX + intent.moveZ * intent.moveZ);
+  if (mag < 0.7 || pl.stamina < 0.35) return false;
+  const dx = intent.moveX / mag;
+  const dz = intent.moveZ / mag;
+  return !state.players.some((o) => {
+    if (o.team === pl.team) return false;
+    const ox = o.pos.x - pl.pos.x;
+    const oz = o.pos.z - pl.pos.z;
+    const along = ox * dx + oz * dz;
+    return along > 0 && along < 5 && Math.abs(ox * dz - oz * dx) < 2;
+  });
 }
 
 /** During a one-two the passer sprints on towards the goal. */

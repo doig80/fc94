@@ -151,8 +151,10 @@ export class MatchView {
       const z = lerp(before.pos.z, pl.pos.z);
       const moved = Math.hypot(x - view.root.position.x, z - view.root.position.z);
       view.root.position.set(x, 0, z);
-      const fx = lerp(before.facing.x, pl.facing.x);
-      const fz = lerp(before.facing.z, pl.facing.z);
+      // A diving keeper faces the way they dive.
+      const diving = pl.action.kind === "dive";
+      const fx = diving ? pl.action.dir.x : lerp(before.facing.x, pl.facing.x);
+      const fz = diving ? pl.action.dir.z : lerp(before.facing.z, pl.facing.z);
       view.root.rotation.y = Math.atan2(-fz, fx);
       const speed = Math.hypot(pl.vel.x, pl.vel.z);
       if (!this.first) this.phases[i] += moved * STRIDE;
