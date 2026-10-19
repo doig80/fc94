@@ -245,6 +245,55 @@ describe("lob, cross and first-time balls", () => {
     expect(landed!.x).toBeGreaterThan(L - 9);
   });
 
+  it("crosses to a teammate in the box, who volleys or heads it when shoot is pressed a moment early", () => {
+    const s = setup();
+    onBall(s, 4, L - 5, W - 2);
+    s.players[3].pos = { x: L - 4, z: -1 };
+    tap(s, intent({ lob: true }));
+    expect(s.ball.intendedReceiver).toBe(3);
+    s.controllers[0].player = 3;
+    // A quarter of a second before it arrives: too early to reach it, so the press waits for the ball.
+    const near = () => Math.hypot(s.ball.pos.x - s.players[3].pos.x, s.ball.pos.z - s.players[3].pos.z);
+    while (near() > 4) run(s, 1);
+    run(s, 1, intent({ shoot: true }));
+    let met = false;
+    for (let t = 0; t < 30 && !met; t++) {
+      run(s, 1);
+      met = s.ball.lastTouch === 3;
+    }
+    expect(met).toBe(true);
+    expect(["header", "volley"]).toContain(s.players[3].action.kind);
+    expect(s.ball.vel.x).toBeGreaterThan(5);
+  });
+
+  it("a defender heads a cross out of their own area, but not a shot", () => {
+    // Team 1 defends the goal at +x in the first half; a high ball for team 0's player 3 comes past one of its
+    // defenders.
+    const highBall = (receiver: number): MatchState => {
+      const s = setup();
+      s.players[9].pos = { x: L - 5, z: 0 };
+      s.players[3].pos = { x: L - 2, z: 0 };
+      s.ball.pos = { x: L - 9, y: 1.6, z: 0 };
+      s.ball.vel = { x: 14, y: 0, z: 0 };
+      s.ball.owner = -1;
+      s.ball.lastTouch = 4;
+      s.ball.intendedReceiver = receiver;
+      return s;
+    };
+    const shot = highBall(-1);
+    run(shot, 20);
+    expect(shot.ball.lastTouch).not.toBe(9);
+    const s = highBall(3);
+    let cleared = false;
+    for (let t = 0; t < 30 && !cleared; t++) {
+      run(s, 1);
+      cleared = s.ball.lastTouch === 9;
+    }
+    expect(cleared).toBe(true);
+    expect(s.ball.vel.x).toBeLessThan(-5);
+    expect(s.players[9].action.kind).toBe("header");
+  });
+
   it("plays a first-time pass when pass is pressed just before the ball arrives", () => {
     const s = setup();
     onBall(s, 4, -6, 0);

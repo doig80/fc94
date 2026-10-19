@@ -3,8 +3,9 @@ import { IDLE, type Intent } from "../intent";
 import type { SimParams } from "../params";
 import { inOwnBox } from "../physics/keeper";
 import { Rng } from "../rng";
-import { FORMATIONS, type AiPlan, type MatchState, type PlayerState } from "../state";
-import { normalize2, type Vec2 } from "../vec";
+import type { AiPlan, MatchState, PlayerState, ShotRead } from "../state";
+import { clamp, normalize2, type Vec2 } from "../vec";
+import { isWide, lineOf, shapeSpot } from "./shape";
 
 /**
  * Intents for every player the AI runs (docs/specs/11): everyone a human doesn't control, keepers always.
@@ -39,6 +40,7 @@ const BUTTON: Record<AiPlan["kind"], "pass" | "shoot" | "lob"> = {
   pass: "pass",
   shot: "shoot",
   lob: "lob",
+  volley: "shoot",
   tackle: "shoot",
   slide: "lob",
   dive: "lob",
@@ -68,6 +70,8 @@ function stillMakesSense(state: MatchState, i: number, plan: AiPlan): boolean {
     case "shot":
     case "lob":
       return owner === i;
+    case "volley":
+      return owner < 0 && state.ball.intendedReceiver === i;
     case "tackle":
     case "slide":
       return owner >= 0 && state.players[owner].team !== pl.team;
@@ -110,8 +114,10 @@ function thinkOutfield(state: MatchState, i: number, params: SimParams, rng: Rng
 
   const receiver = ball.intendedReceiver;
   if (receiver === i) {
-    // Meet the pass.
-    goTo(state, i, ahead(state, 0.25), 1);
+    // Meet the pass; a ball in the air in its path. A cross in the box is met first time with a header or volley.
+    const high = ball.pos.y > params.action.volleyMinHeight || ball.vel.y > 1;
+    goTo(state, i, high ? meetInFlight(state, i, params) : ahead(state, 0.25), 1);
+    attackCross(state, i, params);
     return;
   }
   const ours =
@@ -120,16 +126,111 @@ function thinkOutfield(state: MatchState, i: number, params: SimParams, rng: Rng
       : receiver >= 0 && state.players[receiver].team === pl.team;
   const theirs = owner >= 0 && !ours;
   if (theirs) return defend(state, i, params, rng);
-  if (!ours && closestToBall(state, pl.team) === i) {
-    // Loose ball: the nearest player goes for it.
-    goTo(state, i, ahead(state, Math.min(0.6, dist(pl.pos, ball.pos) / 7)), 1);
-    mem.sprint = dist(pl.pos, ball.pos) > 3 && pl.stamina > 0.3;
+  const nearest = closestToBall(state, pl.team);
+  // A loose ball in our own box is dangerous: the two nearest defenders go for it, not just one.
+  const danger =
+    !ours &&
+    inOwnBox(state, pl.team, ball.pos.x, ball.pos.z) &&
+    closestTo(state, pl.team, ball.pos, nearest) === i;
+  if (!ours && (nearest === i || danger)) {
+    // Loose ball: the nearest player goes for it. A cross or lob for an opponent is attacked in the air.
+    const high = ball.pos.y > params.action.volleyMinHeight || ball.vel.y > 1;
+    const forThem = receiver >= 0 && state.players[receiver].team !== pl.team;
+    goTo(
+      state,
+      i,
+      high && forThem
+        ? meetInFlight(state, i, params)
+        : ahead(state, Math.min(0.6, dist(pl.pos, ball.pos) / 7)),
+      1,
+    );
+    mem.sprint = (danger || dist(pl.pos, ball.pos) > 3) && pl.stamina > 0.3;
     return;
   }
-  // Get into shape (pushed up when we have the ball).
-  const spot = anchor(state, i, ours);
+  // Get into shape: in possession, offer the carrier an option or attack the box; out of it, hold the line.
+  const spot = ours ? supportSpot(state, i) : shapeSpot(state, i, false);
   goTo(state, i, spot, 0.5);
-  mem.sprint = ours && dist(pl.pos, spot) > 8 && pl.stamina > 0.6;
+  mem.sprint = dist(pl.pos, spot) > 8 && pl.stamina > 0.6;
+}
+
+/**
+ * A teammate of the ball carrier: when the ball is out wide in the opponents' half, the forwards attack the near
+ * and far post and the nearest midfielder the penalty spot, ready for the cross; otherwise each player moves to the
+ * most open spot near its place in the shape, where the carrier can find them.
+ */
+function supportSpot(state: MatchState, i: number): Vec2 {
+  const pl = state.players[i];
+  const carrier = state.ball.owner >= 0 ? state.players[state.ball.owner] : null;
+  const home = shapeSpot(state, i, true);
+  if (!carrier) return home;
+  const s = attackSign(state, pl.team);
+  const goalX = (s * state.pitch.length) / 2;
+  const halfW = state.pitch.width / 2;
+  const toGoal = Math.abs(goalX - carrier.pos.x);
+  const side = carrier.pos.z >= 0 ? 1 : -1;
+  if (toGoal < 45 && Math.abs(carrier.pos.z) > halfW * 0.45) {
+    const line = lineOf(state, i);
+    const box = state.pitch.penaltyAreaDepth;
+    const gw = state.pitch.goalWidth;
+    const attackers = state.players
+      .map((_, j) => j)
+      .filter(
+        (j) => state.players[j].team === pl.team && j !== state.ball.owner && lineOf(state, j) === "attack",
+      );
+    if (line === "attack") {
+      // The forward on the ball's side to the near post, the other to the far post.
+      const near = attackers.every((j) => j === i || state.players[j].pos.z * side <= pl.pos.z * side);
+      return near
+        ? { x: goalX - s * box * 0.35, z: side * gw * 0.4 }
+        : { x: goalX - s * box * 0.45, z: -side * gw * 0.6 };
+    }
+    if (
+      line === "midfield" &&
+      closestTo(state, pl.team, { x: goalX - s * box * 0.7, z: 0 }, state.ball.owner) === i
+    )
+      return { x: goalX - s * box * 0.7, z: 0 };
+  }
+  if (dist(home, carrier.pos) > 30) return home;
+  // The most open of a few spots around home: space from defenders, and a lane the carrier can pass along.
+  let best = home;
+  let bestScore = -Infinity;
+  for (const [dx, dz] of [
+    [0, 0],
+    [4, 0],
+    [-4, 0],
+    [0, 4],
+    [0, -4],
+  ]) {
+    const spot = { x: home.x + dx * s, z: clamp(home.z + dz, -halfW * 0.92, halfW * 0.92) };
+    let space = 8;
+    let blocked = false;
+    for (const o of state.players) {
+      if (o.team === pl.team) continue;
+      space = Math.min(space, dist(o.pos, spot));
+      if (distToSegment(o.pos, carrier.pos, spot) < 1.5) blocked = true;
+    }
+    const score = space - (blocked ? 5 : 0) + dx * 0.1;
+    if (score > bestScore) {
+      best = spot;
+      bestScore = score;
+    }
+  }
+  return best;
+}
+
+/** Meeting a cross in the opponents' box: press shoot just before the ball arrives, for a header or volley. */
+function attackCross(state: MatchState, i: number, params: SimParams): void {
+  const pl = state.players[i];
+  const ball = state.ball;
+  const other = pl.team === 0 ? 1 : 0;
+  if (ball.pos.y < 0.5 || !inOwnBox(state, other, pl.pos.x, pl.pos.z)) return;
+  const speed = Math.sqrt(ball.vel.x * ball.vel.x + ball.vel.z * ball.vel.z);
+  const ticks = speed > 1 ? (dist(pl.pos, ball.pos) / speed) * 60 : 99;
+  if (ticks > params.action.bufferTicks) return;
+  const s = attackSign(state, pl.team);
+  steer(state, i, normalize2({ x: (s * state.pitch.length) / 2 - pl.pos.x, z: -pl.pos.z }));
+  // Pressed early, the shot waits (up to `bufferTicks`) until the ball is in reach.
+  plan(state, i, "volley", 0, 2);
 }
 
 /** On the ball: shoot when in range, pass when pressed or a teammate is better placed, otherwise dribble. */
@@ -160,6 +261,19 @@ function carry(state: MatchState, i: number, params: SimParams, rng: Rng): void 
     return;
   }
 
+  // Wide in the final third with a teammate in the box: cross (the lob button crosses from out wide).
+  if (goalDist < 30 && Math.abs(pl.pos.z) > halfW * 0.5) {
+    const other = pl.team === 0 ? 1 : 0;
+    const waiting = state.players.some(
+      (t) => t.team === pl.team && t !== pl && inOwnBox(state, other, t.pos.x, t.pos.z),
+    );
+    if (waiting && rng.next() < 0.6) {
+      steer(state, i, toGoal);
+      plan(state, i, "lob", 0, 1);
+      return;
+    }
+  }
+
   const nearest = nearestOpponent(state, i);
   // Under pressure: closed down from the front.
   const pressure =
@@ -180,15 +294,20 @@ function carry(state: MatchState, i: number, params: SimParams, rng: Rng): void 
     return;
   }
 
-  // Dribble at goal, around the nearest defender in the way.
-  let move = toGoal;
+  // Dribble at goal, around the nearest defender in the way. A wide player out on the wing goes down the line
+  // instead, towards the byline, to cross.
+  const downTheLine = isWide(state, i) && Math.abs(pl.pos.z) > halfW * 0.45 && (goal.x - pl.pos.x) * s > 14;
+  const aim = downTheLine
+    ? normalize2({ x: s * (halfL - 12) - pl.pos.x, z: (pl.pos.z > 0 ? 1 : -1) * halfW * 0.8 - pl.pos.z })
+    : toGoal;
+  let move = aim;
   if (nearest.player && nearest.dist < 4) {
     const ox = nearest.player.pos.x - pl.pos.x;
     const oz = nearest.player.pos.z - pl.pos.z;
-    if (ox * toGoal.x + oz * toGoal.z > 0) {
-      const away = toGoal.x * oz - toGoal.z * ox > 0 ? -1 : 1;
+    if (ox * aim.x + oz * aim.z > 0) {
+      const away = aim.x * oz - aim.z * ox > 0 ? -1 : 1;
       const k = ((4 - nearest.dist) / 4) * 1.2;
-      move = normalize2({ x: toGoal.x - toGoal.z * away * k, z: toGoal.z + toGoal.x * away * k });
+      move = normalize2({ x: aim.x - aim.z * away * k, z: aim.z + aim.x * away * k });
     }
   }
   // Don't dribble out of play.
@@ -225,8 +344,8 @@ function defend(state: MatchState, i: number, params: SimParams, rng: Rng): void
     mem.sprint = d > 3 && pl.stamina > 0.3;
     return;
   }
-  // Mark the attacker nearest my position in the shape, goal side; fall back to the shape itself.
-  const spot = anchor(state, i, false);
+  // Mark the attacker nearest my position in the shape, in the passing lane from the ball; fall back to the shape.
+  const spot = shapeSpot(state, i, false);
   let mark: PlayerState | null = null;
   let best = 10;
   for (const o of state.players) {
@@ -239,8 +358,18 @@ function defend(state: MatchState, i: number, params: SimParams, rng: Rng): void
   }
   if (mark) {
     const goalSide = normalize2({ x: ownGoal.x - mark.pos.x, z: ownGoal.z - mark.pos.z });
-    const m = { x: mark.pos.x + goalSide.x * 1.5, z: mark.pos.z + goalSide.z * 1.5 };
-    goTo(state, i, { x: (m.x + spot.x) / 2, z: (m.z + spot.z) / 2 }, 0.5);
+    if (dist(mark.pos, ownGoal) < state.pitch.penaltyAreaDepth + 6) {
+      // Near our goal: tight, goal side of my man.
+      goTo(state, i, { x: mark.pos.x + goalSide.x * 1.2, z: mark.pos.z + goalSide.z * 1.2 }, 0.5);
+      mem.sprint = dist(pl.pos, mark.pos) > 4 && pl.stamina > 0.3;
+      return;
+    }
+    // Further out: between the ball and my man, nearer him, and a step goal side: cuts out the pass.
+    const lane = {
+      x: carrier.pos.x + (mark.pos.x - carrier.pos.x) * 0.75 + goalSide.x,
+      z: carrier.pos.z + (mark.pos.z - carrier.pos.z) * 0.75 + goalSide.z,
+    };
+    goTo(state, i, { x: lane.x * 0.7 + spot.x * 0.3, z: lane.z * 0.7 + spot.z * 0.3 }, 0.5);
   } else {
     goTo(state, i, spot, 0.5);
   }
@@ -365,7 +494,7 @@ function thinkKeeper(state: MatchState, i: number, params: SimParams, rng: Rng):
     return;
   }
 
-  const shot = incomingShot(state, gk, params);
+  const shot = incomingShot(state, gk, readShot(state, i, params, rng), params);
   if (shot) {
     const dz = shot.z - gk.pos.z;
     const reachable = Math.abs(dz) <= k.reach * 0.8;
@@ -403,14 +532,33 @@ function thinkKeeper(state: MatchState, i: number, params: SimParams, rng: Rng):
   goTo(state, i, spot, 0.35);
 }
 
+/**
+ * How keeper `i` reads the latest shot: decided once per shot, varying like a human keeper does (docs/specs/11 §4),
+ * so the same shot from the same spot doesn't always end the same way.
+ */
+function readShot(state: MatchState, i: number, params: SimParams, rng: Rng): ShotRead {
+  const mem = state.ai[i];
+  const kickedAt = state.ball.kickedAt;
+  if (mem.read?.kickedAt !== kickedAt) {
+    const v = params.ai.keeperVariation;
+    mem.read = {
+      kickedAt,
+      delay: params.ai.keeperReactionTicks * (1 + (rng.next() * 2 - 1) * v),
+      error: (rng.next() * 2 - 1) * v * 1.5,
+    };
+  }
+  return mem.read;
+}
+
 /** A loose ball heading for the keeper's goal: when it reaches the keeper, and where (z, height). */
 function incomingShot(
   state: MatchState,
   gk: PlayerState,
+  read: ShotRead,
   params: SimParams,
 ): { t: number; z: number; y: number } | null {
   const ball = state.ball;
-  if (ball.owner >= 0 || state.tick - ball.kickedAt < params.ai.keeperReactionTicks) return null;
+  if (ball.owner >= 0 || state.tick - ball.kickedAt < read.delay) return null;
   const s = attackSign(state, gk.team);
   const vIn = -ball.vel.x * s; // speed towards this keeper's goal
   if (vIn < 4) return null;
@@ -418,32 +566,10 @@ function incomingShot(
   if (t <= 0 || t > 1.5) return null;
   // Read the curl, as a keeper watching the ball would: sideways acceleration = magnus × (spin × velocity).
   const curl = params.ball.magnus * (ball.spin.x * ball.vel.y - ball.spin.y * ball.vel.x);
-  const z = ball.pos.z + ball.vel.z * t + 0.5 * curl * t * t;
+  const z = ball.pos.z + ball.vel.z * t + 0.5 * curl * t * t + read.error;
   const y = ball.pos.y + ball.vel.y * t - 0.5 * params.ball.gravity * t * t;
   if (Math.abs(z) > state.pitch.goalWidth / 2 + 1.5 || y > params.keeper.handHeight + 0.5) return null;
   return { t, z, y };
-}
-
-// --- Team shape ---------------------------------------------------------------------------------
-
-/** Where player `i` stands in the team's shape, shifted towards the ball and pushed up when attacking. */
-function anchor(state: MatchState, i: number, attacking: boolean): Vec2 {
-  const pl = state.players[i];
-  const teamSize = state.players.length / 2;
-  const base = FORMATIONS[teamSize][i % teamSize];
-  const s = attackSign(state, pl.team);
-  const halfL = state.pitch.length / 2;
-  const halfW = state.pitch.width / 2;
-  const ballX = state.ball.pos.x * s; // in this team's attacking frame
-  const shifted = base[0] * halfL + ballX * 0.55 + (attacking ? 0.18 : -0.05) * halfL;
-  // Defenders stay within a few metres goal side of the ball rather than retreating onto their own line.
-  const x = clamp(Math.max(shifted, ballX - 10), -0.92 * halfL, 0.85 * halfL);
-  const z = clamp(
-    base[1] * halfW * (attacking ? 1.15 : 0.85) + state.ball.pos.z * 0.35,
-    -0.9 * halfW,
-    0.9 * halfW,
-  );
-  return { x: x * s, z };
 }
 
 // --- Helpers --------------------------------------------------------------------------------------
@@ -454,6 +580,25 @@ function ahead(state: MatchState, seconds: number): Vec2 {
   return {
     x: clamp(b.pos.x + b.vel.x * seconds, -state.pitch.length / 2, state.pitch.length / 2),
     z: clamp(b.pos.z + b.vel.z * seconds, -state.pitch.width / 2, state.pitch.width / 2),
+  };
+}
+
+/**
+ * Where player `i` meets a ball in the air: the point of its path nearest them, while it's still high enough to
+ * volley (drag ignored), kept on the pitch.
+ */
+function meetInFlight(state: MatchState, i: number, params: SimParams): Vec2 {
+  const b = state.ball;
+  const p = state.players[i].pos;
+  const g = params.ball.gravity;
+  const disc = b.vel.y * b.vel.y + 2 * g * (b.pos.y - params.action.volleyMinHeight);
+  const landing = disc > 0 ? (b.vel.y + Math.sqrt(disc)) / g : 0;
+  const v2 = b.vel.x * b.vel.x + b.vel.z * b.vel.z;
+  const nearest = v2 > 0 ? ((p.x - b.pos.x) * b.vel.x + (p.z - b.pos.z) * b.vel.z) / v2 : 0;
+  const t = clamp(nearest, 0, landing);
+  return {
+    x: clamp(b.pos.x + b.vel.x * t, -state.pitch.length / 2, state.pitch.length / 2),
+    z: clamp(b.pos.z + b.vel.z * t, -state.pitch.width / 2, state.pitch.width / 2),
   };
 }
 
@@ -472,11 +617,11 @@ function closestToBall(state: MatchState, team: 0 | 1): number {
 }
 
 /** The outfield player of `team` closest to `p`; humans' players count too, so the CPU doesn't double up. */
-function closestTo(state: MatchState, team: 0 | 1, p: Vec2): number {
+function closestTo(state: MatchState, team: 0 | 1, p: Vec2, exclude = -1): number {
   let best = -1;
   let bestDist = Infinity;
   state.players.forEach((pl, j) => {
-    if (pl.team !== team || pl.role === "gk") return;
+    if (pl.team !== team || pl.role === "gk" || j === exclude) return;
     const d = dist(pl.pos, p);
     if (d < bestDist) {
       best = j;
@@ -514,8 +659,4 @@ function distToSegment(p: Vec2, a: Vec2, b: Vec2): number {
   let t = lenSq > 1e-9 ? ((p.x - a.x) * abx + (p.z - a.z) * abz) / lenSq : 0;
   t = t < 0 ? 0 : t > 1 ? 1 : t;
   return dist(p, { x: a.x + abx * t, z: a.z + abz * t });
-}
-
-function clamp(v: number, lo: number, hi: number): number {
-  return v < lo ? lo : v > hi ? hi : v;
 }

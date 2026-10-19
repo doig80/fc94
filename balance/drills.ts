@@ -102,6 +102,8 @@ export function sameShot(shot: Shot, params: SimParams, trials: number, seed = 1
         held = 0;
       }
       held++;
+      // After the shot the bot stands still: a follow-up on a parry is the rebound drill's business.
+      if (held > charge + 1) return { ...IDLE };
       return { ...IDLE, ...move(aim), shoot: held <= charge };
     };
     outcomes[play(s, params, { [SHOOTER]: bot }, 300)]++;

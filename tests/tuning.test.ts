@@ -30,20 +30,20 @@ describe("tuning changes", () => {
   it("lists only what differs from the defaults", () => {
     const p = cloneParams(DEFAULT_PARAMS);
     expect(changes(p, DEFAULT_PARAMS)).toEqual({});
-    p.action.passArrivalSpeed = 9;
+    p.action.passArrivalSpeed = 10;
     p.ball.gravity = 8;
-    expect(changes(p, DEFAULT_PARAMS)).toEqual({ action: { passArrivalSpeed: 9 }, ball: { gravity: 8 } });
+    expect(changes(p, DEFAULT_PARAMS)).toEqual({ action: { passArrivalSpeed: 10 }, ball: { gravity: 8 } });
   });
 
   it("applies pasted changes and ignores anything it doesn't know", () => {
     const p = cloneParams(DEFAULT_PARAMS);
     const n = applyChanges(p, {
-      action: { passArrivalSpeed: 9, made_up: 3, shotMaxSpeed: "fast" },
+      action: { passArrivalSpeed: 10, made_up: 3, shotMaxSpeed: "fast" },
       nonsense: { x: 1 },
       ball: { radius: 5 },
     });
     expect(n).toBe(1);
-    expect(p.action.passArrivalSpeed).toBe(9);
+    expect(p.action.passArrivalSpeed).toBe(10);
     expect(p.action.shotMaxSpeed).toBe(DEFAULT_PARAMS.action.shotMaxSpeed);
     expect(p.ball.radius).toBe(DEFAULT_PARAMS.ball.radius);
     expect(applyChanges(p, "not an object")).toBe(0);

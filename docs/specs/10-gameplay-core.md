@@ -42,7 +42,11 @@ Three action buttons + sprint, with meanings that depend on whether your team ha
 - **Context actions** happen automatically, so no extra buttons are needed:
   - Shoot when the ball is at chest/head height → **diving header** or **bicycle kick** (if facing away from goal).
   - Pass or Shoot pressed up to 0.3 s _(tune)_ before the ball reaches you → played **first time**, anywhere on
-    the pitch.
+    the pitch. For a cross or lob played to you, an early Shoot becomes the volley or header as it arrives.
+  - Lob from out wide in the final third → **cross** to the teammate in the box nearest its middle, dropping just
+    past them so it reaches them at volley height; with nobody there, just beyond the near post.
+  - Defenders **head away** a cross or lob meant for an opponent when it comes within reach in their own area,
+    automatically, like a keeper's hands ([#45](https://github.com/doig80/fc94/issues/45)). Shots are left alone.
   - Double-tap pass → one-two (give and go).
 - **Passing direction:** a pass goes to the teammate in the direction you steer; with no direction held, to
   the teammate you're facing. So you can pass sideways without turning first.
