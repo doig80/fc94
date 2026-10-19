@@ -21,7 +21,7 @@ and above all, playing it on one sofa with friends. We take the **feel**, not th
    A first-time player should enjoy their first match against the easiest CPU.
 2. **Easy to learn, room to master.** Depth comes from timing and positioning
    (one-twos, through balls, curled shots), not from button combos.
-3. **Short, punchy matches.** Default 2 × 3 minutes. Quick restarts. No loading walls.
+3. **Short, punchy matches.** Default 2 × 5 minutes (adjustable). Quick restarts. No loading walls.
 4. **Looks great anywhere.** Cartoon low-poly style with modern lighting, materials and weather,
    scaling from a phone browser to a gaming PC.
 5. **Better together.** Local multiplayer (2–4 players, same screen) is a first-class mode.
@@ -34,9 +34,9 @@ and above all, playing it on one sofa with friends. We take the **feel**, not th
 
 ## v1 scope (headline)
 
-- Friendly match and a small tournament (e.g. fictional "world cup") mode.
+- Friendly match and Practice/tutorial. A world tournament mode follows in v1.1 (see [12](12-modes.md)).
 - 1P vs CPU, and 2–4 local players with keyboard/gamepads. Touch: 1P vs CPU.
-- Fictional national teams.
+- 24 fictional national teams with 1–5 star ratings.
 - Weather (clear, rain, snow) and time of day (day, dusk, night under floodlights).
 - Accessibility basics: remappable controls, assist options, colour-blind-safe kits, readable UI.
 

@@ -32,7 +32,7 @@ degrade gracefully** — no feature may exist only on WebGPU unless it is purely
 | Lint/format     | ESLint + Prettier                                           | Consistent code                                                                                                            |
 | Assets          | glTF 2.0 / GLB, KTX2 textures, Draco/meshopt compression    | Web-standard, small, fast to load                                                                                          |
 | Audio           | Web Audio via Babylon audio engine                          | Positional crowd, ball, whistle                                                                                            |
-| Physics         | **Open decision D2** — see §6                               |                                                                                                                            |
+| Physics         | Custom arcade physics (pure TypeScript) — see §6            | Arcade feel is fully tunable; identical results on every device keep online v2 possible                                    |
 
 Versions are pinned in `package.json`/`pnpm-lock.yaml`. Upgrades are deliberate PRs.
 
@@ -85,7 +85,7 @@ Auto-detected on first launch (GPU tier + a short benchmark), changeable in sett
 | Weather      | Light particles | Full particles             | + wet-pitch shader, splashes | + puddle reflections              |
 | Crowd        | Billboards      | Low-poly instanced         | Animated instanced           | Animated + flags/flares           |
 
-## 6. Physics (open decision D2)
+## 6. Physics (decided: custom arcade physics)
 
 Football needs very little physics: a ball (sphere with drag, spin/curve, bounce, friction),
 players (capsules that push each other), goals and posts. Two options:
@@ -98,15 +98,17 @@ players (capsules that push each other), goals and posts. Two options:
 | Online v2                   | Server-authoritative only; rollback impractical            | Lockstep / rollback / server-authoritative all possible |
 | Testability                 | Needs WASM in tests                                        | Pure TS unit tests                                      |
 
-**Recommendation:** custom arcade physics for gameplay; optionally Havok for purely cosmetic
-effects (net cloth, debris) that never feed back into the simulation.
-**To decide** before the vertical slice. The look-test uses no physics.
+**Decision (2026-10-18, #4):** custom arcade physics for gameplay, living in `src/sim/`. Havok may be used
+later for purely cosmetic effects (net cloth, debris) that never feed back into the simulation.
 
 ## 7. Online v2 readiness (constraints for v1 code)
 
 - Simulation is deterministic given seed + intent stream (enforced by a replay test in CI).
 - No gameplay logic in rendering code.
 - Match state is serialisable (snapshots for rollback / reconnection).
+- The simulation uses only `+ - * /` and `Math.sqrt` (all exactly specified by IEEE 754). Functions such as
+  `Math.sin`, `Math.atan2` or `Math.pow` can give slightly different results in different browsers, which would
+  make two players' games drift apart online. ESLint blocks them in `src/sim/`.
 
 ## 8. Risks
 

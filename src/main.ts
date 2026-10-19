@@ -55,7 +55,10 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((err) => {
+const mode = new URLSearchParams(window.location.search).get("mode");
+const start = mode === "physics" ? import("./sandbox/sandbox").then((m) => m.startSandbox()) : main();
+
+start.catch((err) => {
   console.error(err);
   const el = document.getElementById("error");
   if (el) {
