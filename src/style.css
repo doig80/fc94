@@ -291,6 +291,10 @@ body {
   margin: 0;
   accent-color: var(--accent);
 }
+.tuning-row input[type="checkbox"] {
+  width: auto;
+  justify-self: start;
+}
 .tuning-value {
   font-variant-numeric: tabular-nums;
   color: var(--muted);

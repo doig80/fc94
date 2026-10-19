@@ -2,8 +2,9 @@ import { applyActions, attackSign, pass, playQueued, tickActions } from "./actio
 import { updateControl } from "./control";
 import { IDLE, type Intent } from "./intent";
 import type { SimParams } from "./params";
+import { applyAftertouch } from "./physics/ball";
 import type { MatchState } from "./state";
-import { step } from "./step";
+import { DT, step } from "./step";
 
 /**
  * One tick of a match: humans' intents go to the players they control, everyone else gets an AI intent
@@ -27,6 +28,7 @@ export function stepMatch(
   const assistsFor = (i: number) => state.controllers.find((c) => c.player === i)?.assists ?? null;
   applyActions(state, intents, params, assistsFor);
   tickActions(state, params);
+  applyAftertouch(state, humanIntents, params, DT);
   step(state, intents, params);
   playQueued(state, params, assistsFor);
   oneTwoReturn(state, params);

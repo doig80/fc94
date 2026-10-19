@@ -1,6 +1,6 @@
 import { DEFAULT_PARAMS, type SimParams } from "../params";
 import type { MatchState } from "../state";
-import type { Vec3 } from "../vec";
+import type { Vec2, Vec3 } from "../vec";
 
 /**
  * Ball control: a nearby player picks up a loose, low, slow-enough ball, and keeps it just ahead of
@@ -40,7 +40,28 @@ export function updatePossession(state: MatchState, params: SimParams): void {
     ball.owner = best;
     ball.lastTouch = best;
     ball.intendedReceiver = -1;
+    ball.aftertouchUntil = 0;
+    ball.ownedSince = state.tick;
   }
+}
+
+/**
+ * Looser dribbling (`dribble.looseness` > 0): a running player who has carried the ball for a moment pushes it
+ * ahead with a touch, and has to run onto it again. Returns true when the ball was touched away.
+ */
+export function touchAhead(state: MatchState, params: SimParams, sprinting: boolean): boolean {
+  const d = params.dribble;
+  const ball = state.ball;
+  if (d.looseness <= 0 || ball.owner < 0) return false;
+  const owner = state.players[ball.owner];
+  if (owner.charge >= 0 || state.tick - ball.ownedSince < d.touchDelayTicks) return false;
+  const speed = Math.sqrt(owner.vel.x * owner.vel.x + owner.vel.z * owner.vel.z);
+  if (speed < 2) return false;
+  const push = speed + d.looseness * d.touchBoost * (sprinting ? 1.4 : 1);
+  kickBall(state, ball.owner, { x: owner.facing.x * push, y: 0, z: owner.facing.z * push }, undefined, {
+    blockTicks: 6,
+  });
+  return true;
 }
 
 /** Steer an owned ball towards the spot just ahead of the owner's feet. */
@@ -65,6 +86,10 @@ export interface KickOptions {
   blockTicks?: number;
   /** The teammate the ball is meant for (passes). */
   receiver?: number;
+  /** Ticks during which the kicker's stick still steers the ball (shots). */
+  aftertouchTicks?: number;
+  /** The kicker's stick at the moment of the kick. */
+  stick?: Vec2 | null;
 }
 
 /** Release the ball from `kicker` with the given velocity and spin (passes, shots, clearances, tackles). */
@@ -80,6 +105,10 @@ export function kickBall(
   ball.lastTouch = kicker;
   ball.touchBlockUntil = state.tick + (options.blockTicks ?? DEFAULT_PARAMS.dribble.kickCooldownTicks);
   ball.intendedReceiver = options.receiver ?? -1;
+  ball.aftertouchUntil = state.tick + (options.aftertouchTicks ?? 0);
+  // The stick that kicked keeps steering, even after control has moved on to another player.
+  ball.aftertouchBy = state.controllers.findIndex((c) => c.player === kicker);
+  ball.aftertouchStick = { x: options.stick?.x ?? 0, z: options.stick?.z ?? 0 };
   ball.vel = { ...vel };
   ball.spin = { ...spin };
 }

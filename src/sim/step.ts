@@ -1,7 +1,7 @@
 import type { Intent } from "./intent";
 import type { SimParams } from "./params";
 import { stepBall } from "./physics/ball";
-import { stepDribble, updatePossession } from "./physics/dribble";
+import { stepDribble, touchAhead, updatePossession } from "./physics/dribble";
 import { stepPlayers } from "./physics/players";
 import type { MatchState } from "./state";
 
@@ -16,8 +16,9 @@ export const DT = 1 / TICK_RATE;
 export function step(state: MatchState, intents: readonly Intent[], params: SimParams): void {
   stepPlayers(state, intents, params, DT);
   updatePossession(state, params);
-  if (state.ball.owner >= 0) {
-    stepDribble(state, params, !!intents[state.ball.owner]?.sprint, DT);
+  const owner = state.ball.owner;
+  if (owner >= 0 && !touchAhead(state, params, !!intents[owner]?.sprint)) {
+    stepDribble(state, params, !!intents[owner]?.sprint, DT);
   } else {
     stepBall(state, params, DT);
   }

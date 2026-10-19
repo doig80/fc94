@@ -121,6 +121,15 @@ export interface DribbleParams {
   kickCooldownTicks: number;
   /** Control is lost when the ball gets further away than this. */
   loseDistance: number;
+  /**
+   * 0 = the ball sticks to the feet; up to 1 = it is pushed ahead in touches and has to be run onto
+   * (Kick Off style, docs/specs/10 §5). Loose touches are easier to steal.
+   */
+  looseness: number;
+  /** Extra speed of a touch ahead at full looseness. */
+  touchBoost: number;
+  /** Ticks of carrying the ball before the next touch ahead. */
+  touchDelayTicks: number;
 }
 
 export interface ActionParams {
@@ -182,6 +191,14 @@ export interface ActionParams {
   /** Auto-switch only when another teammate is this much closer to the ball. */
   switchHysteresis: number;
   switchLockTicks: number;
+  /** Aftertouch on (1) or off (0): just after a shot the stick still bends, lifts or dips the ball. */
+  aftertouch: number;
+  /** How long aftertouch lasts after the kick. */
+  aftertouchTicks: number;
+  /** Spin added per second by steering sideways at full stick. */
+  aftertouchSwerve: number;
+  /** Upward (pull back) or downward (push on) acceleration at full stick. */
+  aftertouchLift: number;
 }
 
 export interface WeatherParams {
@@ -237,6 +254,9 @@ export const DEFAULT_PARAMS: SimParams = {
     stiffness: 12,
     kickCooldownTicks: 15,
     loseDistance: 1.6,
+    looseness: 0,
+    touchBoost: 4,
+    touchDelayTicks: 8,
   },
   action: {
     // 8 m/s meets the feel target in docs/specs/10 §8: 10 m in ≤ 1 s, 20 m in ≤ 2 s.
@@ -280,6 +300,10 @@ export const DEFAULT_PARAMS: SimParams = {
     attackContextRadius: 3.5,
     switchHysteresis: 2.5,
     switchLockTicks: 20,
+    aftertouch: 1,
+    aftertouchTicks: 15,
+    aftertouchSwerve: 90,
+    aftertouchLift: 20,
   },
   weather: {
     rainRollingFactor: 0.65,

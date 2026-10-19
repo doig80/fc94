@@ -308,6 +308,11 @@ function loftedKick(
   });
 }
 
+/** How long the stick still steers a shot (0 when aftertouch is switched off). */
+function aftertouchTicks(params: SimParams): number {
+  return params.action.aftertouch > 0 ? params.action.aftertouchTicks : 0;
+}
+
 // --- Shooting -----------------------------------------------------------------------------------
 
 /**
@@ -350,7 +355,7 @@ export function shoot(
     i,
     { x: dir.x * speed, y: rise, z: dir.z * speed },
     { x: 0, y: -lateral * a.curlSpin, z: 0 },
-    { blockTicks: params.dribble.kickCooldownTicks },
+    { blockTicks: params.dribble.kickCooldownTicks, aftertouchTicks: aftertouchTicks(params), stick: move },
   );
 }
 
