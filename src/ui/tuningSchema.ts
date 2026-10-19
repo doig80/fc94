@@ -373,6 +373,26 @@ export const TUNING_GROUPS: TuningGroup[] = [
     ],
   },
   {
+    title: "Game feel",
+    fields: [
+      field(
+        "juice",
+        "powerShotSpeed",
+        "Power shot from",
+        "m/s",
+        10,
+        40,
+        0.5,
+        "Kicks this fast get the freeze and camera kick",
+      ),
+      field("juice", "hitStopShotTicks", "Freeze on a power shot", "ticks", 0, 15, 1),
+      field("juice", "hitStopGoalTicks", "Freeze on a goal", "ticks", 0, 20, 1),
+      field("juice", "shake", "Camera kick", "×", 0, 3, 0.1),
+      field("juice", "netRipple", "Net bulge", "×", 0, 3, 0.1),
+      field("juice", "trail", "Trail on fast balls", "switch", 0, 1, 1),
+    ],
+  },
+  {
     title: "Weather",
     fields: [
       field(

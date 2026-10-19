@@ -9,6 +9,7 @@ export {
   DEFAULT_PARAMS,
   PITCH_5_A_SIDE,
   PITCH_FULL,
+  type JuiceParams,
   type PitchSpec,
   type SimParams,
 } from "./params";

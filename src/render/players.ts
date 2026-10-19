@@ -12,9 +12,9 @@ export interface Kit {
 export const KITS: Record<string, Kit> = {
   home: {
     id: "home",
-    shirt: Color3.FromHexString("#d7263d"),
+    shirt: Color3.FromHexString("#b3101e"),
     shorts: Color3.FromHexString("#f5f5f0"),
-    socks: Color3.FromHexString("#d7263d"),
+    socks: Color3.FromHexString("#b3101e"),
   },
   away: {
     id: "away",

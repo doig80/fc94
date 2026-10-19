@@ -20,7 +20,7 @@ const BIG = new Set<MatchEvent["kind"]>(["goal", "halftime", "fulltime"]);
 /** How long a call stays on screen. */
 const BANNER_TICKS = 100;
 const TEAMS = [
-  { name: "Home", colour: "#d7263d" },
+  { name: "Home", colour: "#b3101e" },
   { name: "Away", colour: "#1b4fd8" },
 ];
 
@@ -135,8 +135,32 @@ export function pauseMenu(actions: { resume(): void; restart(): void; help(): vo
 export function replayBadge(): HTMLElement {
   const el = element(
     "replay-badge",
-    `<span class="dot"></span>REPLAY <span class="muted">Space to skip</span>`,
+    `<span class="dot"></span>REPLAY <span class="label"></span><span class="muted">Space to skip</span>`,
   );
   el.hidden = true;
   return el;
+}
+
+/**
+ * An arrow at the edge of the screen pointing at your player when they're out of shot (readability, G7).
+ * `at` is the player's screen position as fractions of the canvas.
+ */
+export function offscreenMarker(): { update(at: { x: number; y: number }): void } {
+  const el = element("offscreen-marker", `<span>▲</span>`);
+  el.hidden = true;
+  const arrow = el.querySelector<HTMLElement>("span")!;
+  const margin = 0.04;
+  return {
+    update(at) {
+      const inside = at.x >= 0 && at.x <= 1 && at.y >= 0 && at.y <= 1;
+      el.hidden = inside;
+      if (inside) return;
+      const x = Math.min(1 - margin, Math.max(margin, at.x));
+      const y = Math.min(1 - margin, Math.max(margin, at.y));
+      el.style.left = `${x * 100}%`;
+      el.style.top = `${y * 100}%`;
+      const angle = Math.atan2(at.y - 0.5, at.x - 0.5) + Math.PI / 2;
+      arrow.style.transform = `rotate(${angle}rad)`;
+    },
+  };
 }

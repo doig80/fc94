@@ -2,14 +2,16 @@ import {
   AbstractEngine,
   Color3,
   DynamicTexture,
+  Matrix,
   Mesh,
   MeshBuilder,
   Quaternion,
   Scene,
   StandardMaterial,
+  TrailMesh,
   Vector3,
 } from "@babylonjs/core";
-import { DEFAULT_PARAMS, type MatchState } from "../sim";
+import { DEFAULT_PARAMS, type JuiceParams, type MatchState } from "../sim";
 import { Atmosphere } from "./atmosphere";
 import { CameraRig, type CinematicShot, type MatchCamera } from "./cameraRig";
 import { SurfaceLibrary } from "./materials";
@@ -24,6 +26,8 @@ export interface MatchViewOptions {
   weather: Weather;
   quality: Quality;
   camera: MatchCamera;
+  /** Game-feel strengths (read live, so the tuning panel applies at once). */
+  juice: JuiceParams;
 }
 
 /** The ball is drawn larger than its collision size so it is easy to follow (docs/specs/10 §5). */
@@ -60,6 +64,13 @@ export class MatchView {
   private readonly aimMarker: Mesh;
   /** The replay angle shown last frame, to cut (not pan) between angles. */
   private lastShot: CinematicShot["kind"] | null = null;
+  private readonly juice: JuiceParams;
+  private readonly trail: TrailMesh;
+  /** Back nets of the goals at −x and +x, and how far each is into its bulge (seconds, −1 = still). */
+  private readonly nets: Mesh[];
+  private readonly netRest: number[];
+  private readonly netTime = [-1, -1];
+  private lastGoalTick = -1;
   private first = true;
 
   constructor(engine: AbstractEngine, initial: MatchState, options: MatchViewOptions) {
@@ -69,6 +80,9 @@ export class MatchView {
     this.rig = new CameraRig(scene, initial.pitch, options.camera);
 
     const pitch = buildPitch(scene, this.lib, initial.pitch);
+    this.nets = pitch.nets;
+    this.netRest = pitch.nets.map((n) => n.position.x);
+    this.juice = options.juice;
     const stadium = buildStadium(scene, this.lib, options.quality, initial.pitch);
     this.stadium = stadium;
 
@@ -96,6 +110,7 @@ export class MatchView {
     this.ball = buildBall(scene, this.lib);
     this.ballShadow = buildBallShadow(scene);
     this.aimMarker = buildAimMarker(scene);
+    this.trail = buildTrail(scene, this.ball);
     this.ball.rotationQuaternion = Quaternion.Identity();
 
     PLAYER_COLOURS.forEach((hex, i) => {
@@ -149,6 +164,18 @@ export class MatchView {
     // A kick happened this tick if the ball was released with a new touch block.
     const kicked = curr.ball.owner < 0 && curr.ball.touchBlockUntil !== prev.ball.touchBlockUntil;
     if (kicked && curr.ball.lastTouch >= 0) this.kickTimers[curr.ball.lastTouch] = KICK_SECONDS;
+    const j = this.juice;
+    const kickSpeed = Math.hypot(curr.ball.vel.x, curr.ball.vel.y, curr.ball.vel.z);
+    if (kicked && kickSpeed >= j.powerShotSpeed) this.rig.shake(0.12 * j.shake);
+    const goal = curr.lastEvent?.kind === "goal" ? curr.lastEvent.tick : -1;
+    if (goal >= 0 && goal !== this.lastGoalTick) {
+      this.lastGoalTick = goal;
+      if (!this.first) {
+        this.rig.shake(0.3 * j.shake);
+        this.netTime[curr.ball.pos.x > 0 ? 1 : 0] = 0;
+      }
+    }
+    this.rippleNets(dt);
     curr.players.forEach((pl, i) => {
       const before = prev.players[i];
       const view = this.players[i];
@@ -187,6 +214,11 @@ export class MatchView {
       roll.multiplyToRef(this.ball.rotationQuaternion!, this.ball.rotationQuaternion!);
     }
     this.ball.position.set(bx, by, bz);
+    // A trail behind fast balls; cleared when the ball jumps (restarts, replays).
+    if (Math.abs(dx) > 3 || Math.abs(dz) > 3) this.trail.reset();
+    const speed = Math.hypot(b1.vel.x, b1.vel.y, b1.vel.z);
+    const show = j.trail > 0 ? Math.min(0.55, Math.max(0, (speed - 15) / 15)) : 0;
+    this.trail.visibility += (show - this.trail.visibility) * Math.min(1, dt * 10);
     // The spot stays on the grass and shrinks and fades as the ball climbs.
     const height = Math.max(0, by - BALL_VISUAL_RADIUS);
     this.ballShadow.position.set(bx, 0.02, bz);
@@ -226,6 +258,52 @@ export class MatchView {
     );
     this.first = false;
   }
+
+  /**
+   * Where (x, z) on the pitch appears on screen, as fractions of the canvas (0..1 inside it). A point behind
+   * the camera is mirrored, so it still comes out on the side it lies.
+   */
+  screenPosition(x: number, z: number): { x: number; y: number } {
+    const engine = this.scene.getEngine();
+    const w = engine.getRenderWidth();
+    const h = engine.getRenderHeight();
+    const p = Vector3.Project(
+      new Vector3(x, 1, z),
+      Matrix.IdentityReadOnly,
+      this.scene.getTransformMatrix(),
+      this.rig.camera.viewport.toGlobal(w, h),
+    );
+    const behind = p.z > 1;
+    const sx = p.x / w;
+    const sy = p.y / h;
+    // Behind the camera: flip through the centre and push it off-screen.
+    return behind ? { x: 0.5 - (sx - 0.5) * 100, y: 0.5 - (sy - 0.5) * 100 } : { x: sx, y: sy };
+  }
+
+  /** The net the ball went into bulges out and springs back. */
+  private rippleNets(dt: number): void {
+    this.netTime.forEach((t, i) => {
+      if (t < 0) return;
+      const time = t + dt;
+      const bulge = 0.35 * this.juice.netRipple * Math.exp(-time * 5) * Math.cos(time * 16);
+      this.nets[i].position.x = this.netRest[i] + Math.max(-0.05, bulge);
+      this.netTime[i] = time > 1.2 ? -1 : time;
+      if (time > 1.2) this.nets[i].position.x = this.netRest[i];
+    });
+  }
+}
+
+/** A soft streak behind the ball, shown when it's moving fast. */
+function buildTrail(scene: Scene, ball: Mesh): TrailMesh {
+  const trail = new TrailMesh("ballTrail", ball, scene, BALL_VISUAL_RADIUS * 1.2, 8, true);
+  const mat = new StandardMaterial("ballTrailMat", scene);
+  mat.disableLighting = true;
+  mat.emissiveColor = new Color3(1, 1, 1);
+  mat.alpha = 0.5;
+  trail.material = mat;
+  trail.isPickable = false;
+  trail.visibility = 0;
+  return trail;
 }
 
 /** A glowing ring that stands in the goal mouth, facing the pitch. */
