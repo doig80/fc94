@@ -13,9 +13,11 @@ import {
   DEFAULT_PARAMS,
   DIFFICULTY,
   DT,
-  isInGoal,
   PITCH_5_A_SIDE,
   stepMatch,
+  matchMinute,
+  TICK_RATE,
+  type MatchEvent,
   type MatchState,
   type SimParams,
 } from "../sim";
@@ -30,8 +32,21 @@ declare global {
   }
 }
 
-/** How long a goal or an out-of-play ball is shown before play restarts (placeholder until the rules, #13). */
-const RESTART_TICKS = 90;
+/** What the banner says for each referee call (none for a kick-off). */
+const CALLS: Partial<Record<MatchEvent["kind"], string>> = {
+  goal: "GOAL!",
+  foul: "Foul",
+  advantage: "Advantage",
+  freekick: "Free kick",
+  penalty: "Penalty!",
+  corner: "Corner",
+  kickin: "Kick-in",
+  goalkick: "Goal kick",
+  halftime: "Half-time",
+  fulltime: "Full time",
+};
+/** How long a call stays on screen. */
+const BANNER_TICKS = 100;
 
 /** The vertical-slice match: 5-a-side on a small pitch, 1 player vs CPU on the keyboard (docs/specs/30 §1). */
 export async function startMatch(): Promise<void> {
@@ -54,7 +69,7 @@ export async function startMatch(): Promise<void> {
   const banner = overlay("match-banner");
   const help = controlsHelp();
   const meters = hudMeters(params);
-  let restartIn = -1;
+  const board = scoreboard();
 
   window.__match = { ready: false, renderer, state: () => state, params: () => params };
   const status = options.debug ? overlay("debug-overlay") : undefined;
@@ -69,7 +84,6 @@ export async function startMatch(): Promise<void> {
   function restart(): void {
     state = newMatch(options);
     prev = cloneState(state);
-    restartIn = -1;
     banner.hidden = true;
   }
 
@@ -81,23 +95,13 @@ export async function startMatch(): Promise<void> {
     last = now;
     const alpha = stepper.advance(dt, () => {
       prev = cloneState(state);
-      stepMatch(state, [keyboard.read(view.rig.yaw)], params, (s) => aiIntents(s, params));
-      if (restartIn < 0) {
-        const goal = isInGoal(state.ball, state.pitch, params.ball.radius);
-        if (goal !== 0 || outOfPlay(state)) {
-          restartIn = RESTART_TICKS;
-          banner.textContent = goal !== 0 ? "GOAL!" : "Out of play";
-          banner.hidden = false;
-        }
-      } else if (--restartIn === 0) {
-        if (banner.textContent === "GOAL!") restart();
-        else replaceBall(state);
-        restartIn = -1;
-        banner.hidden = true;
-      }
+      const cpu = options.cpu ? (s: MatchState) => aiIntents(s, params) : undefined;
+      stepMatch(state, [keyboard.read(view.rig.yaw)], params, cpu);
+      showCall(state, banner);
     });
     view.render(prev, state, alpha, dt, controlledPlayers(state));
     meters.update(state);
+    board.update(state);
     view.scene.render();
     if (++frames === 30) {
       window.__match!.ready = true;
@@ -117,32 +121,35 @@ function newMatch(options: MatchOptions): MatchState {
     pitch: PITCH_5_A_SIDE,
     teamSize: 5,
     weather: options.weather,
+    rules: { halfTicks: options.halfMinutes * 60 * TICK_RATE, fouls: true },
   });
   state.controllers[0].assists = { ...DIFFICULTY[options.difficulty].assists };
   return state;
 }
 
-function outOfPlay(s: MatchState): boolean {
-  const b = s.ball.pos;
-  const r = DEFAULT_PARAMS.ball.radius;
-  return Math.abs(b.x) > s.pitch.length / 2 + r || Math.abs(b.z) > s.pitch.width / 2 + r;
+/** Show the referee's latest call in the banner for a moment (full time stays up). */
+function showCall(state: MatchState, banner: HTMLElement): void {
+  const e = state.lastEvent;
+  const text = e ? CALLS[e.kind] : undefined;
+  if (!e || !text) {
+    banner.hidden = true;
+    return;
+  }
+  const [home, away] = state.score;
+  banner.textContent = e.kind === "fulltime" ? `Full time ${home}–${away}` : text;
+  banner.hidden = e.kind !== "fulltime" && state.tick - e.tick > BANNER_TICKS;
 }
 
-/** Placeholder restart: the ball comes back 1 m inside the line, loose. Proper restarts arrive with #13. */
-function replaceBall(s: MatchState): void {
-  const halfL = s.pitch.length / 2 - 1;
-  const halfW = s.pitch.width / 2 - 1;
-  const b = s.ball;
-  b.pos = {
-    x: Math.max(-halfL, Math.min(halfL, b.pos.x)),
-    y: DEFAULT_PARAMS.ball.radius,
-    z: Math.max(-halfW, Math.min(halfW, b.pos.z)),
+/** Score and match clock, top centre. */
+function scoreboard(): { update(s: MatchState): void } {
+  const el = document.createElement("div");
+  el.className = "scoreboard";
+  document.body.append(el);
+  return {
+    update(s) {
+      el.textContent = `Home ${s.score[0]} – ${s.score[1]} Away · ${matchMinute(s)}'`;
+    },
   };
-  b.vel = { x: 0, y: 0, z: 0 };
-  b.spin = { x: 0, y: 0, z: 0 };
-  b.owner = -1;
-  b.intendedReceiver = -1;
-  b.touchBlockUntil = 0;
 }
 
 function overlay(className: string): HTMLElement {
@@ -183,6 +190,7 @@ function controlsHelp(): HTMLElement {
     <b>With the ball:</b> <kbd>J</kbd> pass (tap twice: one-two) · hold <kbd>K</kbd> shoot (steer to curl) ·
     <kbd>L</kbd> lob / cross / through ball<br>
     <b>Just after a shot:</b> steer to bend it · pull back to lift · push on to dip<br>
+    <b>Free kicks and penalties:</b> steer to move the yellow ring, hold <kbd>K</kbd> to shoot at it<br>
     <b>Defending:</b> <kbd>J</kbd> switch player · <kbd>K</kbd> tackle · <kbd>L</kbd> slide<br>
     <kbd>R</kbd> restart${new URLSearchParams(location.search).has("tune") ? " · <kbd>T</kbd> tuning panel" : ""}`;
   document.body.append(el);

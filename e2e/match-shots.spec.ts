@@ -21,7 +21,8 @@ const SCENES: { name: string; query: string; views: [string, number, number, num
 for (const scene of SCENES) {
   test(`match screenshots: ${scene.name}`, async ({ page }) => {
     test.setTimeout(600_000);
-    await page.goto(`./?${scene.query}&renderer=webgl&quality=high`);
+    // cpu=0: the computer players stand still, so every run frames the same picture.
+    await page.goto(`./?${scene.query}&renderer=webgl&quality=high&cpu=0`);
     await page.waitForFunction(() => window.__match?.ready === true, null, { timeout: 120_000 });
     await page.keyboard.press("KeyH"); // hide the controls help
     for (const [view, x, y, z] of scene.views) {
@@ -49,6 +50,7 @@ function placeBall(page: Page, x: number, y: number, z: number): Promise<void> {
   return page.evaluate(
     ([bx, by, bz]) => {
       const s = window.__match!.state();
+      s.phase = { kind: "play" };
       s.ball.owner = -1;
       s.ball.pos = { x: bx, y: by, z: bz };
       s.ball.vel = { x: 0, y: by > 0.2 ? 0.1 : 0, z: 0 };

@@ -314,3 +314,17 @@ body {
   color: var(--muted);
   margin: 8px 0 0;
 }
+.scoreboard {
+  position: fixed;
+  top: max(10px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 12px;
+  border-radius: 8px;
+  background: var(--panel-bg);
+  font:
+    700 15px/1.4 system-ui,
+    sans-serif;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}

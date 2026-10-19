@@ -353,6 +353,26 @@ export const TUNING_GROUPS: TuningGroup[] = [
     ],
   },
   {
+    title: "Referee",
+    fields: [
+      field(
+        "referee",
+        "foulOnMiss",
+        "Missed tackle is a foul",
+        "%",
+        0,
+        1,
+        0.05,
+        "A tackle from behind always is",
+      ),
+      field("referee", "autoRestartTicks", "Your restart is taken for you after", "ticks", 30, 600, 10),
+      field("referee", "cpuRestartTicks", "CPU sets up a restart for", "ticks", 0, 180, 5),
+      field("referee", "goalPauseTicks", "Pause after a goal", "ticks", 30, 600, 10),
+      field("referee", "halftimeTicks", "Half-time pause", "ticks", 30, 600, 10),
+      field("referee", "aimSpeed", "Aiming marker speed", "m/s", 0.5, 6, 0.25),
+    ],
+  },
+  {
     title: "Weather",
     fields: [
       field(

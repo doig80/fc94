@@ -12,13 +12,12 @@ test("match boots, the keyboard moves the player, and a shot leaves the foot", a
   page.on("console", (m) => {
     if (m.type() === "error" && !m.text().startsWith("Failed to load resource")) errors.push(m.text());
   });
-  await page.goto(`./?renderer=webgl&quality=${process.env.SHOT_QUALITY ?? "low"}`);
+  // cpu=0: the computer players stand still, so they can't tackle the test's player.
+  await page.goto(`./?renderer=webgl&quality=${process.env.SHOT_QUALITY ?? "low"}&cpu=0`);
   await page.waitForFunction(() => window.__match?.ready === true, null, { timeout: 60_000 });
   const start = await page.evaluate(() => window.__match!.state());
   expect(start.players).toHaveLength(10);
-  const me = start.controllers[0].player;
 
-  // Run towards the ball (it starts just ahead of the forward), then a bit further.
   // Wait for simulation ticks rather than wall time: software rendering in CI can be very slow.
   const ticks = (n: number) =>
     page.evaluate(
@@ -29,12 +28,20 @@ test("match boots, the keyboard moves the player, and a shot leaves the foot", a
         }),
       n,
     );
-  const t0 = await page.evaluate(() => window.__match!.state().tick);
+  // Kick off (a pass), then run.
+  expect(start.phase.kind).toBe("restart");
+  await page.keyboard.press("KeyJ");
+  await page.waitForFunction(() => window.__match!.state().phase.kind === "play");
+  const before = await page.evaluate(() => window.__match!.state());
+  const me = before.controllers[0].player;
+  const t0 = before.tick;
   await page.keyboard.down("KeyW");
   await ticks(t0 + 45);
   await page.keyboard.up("KeyW");
   const moved = await page.evaluate((i) => window.__match!.state().players[i].pos, me);
-  expect(Math.hypot(moved.x - start.players[me].pos.x, moved.z - start.players[me].pos.z)).toBeGreaterThan(1);
+  expect(Math.hypot(moved.x - before.players[me].pos.x, moved.z - before.players[me].pos.z)).toBeGreaterThan(
+    1,
+  );
 
   // Put the ball at the controlled player's feet (the test reaches into the live match), then hold shoot.
   await page.evaluate(() => {

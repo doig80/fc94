@@ -4,6 +4,7 @@ import { IDLE, type Intent } from "./intent";
 import type { SimParams } from "./params";
 import { applyAftertouch } from "./physics/ball";
 import type { MatchState } from "./state";
+import { holdDeadBall, holdRestart, pauseTick, referee } from "./rules";
 import { DT, step } from "./step";
 
 /**
@@ -17,6 +18,10 @@ export function stepMatch(
   params: SimParams,
   aiIntents?: (state: MatchState) => Intent[],
 ): void {
+  if (state.rules && pauseTick(state)) {
+    state.tick++;
+    return;
+  }
   updateControl(state, humanIntents, params);
 
   const intents: Intent[] = aiIntents ? aiIntents(state) : state.players.map(() => ({ ...IDLE }));
@@ -26,14 +31,17 @@ export function stepMatch(
     intents[c.player] = intent;
   });
   oneTwoRun(state, intents);
+  holdRestart(state, intents, params);
 
   const assistsFor = (i: number) => state.controllers.find((c) => c.player === i)?.assists ?? null;
   applyActions(state, intents, params, assistsFor);
   tickActions(state, params);
   applyAftertouch(state, humanIntents, params, DT);
   step(state, intents, params);
+  holdDeadBall(state, params);
   playQueued(state, params, assistsFor);
   oneTwoReturn(state, params);
+  referee(state, params);
 }
 
 /**

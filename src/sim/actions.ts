@@ -353,7 +353,12 @@ export function shoot(
   const d = Math.abs(goalX - ball.pos.x);
   const bend = (0.5 * params.ball.magnus * a.curlSpin * Math.abs(lateral) * d * d) / speed;
   let aimZ = side.z * (lateral * (gw / 2 - 0.35) - Math.sign(lateral) * bend * a.curlAimOffset);
-  if (assists?.aimHelp && Math.abs(lateral) < 0.2) {
+  // A free kick or penalty goes where the aiming marker is.
+  const restart = state.phase.kind === "restart" ? state.phase.restart : null;
+  if (restart && restart.taker === i && restart.aim) {
+    aimZ = restart.aim.z - side.z * Math.sign(lateral) * bend * a.curlAimOffset;
+  }
+  if (!restart?.aim && assists?.aimHelp && Math.abs(lateral) < 0.2) {
     // Aim help: the side of the goal away from the keeper.
     const keeper = state.players.find((p) => p.team !== pl.team && p.role === "gk");
     aimZ = (keeper && keeper.pos.z >= 0 ? -1 : 1) * gw * 0.32;
@@ -421,13 +426,18 @@ export function tackle(state: MatchState, i: number, rng: Rng, params: SimParams
   startAction(pl, "tackle", a.tackleTicks, pl.facing);
   const owner = state.ball.owner;
   if (owner < 0 || state.players[owner].team === pl.team || keeperHolds(state)) return;
+  if (state.phase.kind === "restart") return; // a dead ball can't be tackled
   const o = state.players[owner];
   const dx = o.pos.x - pl.pos.x;
   const dz = o.pos.z - pl.pos.z;
   const dist = Math.sqrt(dx * dx + dz * dz);
   const inFront = dist < 1e-6 || (dx * pl.facing.x + dz * pl.facing.z) / dist > 0;
   if (dist > a.tackleRange || !inFront) return;
+  // From behind: the dribbler is facing away from the tackler.
+  const fromBehind = dist > 1e-6 && (dx * o.facing.x + dz * o.facing.z) / dist > 0.3;
+  const fouls = state.rules?.fouls ?? false;
   if (rng.next() < a.tackleSuccess) {
+    if (fouls && fromBehind) state.foul = { by: i, victim: owner, spot: { ...o.pos } };
     // Poke the ball back towards the tackler; the dribbler is knocked off balance.
     const back = normalize2({ x: pl.pos.x - state.ball.pos.x, z: pl.pos.z - state.ball.pos.z }, pl.facing);
     kickBall(state, i, { x: back.x * a.tacklePokeSpeed, y: 0, z: back.z * a.tacklePokeSpeed }, undefined, {
@@ -436,6 +446,11 @@ export function tackle(state: MatchState, i: number, rng: Rng, params: SimParams
     startAction(o, "stumble", Math.round(a.stumbleTicks / 2), o.facing);
   } else {
     startAction(pl, "stumble", a.stumbleTicks, pl.facing);
+    // A mistimed tackle often catches the man instead of the ball.
+    if (fouls && (fromBehind || rng.next() < params.referee.foulOnMiss)) {
+      state.foul = { by: i, victim: owner, spot: { ...o.pos } };
+      startAction(o, "stumble", Math.round(a.stumbleTicks / 2), o.facing);
+    }
   }
 }
 
@@ -450,6 +465,7 @@ function slideContact(state: MatchState, i: number, params: SimParams): void {
   const ownedByTeammate = ball.owner >= 0 && state.players[ball.owner].team === pl.team;
   if (
     !ownedByTeammate &&
+    state.phase.kind !== "restart" &&
     !keeperHolds(state) &&
     ball.pos.y < 0.5 &&
     bdx * bdx + bdz * bdz < a.slideReach * a.slideReach
@@ -459,11 +475,20 @@ function slideContact(state: MatchState, i: number, params: SimParams): void {
       blockTicks: a.slideTicks,
     });
   }
-  state.players.forEach((o) => {
+  // Won the ball cleanly with this slide?
+  const wonBall = ball.lastTouch === i && state.tick - ball.kickedAt <= pl.action.total;
+  state.players.forEach((o, j) => {
     if (o.team === pl.team || o.action.kind === "stumble") return;
     const dx = o.pos.x - foot.x;
     const dz = o.pos.z - foot.z;
-    if (dx * dx + dz * dz < 0.8 * 0.8) startAction(o, "stumble", a.stumbleTicks, o.facing);
+    if (dx * dx + dz * dz >= 0.8 * 0.8) return;
+    startAction(o, "stumble", a.stumbleTicks, o.facing);
+    // Sliding into a player without the ball, or from behind, is a foul.
+    const d = pl.action.dir;
+    const fromBehind = d.x * o.facing.x + d.z * o.facing.z > 0.3;
+    if (state.rules?.fouls && !state.foul && (!wonBall || fromBehind)) {
+      state.foul = { by: i, victim: j, spot: { ...o.pos } };
+    }
   });
 }
 

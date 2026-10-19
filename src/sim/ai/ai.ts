@@ -101,6 +101,7 @@ function thinkOutfield(state: MatchState, i: number, params: SimParams, rng: Rng
   if (mem.plan && state.tick <= mem.plan.releaseAt) return;
   mem.plan = null;
   mem.sprint = false;
+  if (takingRestart(state, i)) return takeRestart(state, i, params, rng);
   const owner = ball.owner;
   if (owner === i) return carry(state, i, params, rng);
 
@@ -204,7 +205,9 @@ function defend(state: MatchState, i: number, params: SimParams, rng: Rng): void
     const d = dist(pl.pos, carrier.pos);
     const toCarrier = normalize2({ x: carrier.pos.x - pl.pos.x, z: carrier.pos.z - pl.pos.z });
     const facing = toCarrier.x * pl.facing.x + toCarrier.z * pl.facing.z;
-    if (d < params.action.tackleRange * 0.9 && facing > 0.5) {
+    // A sensible defender doesn't tackle from behind: that's a foul (docs/specs/10 §6).
+    const behind = toCarrier.x * carrier.facing.x + toCarrier.z * carrier.facing.z > 0.3;
+    if (d < params.action.tackleRange * 0.9 && facing > 0.5 && !behind) {
       const r = rng.next();
       const ai = params.ai;
       if (r < ai.slideChance) plan(state, i, "slide", ai.telegraphTicks, 1);
@@ -268,6 +271,50 @@ function bestPassTarget(
   return best;
 }
 
+// --- Restarts -------------------------------------------------------------------------------------
+
+function takingRestart(state: MatchState, i: number): boolean {
+  return state.phase.kind === "restart" && state.phase.restart.taker === i;
+}
+
+/**
+ * A CPU restart (docs/specs/10 §1): set up for a moment, then shoot a penalty or a free kick in range at a
+ * corner, cross a corner into the box, and play anything else to the best-placed teammate.
+ */
+function takeRestart(state: MatchState, i: number, params: SimParams, rng: Rng): void {
+  if (state.phase.kind !== "restart") return;
+  const r = state.phase.restart;
+  const pl = state.players[i];
+  steer(state, i, { x: 0, z: 0 });
+  if (state.tick - r.since < params.referee.cpuRestartTicks) return;
+  const s = attackSign(state, pl.team);
+  const halfL = state.pitch.length / 2;
+  const goal = { x: s * halfL, z: 0 };
+  const range = params.ai.shootRange * state.pitch.length;
+  if (r.aim && (r.kind === "penalty" || (dist(r.spot, goal) < range && Math.abs(r.spot.z) < 4))) {
+    // Pick a corner for the aiming marker, then shoot at it.
+    const side = rng.next() < 0.5 ? -1 : 1;
+    const inside = 0.35 + rng.next() * params.ai.aimError;
+    r.aim = { x: goal.x, z: side * (state.pitch.goalWidth / 2 - inside) };
+    // Stick centred: it would slide the marker, and the shot goes where the marker is anyway.
+    steer(state, i, { x: 0, z: 0 });
+    plan(state, i, "shot", 0, Math.round(0.75 * params.action.shotChargeTicks));
+    return;
+  }
+  if (r.kind === "corner") {
+    // Cross towards the penalty spot.
+    const spot = { x: s * (halfL - state.pitch.penaltySpot), z: 0 };
+    steer(state, i, normalize2({ x: spot.x - pl.pos.x, z: spot.z - pl.pos.z }));
+    plan(state, i, "lob", 0, 1);
+    return;
+  }
+  const target = bestPassTarget(state, i, false);
+  const t = target ? state.players[target.index] : null;
+  const dir = t ? normalize2({ x: t.pos.x - pl.pos.x, z: t.pos.z - pl.pos.z }) : { x: s, z: 0 };
+  steer(state, i, dir);
+  plan(state, i, t && dist(pl.pos, t.pos) > 15 ? "lob" : "pass", 0, 1);
+}
+
 // --- Goalkeepers ------------------------------------------------------------------------------------
 
 function thinkKeeper(state: MatchState, i: number, params: SimParams, rng: Rng): void {
@@ -280,6 +327,7 @@ function thinkKeeper(state: MatchState, i: number, params: SimParams, rng: Rng):
   mem.sprint = false;
   if (mem.plan && state.tick <= mem.plan.releaseAt) return;
   mem.plan = null;
+  if (takingRestart(state, i)) return takeRestart(state, i, params, rng);
 
   if (ball.owner === i) {
     steer(state, i, { x: 0, z: 0 });

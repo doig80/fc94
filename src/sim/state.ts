@@ -97,6 +97,53 @@ export interface AiPlan {
   releaseAt: number;
 }
 
+export type RestartKind = "kickoff" | "kickin" | "corner" | "goalkick" | "freekick" | "penalty";
+
+/** A dead ball waiting to be played (docs/specs/10 §1). */
+export interface Restart {
+  kind: RestartKind;
+  /** The team taking it. */
+  team: 0 | 1;
+  /** Where the ball sits. */
+  spot: Vec2;
+  /** The player taking it; they can turn to aim but not run off with the ball. */
+  taker: number;
+  /** Tick the restart began. */
+  since: number;
+  /** Free kicks and penalties: the aiming marker on the goal line, moved with the stick (M7). */
+  aim: Vec2 | null;
+}
+
+/** What the referee says is happening. */
+export type Phase =
+  | { kind: "play" }
+  | { kind: "restart"; restart: Restart }
+  | { kind: "goal"; team: 0 | 1; until: number }
+  | { kind: "halftime"; until: number }
+  | { kind: "fulltime" };
+
+/** The latest thing the referee called, for banners and the HUD. */
+export interface MatchEvent {
+  kind: RestartKind | "goal" | "foul" | "advantage" | "halftime" | "fulltime";
+  /** The team it is for (the scorer, or the team awarded the restart). */
+  team: 0 | 1;
+  tick: number;
+}
+
+/** A foul spotted during this tick's actions, for the referee to rule on. */
+export interface Foul {
+  by: number;
+  victim: number;
+  spot: Vec2;
+}
+
+export interface Rules {
+  /** Ticks in each half (the clock shows 45 minutes per half). */
+  halfTicks: number;
+  /** Fouls, free kicks and penalties ("no ref" turns them off, docs/specs/10 §6). */
+  fouls: boolean;
+}
+
 /** A give-and-go in progress: the receiver plays the ball straight back into the passer's run. */
 export interface OneTwo {
   passer: number;
@@ -148,6 +195,15 @@ export interface MatchState {
   oneTwo: OneTwo | null;
   /** One per player; used only for players the AI runs. */
   ai: AiMemory[];
+  /** The referee: null for free play (the physics tests and sandbox). */
+  rules: Rules | null;
+  phase: Phase;
+  /** Ticks played in the current half. */
+  clock: number;
+  /** The team that kicked off the first half (the other one kicks off the second). */
+  firstKickoff: 0 | 1;
+  lastEvent: MatchEvent | null;
+  foul: Foul | null;
 }
 
 export interface MatchConfig {
@@ -158,6 +214,8 @@ export interface MatchConfig {
   weather?: Weather;
   /** Which team each human plays for (default: one human on team 0). */
   humans?: (0 | 1)[];
+  /** Play with a referee (restarts, fouls, halves). Off by default: free play for tests and the sandbox. */
+  rules?: Rules;
 }
 
 /** Kick-off formation for one team, as fractions of the half-length (x) and half-width (z), attacking +x. */
@@ -195,7 +253,7 @@ export function createMatch(config: MatchConfig, params: SimParams = DEFAULT_PAR
       });
     });
   }
-  return {
+  const state: MatchState = {
     tick: 0,
     rng: config.seed >>> 0,
     pitch: { ...config.pitch },
@@ -233,7 +291,74 @@ export function createMatch(config: MatchConfig, params: SimParams = DEFAULT_PAR
       nextThink: i % 4,
       plan: null,
     })),
+    rules: config.rules ?? null,
+    phase: { kind: "play" },
+    clock: 0,
+    firstKickoff: 0,
+    lastEvent: null,
+    foul: null,
   };
+  if (state.rules) placeForKickoff(state, 0);
+  return state;
+}
+
+/**
+ * Line both teams up for a kick-off by `team` (docs/specs/10 §1): everyone in their own half, the opponents
+ * outside the centre circle, and the kicking team's forward on the ball.
+ */
+export function placeForKickoff(state: MatchState, team: 0 | 1): void {
+  const teamSize = state.players.length / 2;
+  const formation = FORMATIONS[teamSize];
+  const halfL = state.pitch.length / 2;
+  const halfW = state.pitch.width / 2;
+  const circle = state.pitch.centreCircle + 0.5;
+  const taker = team * teamSize + teamSize - 1;
+  state.players.forEach((pl, i) => {
+    const s = (pl.team === 0) === (state.half === 1) ? 1 : -1;
+    const [fx, fz] = formation[i % teamSize];
+    let x = fx * halfL * s;
+    let z = fz * halfW * s;
+    if (pl.team !== team) {
+      // Outside the circle.
+      const d = Math.sqrt(x * x + z * z);
+      if (d < circle) {
+        const k = d > 1e-6 ? circle / d : 1;
+        x = d > 1e-6 ? x * k : -s * circle;
+        z *= k;
+      }
+    }
+    if (i === taker) {
+      x = -s * 0.5;
+      z = 0;
+    }
+    pl.pos = { x, z };
+    pl.vel = { x: 0, z: 0 };
+    pl.facing = { x: s, z: 0 };
+    pl.held = 0;
+    pl.charge = -1;
+    pl.queued = null;
+    pl.action = { kind: "none", ticks: 0, total: 0, dir: { x: s, z: 0 } };
+  });
+  state.ai.forEach((m) => {
+    m.plan = null;
+    m.target = null;
+    m.move = { x: 0, z: 0 };
+  });
+  const ball = state.ball;
+  ball.pos = { x: 0, y: DEFAULT_PARAMS.ball.radius, z: 0 };
+  ball.vel = { x: 0, y: 0, z: 0 };
+  ball.spin = { x: 0, y: 0, z: 0 };
+  ball.owner = taker;
+  ball.lastTouch = taker;
+  ball.intendedReceiver = -1;
+  ball.aftertouchUntil = 0;
+  state.oneTwo = null;
+  state.phase = {
+    kind: "restart",
+    restart: { kind: "kickoff", team, spot: { x: 0, z: 0 }, taker, since: state.tick, aim: null },
+  };
+  state.lastEvent = { kind: "kickoff", team, tick: state.tick };
+  for (const c of state.controllers) if (c.team === team) c.player = taker;
 }
 
 /** Independent deep copy (snapshots for replays and rollback). */
