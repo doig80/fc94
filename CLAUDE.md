@@ -32,10 +32,13 @@ Use the Context7 MCP for current Babylon.js/Vite/Playwright APIs instead of rely
 
 - `pnpm dev` — dev server · `pnpm build` — typecheck + production build
 - `pnpm lint` · `pnpm typecheck` · `pnpm test` (Vitest)
+- `pnpm check:size` (after a build: startup download vs budget) · `pnpm check:licences` (dependency licences)
 - `pnpm e2e e2e/smoke.spec.ts` — boots the game in headless Chromium
 - Pages: `/` the match (`src/game/matchApp.ts`), `?mode=looktest` the look-test, `?mode=physics` the physics sandbox
 - `?mode=physics` — top-down physics sandbox (debug view of `src/sim`); `pnpm e2e e2e/sandbox.spec.ts` tests it
 - `pnpm screenshots` — renders look-test screenshots into `screenshots/` (slow: software rendering)
+- `pnpm screenshots:match` — match screenshots (day views + night rain); CI links both sets from each PR
+- `?debug=1` overlay: renderer, quality, fps, draw calls · `?inspector=1` opens the Babylon Inspector (`pnpm dev` only)
 - Close-up for review: `SHOT_QUERY="look=toon&time=night&view=-2.6,1.2,14,48,0" SHOT_NAME=x pnpm e2e e2e/closeup.spec.ts`
 - In cloud sessions set `PW_CHROMIUM_PATH=/opt/pw-browsers/chromium` (the SessionStart hook does this).
 

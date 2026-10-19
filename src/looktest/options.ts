@@ -29,6 +29,8 @@ export interface LookTestOptions {
   /** Hide the settings panel (used for screenshots). */
   hideUi: boolean;
   debug: boolean;
+  /** `?inspector=1`: open the Babylon.js Inspector. */
+  inspector: boolean;
   /** Optional exact camera for art review: `view=alpha,beta,radius,targetX,targetZ`. */
   view?: [number, number, number, number, number];
 }
@@ -42,6 +44,7 @@ export const DEFAULTS: Omit<LookTestOptions, "quality"> = {
   freeze: false,
   hideUi: false,
   debug: false,
+  inspector: false,
 };
 
 function pickEnum<T extends string>(values: readonly T[], raw: string | null, fallback: T): T {
@@ -70,6 +73,7 @@ export function parseOptions(search: string, isMobile: boolean): LookTestOptions
     freeze: flag(params, "freeze"),
     hideUi: flag(params, "hideui"),
     debug: flag(params, "debug"),
+    inspector: flag(params, "inspector"),
     view: parseView(params.get("view")),
   };
 }

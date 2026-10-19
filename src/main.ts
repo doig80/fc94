@@ -1,5 +1,6 @@
 import "./style.css";
 import { createEngine } from "./render/engine";
+import { showInspector } from "./render/inspector";
 import { LookTest } from "./looktest/lookTest";
 import { parseOptions, toSearch, type LookTestOptions } from "./looktest/options";
 import { buildPanel } from "./looktest/ui";
@@ -22,6 +23,7 @@ async function main(): Promise<void> {
 
   const lookTest = new LookTest(engine, options);
   window.__looktest = { ready: false, renderer };
+  if (options.inspector) void showInspector(lookTest.scene);
 
   const panel = options.hideUi
     ? undefined
