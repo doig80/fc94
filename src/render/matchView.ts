@@ -57,6 +57,7 @@ export class MatchView {
   private readonly atmosphere: Atmosphere;
   private readonly stadium: Stadium;
   private readonly weather: WeatherFx;
+  private readonly aimMarker: Mesh;
   private first = true;
 
   constructor(engine: AbstractEngine, initial: MatchState, options: MatchViewOptions) {
@@ -92,6 +93,7 @@ export class MatchView {
     });
     this.ball = buildBall(scene, this.lib);
     this.ballShadow = buildBallShadow(scene);
+    this.aimMarker = buildAimMarker(scene);
     this.ball.rotationQuaternion = Quaternion.Identity();
 
     PLAYER_COLOURS.forEach((hex, i) => {
@@ -188,6 +190,11 @@ export class MatchView {
     this.ballShadow.scaling.setAll(Math.max(0.45, 1 - height * 0.12));
     this.ballShadow.visibility = Math.max(0.25, 0.85 - height * 0.12);
 
+    // Free kicks and penalties: where on the goal the shot will go (docs/specs/10 §1).
+    const aim = curr.phase.kind === "restart" ? curr.phase.restart.aim : null;
+    this.aimMarker.setEnabled(aim !== null);
+    if (aim) this.aimMarker.position.set(aim.x, curr.pitch.goalHeight * 0.5, aim.z);
+
     this.rings.forEach((ring, slot) => {
       const index = controlled[slot] ?? -1;
       ring.setEnabled(index >= 0);
@@ -211,6 +218,25 @@ export class MatchView {
     );
     this.first = false;
   }
+}
+
+/** A glowing ring that stands in the goal mouth, facing the pitch. */
+function buildAimMarker(scene: Scene): Mesh {
+  const ring = MeshBuilder.CreateTorus(
+    "aimMarker",
+    { diameter: 1, thickness: 0.14, tessellation: 24 },
+    scene,
+  );
+  ring.rotation.z = Math.PI / 2;
+  // Drawn over the net and the keeper, so it never hides.
+  ring.renderingGroupId = 1;
+  const mat = new StandardMaterial("aimMarkerMat", scene);
+  mat.disableLighting = true;
+  mat.emissiveColor = Color3.FromHexString("#ffd23f");
+  ring.material = mat;
+  ring.isPickable = false;
+  ring.setEnabled(false);
+  return ring;
 }
 
 function buildBallShadow(scene: Scene): Mesh {

@@ -241,6 +241,22 @@ export interface AiParams {
   passWillingness: number;
 }
 
+/** The referee's timings (docs/specs/10 §1, §6). */
+export interface RefereeParams {
+  /** A human's restart is taken for them (a short pass) after this long. */
+  autoRestartTicks: number;
+  /** The CPU takes its restarts after this long. */
+  cpuRestartTicks: number;
+  /** Pause after a goal before the kick-off. */
+  goalPauseTicks: number;
+  /** Pause at half-time. */
+  halftimeTicks: number;
+  /** Chance that a missed standing tackle is a foul (a tackle from behind always is). */
+  foulOnMiss: number;
+  /** How fast the stick moves the free-kick and penalty aiming marker. */
+  aimSpeed: number;
+}
+
 export interface WeatherParams {
   /** Rolling friction multipliers (docs/specs/10 §5: rain skids, snow slows). */
   rainRollingFactor: number;
@@ -254,6 +270,7 @@ export interface SimParams {
   action: ActionParams;
   keeper: KeeperParams;
   ai: AiParams;
+  referee: RefereeParams;
   weather: WeatherParams;
 }
 
@@ -367,6 +384,14 @@ export const DEFAULT_PARAMS: SimParams = {
     shootRange: 0.33,
     shotCurl: 0.4,
     passWillingness: 0.35,
+  },
+  referee: {
+    autoRestartTicks: 180,
+    cpuRestartTicks: 45,
+    goalPauseTicks: 180,
+    halftimeTicks: 180,
+    foulOnMiss: 0.35,
+    aimSpeed: 2.5,
   },
   weather: {
     rainRollingFactor: 0.65,

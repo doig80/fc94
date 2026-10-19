@@ -21,12 +21,16 @@ export interface MatchOptions {
   seed: number;
   /** `?difficulty=easy|normal|hard` (docs/specs/11 §2). */
   difficulty: Difficulty;
+  /** `?minutes=2|3|5|10`: real minutes per half (docs/specs/10 §1). */
+  halfMinutes: number;
   /** `?debug=1`: renderer, quality, fps and draw calls in a corner overlay. */
   debug: boolean;
   /** `?inspector=1`: open the Babylon.js Inspector. */
   inspector: boolean;
   /** `?tune=1`: the tuning panel (docs/specs/02). */
   tune: boolean;
+  /** `?cpu=0` freezes the computer players (steady review screenshots and debugging). */
+  cpu: boolean;
 }
 
 function flag(params: URLSearchParams, name: string): boolean {
@@ -49,8 +53,10 @@ export function parseMatchOptions(search: string, isMobile: boolean): MatchOptio
     renderer: pick(RENDERERS, params.get("renderer"), "auto"),
     seed: Number.isFinite(seed) ? seed : 1994,
     difficulty: pick(DIFFICULTIES, params.get("difficulty"), "normal"),
+    halfMinutes: Number(pick(["2", "3", "5", "10"] as const, params.get("minutes"), "5")),
     debug: flag(params, "debug"),
     inspector: flag(params, "inspector"),
     tune: flag(params, "tune"),
+    cpu: params.get("cpu") !== "0",
   };
 }

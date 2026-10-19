@@ -16,16 +16,22 @@ export { kickBall } from "./physics/dribble";
 export { isInGoal } from "./physics/goal";
 export { inOwnBox, keeperHolds } from "./physics/keeper";
 export { Rng } from "./rng";
+export { matchMinute, startRestart } from "./rules";
 export {
   Button,
   cloneState,
   createMatch,
   NORMAL_ASSISTS,
+  placeForKickoff,
   type Assists,
   type BallState,
   type Controller,
   type MatchConfig,
+  type MatchEvent,
   type MatchState,
+  type Phase,
+  type Restart,
+  type RestartKind,
   type PlayerState,
   type Weather,
 } from "./state";
