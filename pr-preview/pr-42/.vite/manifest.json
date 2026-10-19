@@ -1,0 +1,1390 @@
+{
+  "_abstractAudioBus-CLJgfIGz.js": {
+    "file": "assets/abstractAudioBus-CLJgfIGz.js",
+    "name": "abstractAudioBus",
+    "imports": [
+      "_webAudioBaseSubGraph-Dt0pq0Kf.js"
+    ]
+  },
+  "_abstractSoundSource-vjAm2svO.js": {
+    "file": "assets/abstractSoundSource-vjAm2svO.js",
+    "name": "abstractSoundSource",
+    "imports": [
+      "_webAudioBaseSubGraph-Dt0pq0Kf.js"
+    ]
+  },
+  "_clusteredLightingFunctions-BFCOODPn.js": {
+    "file": "assets/clusteredLightingFunctions-BFCOODPn.js",
+    "name": "clusteredLightingFunctions",
+    "imports": [
+      "_shaderStore-D-XQlhUT.js"
+    ]
+  },
+  "_clusteredLightingFunctions-DNqaoQCj.js": {
+    "file": "assets/clusteredLightingFunctions-DNqaoQCj.js",
+    "name": "clusteredLightingFunctions",
+    "imports": [
+      "_shaderStore-D-XQlhUT.js"
+    ]
+  },
+  "_decorators-D3kDnvNy.js": {
+    "file": "assets/decorators-D3kDnvNy.js",
+    "name": "decorators"
+  },
+  "_engineStore-B_7KzytD.js": {
+    "file": "assets/engineStore-B_7KzytD.js",
+    "name": "engineStore",
+    "imports": [
+      "_observable.pure-H-M_hi7F.js"
+    ]
+  },
+  "_halfFloat-Ce77JD5z.js": {
+    "file": "assets/halfFloat-Ce77JD5z.js",
+    "name": "halfFloat"
+  },
+  "_logger-CuBYPcDK.js": {
+    "file": "assets/logger-CuBYPcDK.js",
+    "name": "logger"
+  },
+  "_ltcHelperFunctions-D8BySwCQ.js": {
+    "file": "assets/ltcHelperFunctions-D8BySwCQ.js",
+    "name": "ltcHelperFunctions",
+    "imports": [
+      "_shaderStore-D-XQlhUT.js"
+    ]
+  },
+  "_ltcHelperFunctions-DS3Utz6C.js": {
+    "file": "assets/ltcHelperFunctions-DS3Utz6C.js",
+    "name": "ltcHelperFunctions",
+    "imports": [
+      "_shaderStore-D-XQlhUT.js"
+    ]
+  },
+  "_mainUVVaryingDeclaration-BBamQlxR.js": {
+    "file": "assets/mainUVVaryingDeclaration-BBamQlxR.js",
+    "name": "mainUVVaryingDeclaration",
+    "imports": [
+      "_shaderStore-D-XQlhUT.js"
+    ]
+  },
+  "_mainUVVaryingDeclaration-B_7d0nc3.js": {
+    "file": "assets/mainUVVaryingDeclaration-B_7d0nc3.js",
+    "name": "mainUVVaryingDeclaration",
+    "imports": [
+      "_shaderStore-D-XQlhUT.js"
+    ]
+  },
+  "_math.color.pure-DQbGwYYX.js": {
+    "file": "assets/math.color.pure-DQbGwYYX.js",
+    "name": "math.color.pure",
+    "imports": [
+      "_math.scalar.functions-BWXNux-o.js",
+      "_math.vector.pure-Bn4YwtvS.js",
+      "_typeStore-Cu_sj2zM.js"
+    ]
+  },
+  "_math.scalar.functions-BWXNux-o.js": {
+    "file": "assets/math.scalar.functions-BWXNux-o.js",
+    "name": "math.scalar.functions"
+  },
+  "_math.vector.pure-Bn4YwtvS.js": {
+    "file": "assets/math.vector.pure-Bn4YwtvS.js",
+    "name": "math.vector.pure",
+    "imports": [
+      "_math.scalar.functions-BWXNux-o.js",
+      "_performanceConfigurator-UtxC_Odd.js",
+      "_engineStore-B_7KzytD.js",
+      "_typeStore-Cu_sj2zM.js"
+    ]
+  },
+  "_meshBlendTagFragmentOutput-DphJWeHM.js": {
+    "file": "assets/meshBlendTagFragmentOutput-DphJWeHM.js",
+    "name": "meshBlendTagFragmentOutput",
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "_objectIdFunctions-B7azwFhh.js"
+    ]
+  },
+  "_meshUboDeclaration-BATNZvmb.js": {
+    "file": "assets/meshUboDeclaration-BATNZvmb.js",
+    "name": "meshUboDeclaration",
+    "imports": [
+      "_shaderStore-D-XQlhUT.js"
+    ]
+  },
+  "_meshUboDeclaration-BmNu2KU_.js": {
+    "file": "assets/meshUboDeclaration-BmNu2KU_.js",
+    "name": "meshUboDeclaration",
+    "imports": [
+      "_shaderStore-D-XQlhUT.js"
+    ]
+  },
+  "_objectIdFunctions-532nR7xV.js": {
+    "file": "assets/objectIdFunctions-532nR7xV.js",
+    "name": "objectIdFunctions",
+    "imports": [
+      "_math.scalar.functions-BWXNux-o.js",
+      "_shaderStore-D-XQlhUT.js"
+    ]
+  },
+  "_objectIdFunctions-B7azwFhh.js": {
+    "file": "assets/objectIdFunctions-B7azwFhh.js",
+    "name": "objectIdFunctions",
+    "imports": [
+      "_math.scalar.functions-BWXNux-o.js",
+      "_shaderStore-D-XQlhUT.js"
+    ]
+  },
+  "_observable.pure-H-M_hi7F.js": {
+    "file": "assets/observable.pure-H-M_hi7F.js",
+    "name": "observable.pure"
+  },
+  "_performanceConfigurator-UtxC_Odd.js": {
+    "file": "assets/performanceConfigurator-UtxC_Odd.js",
+    "name": "performanceConfigurator"
+  },
+  "_precisionDate-CfCevjl-.js": {
+    "file": "assets/precisionDate-CfCevjl-.js",
+    "name": "precisionDate"
+  },
+  "_samplerFragmentDeclaration-3yaLawFX.js": {
+    "file": "assets/samplerFragmentDeclaration-3yaLawFX.js",
+    "name": "samplerFragmentDeclaration",
+    "imports": [
+      "_shaderStore-D-XQlhUT.js"
+    ]
+  },
+  "_samplerFragmentDeclaration-CEHqUfAO.js": {
+    "file": "assets/samplerFragmentDeclaration-CEHqUfAO.js",
+    "name": "samplerFragmentDeclaration",
+    "imports": [
+      "_shaderStore-D-XQlhUT.js"
+    ]
+  },
+  "_sceneUboDeclaration-B5VhSG0v.js": {
+    "file": "assets/sceneUboDeclaration-B5VhSG0v.js",
+    "name": "sceneUboDeclaration",
+    "imports": [
+      "_shaderStore-D-XQlhUT.js"
+    ]
+  },
+  "_sceneUboDeclaration-B96Tfx7b.js": {
+    "file": "assets/sceneUboDeclaration-B96Tfx7b.js",
+    "name": "sceneUboDeclaration",
+    "imports": [
+      "_shaderStore-D-XQlhUT.js"
+    ]
+  },
+  "_shaderStore-D-XQlhUT.js": {
+    "file": "assets/shaderStore-D-XQlhUT.js",
+    "name": "shaderStore"
+  },
+  "_tools.functions-CkKvTgVX.js": {
+    "file": "assets/tools.functions-CkKvTgVX.js",
+    "name": "tools.functions"
+  },
+  "_tools.pure-CK5UID_X.js": {
+    "file": "assets/tools.pure-CK5UID_X.js",
+    "name": "tools.pure",
+    "imports": [
+      "_observable.pure-H-M_hi7F.js",
+      "_engineStore-B_7KzytD.js",
+      "_typeStore-Cu_sj2zM.js",
+      "_logger-CuBYPcDK.js",
+      "_tools.functions-CkKvTgVX.js",
+      "_webRequest-dqz0dHXK.js",
+      "_precisionDate-CfCevjl-.js",
+      "_halfFloat-Ce77JD5z.js"
+    ]
+  },
+  "_tuningPanel-CWT81LSJ.js": {
+    "file": "assets/tuningPanel-CWT81LSJ.js",
+    "name": "tuningPanel",
+    "imports": [
+      "index.html"
+    ]
+  },
+  "_typeStore-Cu_sj2zM.js": {
+    "file": "assets/typeStore-Cu_sj2zM.js",
+    "name": "typeStore"
+  },
+  "_webAudioBaseSubGraph-Dt0pq0Kf.js": {
+    "file": "assets/webAudioBaseSubGraph-Dt0pq0Kf.js",
+    "name": "webAudioBaseSubGraph",
+    "imports": [
+      "_observable.pure-H-M_hi7F.js",
+      "_logger-CuBYPcDK.js",
+      "_webRequest-dqz0dHXK.js"
+    ]
+  },
+  "_webRequest-dqz0dHXK.js": {
+    "file": "assets/webRequest-dqz0dHXK.js",
+    "name": "webRequest"
+  },
+  "index.html": {
+    "file": "assets/index-DdGvnLGB.js",
+    "name": "index",
+    "src": "index.html",
+    "isEntry": true,
+    "imports": [
+      "_math.scalar.functions-BWXNux-o.js",
+      "_observable.pure-H-M_hi7F.js",
+      "_math.vector.pure-Bn4YwtvS.js",
+      "_performanceConfigurator-UtxC_Odd.js",
+      "_engineStore-B_7KzytD.js",
+      "_typeStore-Cu_sj2zM.js",
+      "_math.color.pure-DQbGwYYX.js",
+      "_logger-CuBYPcDK.js",
+      "_tools.pure-CK5UID_X.js",
+      "_tools.functions-CkKvTgVX.js",
+      "_decorators-D3kDnvNy.js",
+      "_webRequest-dqz0dHXK.js",
+      "_precisionDate-CfCevjl-.js",
+      "_halfFloat-Ce77JD5z.js",
+      "_shaderStore-D-XQlhUT.js",
+      "_webAudioBaseSubGraph-Dt0pq0Kf.js",
+      "_abstractSoundSource-vjAm2svO.js",
+      "_meshUboDeclaration-BATNZvmb.js",
+      "_sceneUboDeclaration-B96Tfx7b.js",
+      "_sceneUboDeclaration-B5VhSG0v.js",
+      "_meshUboDeclaration-BmNu2KU_.js",
+      "_clusteredLightingFunctions-BFCOODPn.js",
+      "_clusteredLightingFunctions-DNqaoQCj.js",
+      "_ltcHelperFunctions-D8BySwCQ.js",
+      "_ltcHelperFunctions-DS3Utz6C.js",
+      "_mainUVVaryingDeclaration-B_7d0nc3.js",
+      "_objectIdFunctions-B7azwFhh.js",
+      "_meshBlendTagFragmentOutput-DphJWeHM.js",
+      "_samplerFragmentDeclaration-CEHqUfAO.js",
+      "_mainUVVaryingDeclaration-BBamQlxR.js",
+      "_objectIdFunctions-532nR7xV.js",
+      "_samplerFragmentDeclaration-3yaLawFX.js"
+    ],
+    "dynamicImports": [
+      "index.html",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/AudioV2/webAudio/webAudioBus.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/AudioV2/webAudio/webAudioMainBus.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/lod3D.fragment.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/lod3D.fragment.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/gaussianSplatting.fragment.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/gaussianSplatting.vertex.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/gaussianSplatting.fragment.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/gaussianSplatting.vertex.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/gaussianSplattingVoxel.vertex.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/gaussianSplattingVoxel.fragment.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/gaussianSplattingVoxel.vertex.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/gaussianSplattingVoxel.fragment.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Materials/Textures/Loaders/iesTextureLoader.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Materials/Textures/Loaders/ddsTextureLoader.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Materials/Textures/Loaders/basisTextureLoader.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Materials/Textures/Loaders/envTextureLoader.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Materials/Textures/Loaders/hdrTextureLoader.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Materials/Textures/Loaders/ktxTextureLoader.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Materials/Textures/Loaders/tgaTextureLoader.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/oitFinalSimpleBlend.fragment.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/oitFinalSimpleBlend.fragment.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/selection.vertex.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/selection.fragment.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/selectionOutline.fragment.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/selection.vertex.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/selection.fragment.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/selectionOutline.fragment.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/meshBlending.fragment.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/meshBlending.fragment.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/screenSpaceCurvature.fragment.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/volumetricLightingBlendVolume.fragment.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/volumetricLightingBlendVolume.fragment.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/volumetricLightingRenderVolume.vertex.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/volumetricLightingRenderVolume.fragment.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/volumetricLightingRenderVolume.vertex.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/volumetricLightingRenderVolume.fragment.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/iblCopyVoxelBufferToGrid.compute.js",
+      "_objectIdFunctions-B7azwFhh.js",
+      "_objectIdFunctions-532nR7xV.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/noise.fragment.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/noise.fragment.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/gpuRenderParticles.vertex.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/gpuRenderParticles.fragment.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/subSurfaceScattering.fragment.js",
+      "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/subSurfaceScattering.fragment.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/cell/cell.vertex.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/cell/cell.fragment.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/cell/wgsl/cell.vertex.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/cell/wgsl/cell.fragment.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/fire/fire.vertex.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/fire/fire.fragment.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/fire/wgsl/fire.vertex.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/fire/wgsl/fire.fragment.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/fur/fur.vertex.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/fur/fur.fragment.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/fur/wgsl/fur.vertex.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/fur/wgsl/fur.fragment.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/gradient/gradient.vertex.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/gradient/gradient.fragment.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/gradient/wgsl/gradient.vertex.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/gradient/wgsl/gradient.fragment.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/grid/grid.vertex.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/grid/grid.fragment.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/grid/wgsl/grid.vertex.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/grid/wgsl/grid.fragment.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/lava/lava.vertex.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/lava/lava.fragment.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/lava/wgsl/lava.vertex.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/lava/wgsl/lava.fragment.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/mix/mix.vertex.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/mix/mix.fragment.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/mix/wgsl/mix.vertex.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/mix/wgsl/mix.fragment.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/normal/normal.vertex.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/normal/normal.fragment.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/normal/wgsl/normal.vertex.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/normal/wgsl/normal.fragment.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/shadowOnly/shadowOnly.vertex.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/shadowOnly/shadowOnly.fragment.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/shadowOnly/wgsl/shadowOnly.vertex.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/shadowOnly/wgsl/shadowOnly.fragment.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/simple/simple.vertex.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/simple/simple.fragment.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/simple/wgsl/simple.vertex.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/simple/wgsl/simple.fragment.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/sky/sky.vertex.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/sky/sky.fragment.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/sky/wgsl/sky.vertex.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/sky/wgsl/sky.fragment.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/terrain/terrain.vertex.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/terrain/terrain.fragment.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/terrain/wgsl/terrain.vertex.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/terrain/wgsl/terrain.fragment.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/triPlanar/triplanar.vertex.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/triPlanar/triplanar.fragment.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/triPlanar/wgsl/triplanar.vertex.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/triPlanar/wgsl/triplanar.fragment.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/water/water.vertex.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/water/water.fragment.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/water/wgsl/water.vertex.js",
+      "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/water/wgsl/water.fragment.js",
+      "src/sandbox/sandbox.ts",
+      "src/game/matchApp.ts"
+    ],
+    "css": [
+      "assets/index-BbIcQsD3.css"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/AudioV2/webAudio/webAudioBus.js": {
+    "file": "assets/webAudioBus-DkMpTWPk.js",
+    "name": "webAudioBus",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/AudioV2/webAudio/webAudioBus.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_abstractAudioBus-CLJgfIGz.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/AudioV2/webAudio/webAudioMainBus.js": {
+    "file": "assets/webAudioMainBus-D6M9Dkhx.js",
+    "name": "webAudioMainBus",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/AudioV2/webAudio/webAudioMainBus.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_webAudioBaseSubGraph-Dt0pq0Kf.js",
+      "_abstractAudioBus-CLJgfIGz.js"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Materials/Textures/Loaders/basisTextureLoader.js": {
+    "file": "assets/basisTextureLoader-CdF1jZ4n.js",
+    "name": "basisTextureLoader",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Materials/Textures/Loaders/basisTextureLoader.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_tools.pure-CK5UID_X.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Materials/Textures/Loaders/ddsTextureLoader.js": {
+    "file": "assets/ddsTextureLoader-TxatNeCu.js",
+    "name": "ddsTextureLoader",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Materials/Textures/Loaders/ddsTextureLoader.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Materials/Textures/Loaders/envTextureLoader.js": {
+    "file": "assets/envTextureLoader-C1jawVFC.js",
+    "name": "envTextureLoader",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Materials/Textures/Loaders/envTextureLoader.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Materials/Textures/Loaders/hdrTextureLoader.js": {
+    "file": "assets/hdrTextureLoader-hycHfshm.js",
+    "name": "hdrTextureLoader",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Materials/Textures/Loaders/hdrTextureLoader.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Materials/Textures/Loaders/iesTextureLoader.js": {
+    "file": "assets/iesTextureLoader-Dvr1zCIo.js",
+    "name": "iesTextureLoader",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Materials/Textures/Loaders/iesTextureLoader.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_math.scalar.functions-BWXNux-o.js"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Materials/Textures/Loaders/ktxTextureLoader.js": {
+    "file": "assets/ktxTextureLoader-CHlaTQ3U.js",
+    "name": "ktxTextureLoader",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Materials/Textures/Loaders/ktxTextureLoader.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_logger-CuBYPcDK.js",
+      "_tools.pure-CK5UID_X.js"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Materials/Textures/Loaders/tgaTextureLoader.js": {
+    "file": "assets/tgaTextureLoader-C7xUNzBJ.js",
+    "name": "tgaTextureLoader",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Materials/Textures/Loaders/tgaTextureLoader.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/gaussianSplatting.fragment.js": {
+    "file": "assets/gaussianSplatting.fragment-TKyu2Oot.js",
+    "name": "gaussianSplatting.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/gaussianSplatting.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "_objectIdFunctions-532nR7xV.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/gaussianSplatting.vertex.js": {
+    "file": "assets/gaussianSplatting.vertex-n6MKIIlU.js",
+    "name": "gaussianSplatting.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/gaussianSplatting.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "_sceneUboDeclaration-B5VhSG0v.js",
+      "_meshUboDeclaration-BmNu2KU_.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/gaussianSplattingVoxel.fragment.js": {
+    "file": "assets/gaussianSplattingVoxel.fragment-B_Om6CDx.js",
+    "name": "gaussianSplattingVoxel.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/gaussianSplattingVoxel.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/gaussianSplattingVoxel.vertex.js": {
+    "file": "assets/gaussianSplattingVoxel.vertex-D48mmco7.js",
+    "name": "gaussianSplattingVoxel.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/gaussianSplattingVoxel.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "_sceneUboDeclaration-B5VhSG0v.js",
+      "_meshUboDeclaration-BmNu2KU_.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/lod3D.fragment.js": {
+    "file": "assets/lod3D.fragment-yRlWVCij.js",
+    "name": "lod3D.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/lod3D.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/meshBlending.fragment.js": {
+    "file": "assets/meshBlending.fragment-DzK0T9dh.js",
+    "name": "meshBlending.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/meshBlending.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/noise.fragment.js": {
+    "file": "assets/noise.fragment-DEbzbasH.js",
+    "name": "noise.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/noise.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/oitFinalSimpleBlend.fragment.js": {
+    "file": "assets/oitFinalSimpleBlend.fragment-Q5Yng1yZ.js",
+    "name": "oitFinalSimpleBlend.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/oitFinalSimpleBlend.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/selection.fragment.js": {
+    "file": "assets/selection.fragment-DVhWVKvR.js",
+    "name": "selection.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/selection.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/selection.vertex.js": {
+    "file": "assets/selection.vertex-D9uEavsf.js",
+    "name": "selection.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/selection.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/selectionOutline.fragment.js": {
+    "file": "assets/selectionOutline.fragment-lN_28Eg-.js",
+    "name": "selectionOutline.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/selectionOutline.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/subSurfaceScattering.fragment.js": {
+    "file": "assets/subSurfaceScattering.fragment-DEnbpT4d.js",
+    "name": "subSurfaceScattering.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/subSurfaceScattering.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/volumetricLightingBlendVolume.fragment.js": {
+    "file": "assets/volumetricLightingBlendVolume.fragment-Bz5yiNiY.js",
+    "name": "volumetricLightingBlendVolume.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/volumetricLightingBlendVolume.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/volumetricLightingRenderVolume.fragment.js": {
+    "file": "assets/volumetricLightingRenderVolume.fragment-CbTzfzi7.js",
+    "name": "volumetricLightingRenderVolume.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/volumetricLightingRenderVolume.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "_sceneUboDeclaration-B5VhSG0v.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/volumetricLightingRenderVolume.vertex.js": {
+    "file": "assets/volumetricLightingRenderVolume.vertex-B243_peH.js",
+    "name": "volumetricLightingRenderVolume.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/Shaders/volumetricLightingRenderVolume.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "_sceneUboDeclaration-B5VhSG0v.js",
+      "_meshUboDeclaration-BmNu2KU_.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/gaussianSplatting.fragment.js": {
+    "file": "assets/gaussianSplatting.fragment-ZAZxwQp5.js",
+    "name": "gaussianSplatting.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/gaussianSplatting.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "_objectIdFunctions-B7azwFhh.js",
+      "_meshBlendTagFragmentOutput-DphJWeHM.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/gaussianSplatting.vertex.js": {
+    "file": "assets/gaussianSplatting.vertex-Cm19BrVK.js",
+    "name": "gaussianSplatting.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/gaussianSplatting.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "_meshUboDeclaration-BATNZvmb.js",
+      "_sceneUboDeclaration-B96Tfx7b.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/gaussianSplattingVoxel.fragment.js": {
+    "file": "assets/gaussianSplattingVoxel.fragment-WM9CN_tJ.js",
+    "name": "gaussianSplattingVoxel.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/gaussianSplattingVoxel.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/gaussianSplattingVoxel.vertex.js": {
+    "file": "assets/gaussianSplattingVoxel.vertex-BK2NtdzZ.js",
+    "name": "gaussianSplattingVoxel.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/gaussianSplattingVoxel.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "_meshUboDeclaration-BATNZvmb.js",
+      "_sceneUboDeclaration-B96Tfx7b.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/gpuRenderParticles.fragment.js": {
+    "file": "assets/gpuRenderParticles.fragment-DyuZnEic.js",
+    "name": "gpuRenderParticles.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/gpuRenderParticles.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "_objectIdFunctions-B7azwFhh.js",
+      "_meshBlendTagFragmentOutput-DphJWeHM.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/gpuRenderParticles.vertex.js": {
+    "file": "assets/gpuRenderParticles.vertex-BbisTKOo.js",
+    "name": "gpuRenderParticles.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/gpuRenderParticles.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/iblCopyVoxelBufferToGrid.compute.js": {
+    "file": "assets/iblCopyVoxelBufferToGrid.compute-Dn5OuT-_.js",
+    "name": "iblCopyVoxelBufferToGrid.compute",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/iblCopyVoxelBufferToGrid.compute.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/lod3D.fragment.js": {
+    "file": "assets/lod3D.fragment-y-jhIqg5.js",
+    "name": "lod3D.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/lod3D.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/meshBlending.fragment.js": {
+    "file": "assets/meshBlending.fragment-BS074wkT.js",
+    "name": "meshBlending.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/meshBlending.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/noise.fragment.js": {
+    "file": "assets/noise.fragment-LuZEVkT0.js",
+    "name": "noise.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/noise.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/oitFinalSimpleBlend.fragment.js": {
+    "file": "assets/oitFinalSimpleBlend.fragment-nGYFumis.js",
+    "name": "oitFinalSimpleBlend.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/oitFinalSimpleBlend.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/screenSpaceCurvature.fragment.js": {
+    "file": "assets/screenSpaceCurvature.fragment-DGKqBbuS.js",
+    "name": "screenSpaceCurvature.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/screenSpaceCurvature.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/selection.fragment.js": {
+    "file": "assets/selection.fragment-LJDTs3eJ.js",
+    "name": "selection.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/selection.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/selection.vertex.js": {
+    "file": "assets/selection.vertex-CxZNsrQx.js",
+    "name": "selection.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/selection.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/selectionOutline.fragment.js": {
+    "file": "assets/selectionOutline.fragment-CwDO4qmT.js",
+    "name": "selectionOutline.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/selectionOutline.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/subSurfaceScattering.fragment.js": {
+    "file": "assets/subSurfaceScattering.fragment-DadgkTXH.js",
+    "name": "subSurfaceScattering.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/subSurfaceScattering.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/volumetricLightingBlendVolume.fragment.js": {
+    "file": "assets/volumetricLightingBlendVolume.fragment-DIkNb-c4.js",
+    "name": "volumetricLightingBlendVolume.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/volumetricLightingBlendVolume.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/volumetricLightingRenderVolume.fragment.js": {
+    "file": "assets/volumetricLightingRenderVolume.fragment--stnBwf_.js",
+    "name": "volumetricLightingRenderVolume.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/volumetricLightingRenderVolume.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "_meshUboDeclaration-BATNZvmb.js",
+      "_sceneUboDeclaration-B96Tfx7b.js"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/volumetricLightingRenderVolume.vertex.js": {
+    "file": "assets/volumetricLightingRenderVolume.vertex-C6FZxDYC.js",
+    "name": "volumetricLightingRenderVolume.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+core@9.31.0/node_modules/@babylonjs/core/ShadersWGSL/volumetricLightingRenderVolume.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "_meshUboDeclaration-BATNZvmb.js",
+      "_sceneUboDeclaration-B96Tfx7b.js"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/cell/cell.fragment.js": {
+    "file": "assets/cell.fragment-Ca6rWnBi.js",
+    "name": "cell.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/cell/cell.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/cell/cell.vertex.js": {
+    "file": "assets/cell.vertex-Cn5fNgXX.js",
+    "name": "cell.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/cell/cell.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/cell/wgsl/cell.fragment.js": {
+    "file": "assets/cell.fragment-BznD3A8r.js",
+    "name": "cell.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/cell/wgsl/cell.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/cell/wgsl/cell.vertex.js": {
+    "file": "assets/cell.vertex-B8ORXQPG.js",
+    "name": "cell.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/cell/wgsl/cell.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/fire/fire.fragment.js": {
+    "file": "assets/fire.fragment-BJ5aEE_Z.js",
+    "name": "fire.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/fire/fire.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/fire/fire.vertex.js": {
+    "file": "assets/fire.vertex-ClfWveD0.js",
+    "name": "fire.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/fire/fire.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/fire/wgsl/fire.fragment.js": {
+    "file": "assets/fire.fragment-DVBZ5I3h.js",
+    "name": "fire.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/fire/wgsl/fire.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/fire/wgsl/fire.vertex.js": {
+    "file": "assets/fire.vertex-DZkrG4Ap.js",
+    "name": "fire.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/fire/wgsl/fire.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/fur/fur.fragment.js": {
+    "file": "assets/fur.fragment-CguVG5SW.js",
+    "name": "fur.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/fur/fur.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/fur/fur.vertex.js": {
+    "file": "assets/fur.vertex-ZX_W2vBs.js",
+    "name": "fur.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/fur/fur.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/fur/wgsl/fur.fragment.js": {
+    "file": "assets/fur.fragment-DhBJXtbu.js",
+    "name": "fur.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/fur/wgsl/fur.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/fur/wgsl/fur.vertex.js": {
+    "file": "assets/fur.vertex-CCVTXT-c.js",
+    "name": "fur.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/fur/wgsl/fur.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/gradient/gradient.fragment.js": {
+    "file": "assets/gradient.fragment-Yqy6NBnL.js",
+    "name": "gradient.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/gradient/gradient.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/gradient/gradient.vertex.js": {
+    "file": "assets/gradient.vertex-CX7jC7pd.js",
+    "name": "gradient.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/gradient/gradient.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/gradient/wgsl/gradient.fragment.js": {
+    "file": "assets/gradient.fragment-5hSahJAH.js",
+    "name": "gradient.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/gradient/wgsl/gradient.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/gradient/wgsl/gradient.vertex.js": {
+    "file": "assets/gradient.vertex-CFassnyu.js",
+    "name": "gradient.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/gradient/wgsl/gradient.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/grid/grid.fragment.js": {
+    "file": "assets/grid.fragment-o8IkbhjF.js",
+    "name": "grid.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/grid/grid.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/grid/grid.vertex.js": {
+    "file": "assets/grid.vertex-BENJlbep.js",
+    "name": "grid.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/grid/grid.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "_sceneUboDeclaration-B5VhSG0v.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/grid/wgsl/grid.fragment.js": {
+    "file": "assets/grid.fragment-BvNrYuwh.js",
+    "name": "grid.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/grid/wgsl/grid.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/grid/wgsl/grid.vertex.js": {
+    "file": "assets/grid.vertex-CcWKYP8x.js",
+    "name": "grid.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/grid/wgsl/grid.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "_sceneUboDeclaration-B96Tfx7b.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/lava/lava.fragment.js": {
+    "file": "assets/lava.fragment-Dw2W0UvH.js",
+    "name": "lava.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/lava/lava.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/lava/lava.vertex.js": {
+    "file": "assets/lava.vertex-B4H6aFhJ.js",
+    "name": "lava.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/lava/lava.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/lava/wgsl/lava.fragment.js": {
+    "file": "assets/lava.fragment-uJi4CxOX.js",
+    "name": "lava.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/lava/wgsl/lava.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/lava/wgsl/lava.vertex.js": {
+    "file": "assets/lava.vertex-mLWFyRRy.js",
+    "name": "lava.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/lava/wgsl/lava.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/mix/mix.fragment.js": {
+    "file": "assets/mix.fragment-DlSD-Ely.js",
+    "name": "mix.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/mix/mix.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/mix/mix.vertex.js": {
+    "file": "assets/mix.vertex-Ch71w1gY.js",
+    "name": "mix.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/mix/mix.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/mix/wgsl/mix.fragment.js": {
+    "file": "assets/mix.fragment-B1vAcf_L.js",
+    "name": "mix.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/mix/wgsl/mix.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/mix/wgsl/mix.vertex.js": {
+    "file": "assets/mix.vertex-BISxYFWI.js",
+    "name": "mix.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/mix/wgsl/mix.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/normal/normal.fragment.js": {
+    "file": "assets/normal.fragment-WaBiig9X.js",
+    "name": "normal.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/normal/normal.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/normal/normal.vertex.js": {
+    "file": "assets/normal.vertex-gSIysuNb.js",
+    "name": "normal.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/normal/normal.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/normal/wgsl/normal.fragment.js": {
+    "file": "assets/normal.fragment-BwxY5J_4.js",
+    "name": "normal.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/normal/wgsl/normal.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/normal/wgsl/normal.vertex.js": {
+    "file": "assets/normal.vertex-BMvIv7VU.js",
+    "name": "normal.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/normal/wgsl/normal.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/shadowOnly/shadowOnly.fragment.js": {
+    "file": "assets/shadowOnly.fragment-CYBRpYyH.js",
+    "name": "shadowOnly.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/shadowOnly/shadowOnly.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "_sceneUboDeclaration-B5VhSG0v.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/shadowOnly/shadowOnly.vertex.js": {
+    "file": "assets/shadowOnly.vertex-B3611mBr.js",
+    "name": "shadowOnly.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/shadowOnly/shadowOnly.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "_sceneUboDeclaration-B5VhSG0v.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/shadowOnly/wgsl/shadowOnly.fragment.js": {
+    "file": "assets/shadowOnly.fragment--Zs9XBQG.js",
+    "name": "shadowOnly.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/shadowOnly/wgsl/shadowOnly.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "_sceneUboDeclaration-B96Tfx7b.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/shadowOnly/wgsl/shadowOnly.vertex.js": {
+    "file": "assets/shadowOnly.vertex-BZs8msrx.js",
+    "name": "shadowOnly.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/shadowOnly/wgsl/shadowOnly.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "_sceneUboDeclaration-B96Tfx7b.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/simple/simple.fragment.js": {
+    "file": "assets/simple.fragment-uW9kED61.js",
+    "name": "simple.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/simple/simple.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/simple/simple.vertex.js": {
+    "file": "assets/simple.vertex-CilpA1YR.js",
+    "name": "simple.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/simple/simple.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/simple/wgsl/simple.fragment.js": {
+    "file": "assets/simple.fragment-CB8rWSFD.js",
+    "name": "simple.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/simple/wgsl/simple.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/simple/wgsl/simple.vertex.js": {
+    "file": "assets/simple.vertex-DF2pvRrP.js",
+    "name": "simple.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/simple/wgsl/simple.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/sky/sky.fragment.js": {
+    "file": "assets/sky.fragment-BdSHhD5k.js",
+    "name": "sky.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/sky/sky.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/sky/sky.vertex.js": {
+    "file": "assets/sky.vertex-C8cmZCTI.js",
+    "name": "sky.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/sky/sky.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/sky/wgsl/sky.fragment.js": {
+    "file": "assets/sky.fragment-CEY42eA_.js",
+    "name": "sky.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/sky/wgsl/sky.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/sky/wgsl/sky.vertex.js": {
+    "file": "assets/sky.vertex-Dhu1bv7b.js",
+    "name": "sky.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/sky/wgsl/sky.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/terrain/terrain.fragment.js": {
+    "file": "assets/terrain.fragment-Cu5EmvRO.js",
+    "name": "terrain.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/terrain/terrain.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/terrain/terrain.vertex.js": {
+    "file": "assets/terrain.vertex-Cg06Gvg4.js",
+    "name": "terrain.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/terrain/terrain.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/terrain/wgsl/terrain.fragment.js": {
+    "file": "assets/terrain.fragment-jEBjN_IW.js",
+    "name": "terrain.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/terrain/wgsl/terrain.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/terrain/wgsl/terrain.vertex.js": {
+    "file": "assets/terrain.vertex-CIrEtDca.js",
+    "name": "terrain.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/terrain/wgsl/terrain.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/triPlanar/triplanar.fragment.js": {
+    "file": "assets/triplanar.fragment-BNnfvA19.js",
+    "name": "triplanar.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/triPlanar/triplanar.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/triPlanar/triplanar.vertex.js": {
+    "file": "assets/triplanar.vertex-BxXptu8V.js",
+    "name": "triplanar.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/triPlanar/triplanar.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/triPlanar/wgsl/triplanar.fragment.js": {
+    "file": "assets/triplanar.fragment-DvhOzpHA.js",
+    "name": "triplanar.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/triPlanar/wgsl/triplanar.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/triPlanar/wgsl/triplanar.vertex.js": {
+    "file": "assets/triplanar.vertex-B88kOuyA.js",
+    "name": "triplanar.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/triPlanar/wgsl/triplanar.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/water/water.fragment.js": {
+    "file": "assets/water.fragment-C7gd2qxV.js",
+    "name": "water.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/water/water.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/water/water.vertex.js": {
+    "file": "assets/water.vertex-DknxQvcR.js",
+    "name": "water.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/water/water.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/water/wgsl/water.fragment.js": {
+    "file": "assets/water.fragment-B8FG6ndv.js",
+    "name": "water.fragment",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/water/wgsl/water.fragment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/water/wgsl/water.vertex.js": {
+    "file": "assets/water.vertex-BnAzCFn4.js",
+    "name": "water.vertex",
+    "src": "node_modules/.pnpm/@babylonjs+materials@9.31.0_@babylonjs+core@9.31.0/node_modules/@babylonjs/materials/water/wgsl/water.vertex.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shaderStore-D-XQlhUT.js",
+      "index.html"
+    ]
+  },
+  "src/game/matchApp.ts": {
+    "file": "assets/matchApp-BvxElvDg.js",
+    "name": "matchApp",
+    "src": "src/game/matchApp.ts",
+    "isDynamicEntry": true,
+    "imports": [
+      "_math.vector.pure-Bn4YwtvS.js",
+      "_math.color.pure-DQbGwYYX.js",
+      "_tools.pure-CK5UID_X.js",
+      "index.html",
+      "_tuningPanel-CWT81LSJ.js"
+    ]
+  },
+  "src/sandbox/sandbox.ts": {
+    "file": "assets/sandbox-CQ-qnw2M.js",
+    "name": "sandbox",
+    "src": "src/sandbox/sandbox.ts",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html",
+      "_tuningPanel-CWT81LSJ.js"
+    ]
+  }
+}
