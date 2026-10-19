@@ -31,9 +31,11 @@ e2e/                 Playwright smoke tests + screenshot scripts
 1. Work is captured as **GitHub Issues** (from specs, playtests, or ideas).
 2. Claude picks an issue, works on a branch, opens a **pull request** that says `Fixes #n`.
 3. CI runs on the PR: lint, typecheck, unit tests, build, Playwright smoke test + screenshots.
-4. You review the PR description and screenshots, then merge (or ask for changes).
+   The PR also gets its own **preview link** (posted as a comment, with a QR code for phones):
+   `https://doig80.github.io/fc94/pr-preview/pr-<number>/`.
+4. You play the preview and read the PR description, then merge (or ask for changes).
 5. Merging to `main` deploys to **GitHub Pages** automatically (https://doig80.github.io/fc94/). You playtest from the link.
-   There are no per-PR preview links; PRs show screenshots instead.
+   The main link is the "released" version; previews are removed when their PR closes.
 6. Feedback goes into new issues (template: _Playtest feedback_).
 
 ## GitHub Issues & Projects
@@ -48,11 +50,12 @@ e2e/                 Playwright smoke tests + screenshot scripts
 
 ## CI / CD (GitHub Actions)
 
-| Workflow     | Trigger                        | Steps                                                                                                    |
-| ------------ | ------------------------------ | -------------------------------------------------------------------------------------------------------- |
-| `ci.yml`     | PRs and pushes                 | install → lint → typecheck → unit tests → build → Playwright smoke + screenshots (uploaded as artifacts) |
-| `pages.yml`  | push to `main`                 | build → deploy to GitHub Pages                                                                           |
-| `labels.yml` | change to `.github/labels.yml` | sync labels                                                                                              |
+| Workflow      | Trigger                        | Steps                                                                                                    |
+| ------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| `ci.yml`      | PRs and pushes                 | install → lint → typecheck → unit tests → build → Playwright smoke + screenshots (uploaded as artifacts) |
+| `pages.yml`   | push to `main`                 | build → publish to the root of the `gh-pages` branch (GitHub Pages serves that branch)                   |
+| `preview.yml` | PR opened / updated / closed   | build → publish to `gh-pages/pr-preview/pr-<n>/` and comment the link; remove it when the PR closes      |
+| `labels.yml`  | change to `.github/labels.yml` | sync labels                                                                                              |
 
 ## Playtesting
 
