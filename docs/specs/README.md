@@ -57,3 +57,4 @@ Status values: `Not started` → `Draft` → `Approved` → (`Revised` when a la
 | 2026-10-18 | v1.1 adds preset formations (v1 uses a fixed 4-4-2) and substitutes                                                                                                 |
 | 2026-10-18 | Milestones: Vertical slice (5-a-side, small pitch, keyboard, 1P vs CPU) → Full match (11v11) → Alpha → Beta → v1.0 → v1.1                                           |
 | 2026-10-18 | Every merged PR deploys to Pages for playtesting; v1 launches on GitHub Pages                                                                                       |
+| 2026-10-19 | Every PR gets a playable preview link (gh-pages/pr-preview/pr-<n>/); the main link shows `main`                                                                     |
