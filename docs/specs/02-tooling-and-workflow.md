@@ -12,12 +12,11 @@
 ```
 docs/specs/          specs (source of truth)
 src/
-  sim/               deterministic simulation (no Babylon)
+  sim/               deterministic simulation (no Babylon); all gameplay constants in params.ts
   game/              match app: wires input, simulation and rendering together
   input/             keyboard, gamepad, touch -> intents
   render/            Babylon.js scenes, materials, effects, camera
-  audio/  ui/        sound, menus, HUD
-  tuning/            gameplay constants + tuning panel
+  audio/  ui/        sound, menus, HUD, tuning panel
   looktest/          art-direction look-test (temporary)
   sandbox/           top-down physics debug view (?mode=physics)
 public/assets/       runtime assets (GLB, KTX2, audio)
@@ -32,7 +31,8 @@ e2e/                 Playwright smoke tests + screenshot scripts
 
 1. Work is captured as **GitHub Issues** (from specs, playtests, or ideas).
 2. Claude picks an issue, works on a branch, opens a **pull request** that says `Fixes #n`.
-3. CI runs on the PR: lint, typecheck, unit tests, build, Playwright smoke test + screenshots.
+3. CI runs on the PR: lint, typecheck, unit tests, build, download-size and licence checks, Playwright
+   smoke tests + screenshots of the look-test and the match.
    The PR also gets its own **preview link** (posted as a comment, with a QR code for phones):
    `https://doig80.github.io/fc94/pr-preview/pr-<number>/`.
 4. You play the preview and read the PR description, then merge (or ask for changes).
@@ -46,24 +46,32 @@ e2e/                 Playwright smoke tests + screenshot scripts
 - **Labels** (synced from `.github/labels.yml`):
   `bug`, `feedback`, `idea`, `spec`, `area:gameplay`, `area:graphics`, `area:audio`, `area:ui`,
   `area:infra`, `priority:high`, `priority:low`, `good-first-playtest`.
-- **Milestones:** Look-test → Vertical slice → Alpha → Beta → v1.0.
+- **Milestones:** Look-test → Vertical slice → Full match → Alpha → Beta → v1.0 → v1.1 (see [30](30-milestones.md)).
 - **Projects board** (kanban): _To do → In progress → In review → Done_. Issues are added to it as they're created.
 - Rule: discussions may happen in issues, but **decisions are copied into the specs**.
 
 ## CI / CD (GitHub Actions)
 
-| Workflow      | Trigger                        | Steps                                                                                                    |
-| ------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------- |
-| `ci.yml`      | PRs and pushes                 | install → lint → typecheck → unit tests → build → Playwright smoke + screenshots (uploaded as artifacts) |
-| `pages.yml`   | push to `main`                 | build → publish to the root of the `gh-pages` branch (GitHub Pages serves that branch)                   |
-| `preview.yml` | PR opened / updated / closed   | build → publish to `gh-pages/pr-preview/pr-<n>/` and comment the link; remove it when the PR closes      |
-| `labels.yml`  | change to `.github/labels.yml` | sync labels                                                                                              |
+| Workflow      | Trigger                        | Steps                                                                                                                                                         |
+| ------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ci.yml`      | PRs and pushes                 | install → lint → typecheck → unit tests → build → size + licence checks → Playwright smoke → screenshots of look-test and match (artifact linked from the PR) |
+| `pages.yml`   | push to `main`                 | build → publish to the root of the `gh-pages` branch (GitHub Pages serves that branch)                                                                        |
+| `preview.yml` | PR opened / updated / closed   | build → publish to `gh-pages/pr-preview/pr-<n>/` and comment the link; remove it when the PR closes                                                           |
+| `labels.yml`  | change to `.github/labels.yml` | sync labels                                                                                                                                                   |
 
 ## Playtesting
 
 - Every merge is playable at the Pages URL (desktop and phone).
 - A debug overlay (`?debug=1`) shows fps, renderer (WebGPU/WebGL2), quality preset, draw calls.
 - The Babylon.js Inspector is available in dev builds (`?inspector=1`).
+- **Real-device check** (CI has no GPU, so it only tests WebGL2). At the end of each milestone, the product owner
+  opens the main link with `?debug=1` on a laptop (Chrome or Edge), an iPhone or iPad (Safari) and, if available,
+  an Android phone (Chrome), and for each:
+  1. checks the overlay says **WebGPU** (or WebGL2 on browsers without WebGPU),
+  2. plays one minute, noting stutter or visual glitches,
+  3. reloads with `?renderer=webgl` and compares: both should look the same.
+
+  Anything odd goes into a _Bug_ issue with a screenshot.
 
 ## Tuning panel
 
@@ -89,6 +97,7 @@ Candidates for later: headless Blender (asset processing), an AI 3D/texture gene
 ## Definition of done (any change)
 
 - Lint, typecheck, unit tests and build pass in CI.
-- Visual changes include screenshots in the PR.
+- Visual changes: the PR links the CI screenshots (look-test and match) and says what to look at; Claude also
+  shows the key screenshots in the session.
 - Specs updated if behaviour or decisions changed.
 - New third-party assets are recorded in `assets/LICENSES.md`.

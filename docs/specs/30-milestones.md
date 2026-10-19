@@ -28,22 +28,48 @@ always something to play. Milestones group the work; each ends with a playtest b
 - **Presentation:** score and clock on screen, goal replay (simple). No menus: settings via the URL.
 - **Tuning panel** (`?tune=1`) for all feel values, with copy/paste JSON (see [02](02-tooling-and-workflow.md#tuning-panel)).
 - **Tests:** determinism test (same seed + inputs → same match), physics unit tests, smoke test.
+- **Added after the review (#19):** ball-feel options (aftertouch switch, looser-dribbling slider, ≤ 50 ms
+  input target), set-piece aiming for free kicks and penalties, pause, goalkeeper save types, auto-sprint,
+  juice and readability, automatic CPU-vs-CPU balance tests, download-size and licence checks in CI.
+
+**Build order** (one issue and one preview link each):
+
+| Order | Issue                                           | Contains                                                    |
+| ----- | ----------------------------------------------- | ----------------------------------------------------------- |
+| 1–4   | #9–#12 ✅                                       | Simulation core, physics, 3D match view, keyboard controls  |
+| 5     | [#22](https://github.com/doig80/fc94/issues/22) | Spec updates from the review                                |
+| 6     | [#23](https://github.com/doig80/fc94/issues/23) | CI checks (size, licences, match screenshots) and dev tools |
+| 7     | [#16](https://github.com/doig80/fc94/issues/16) | Tuning panel                                                |
+| 8     | [#24](https://github.com/doig80/fc94/issues/24) | Ball feel: aftertouch, looser dribbling, input-lag target   |
+| 9     | [#14](https://github.com/doig80/fc94/issues/14) | AI, keeper saves, auto-sprint                               |
+| 10    | [#13](https://github.com/doig80/fc94/issues/13) | Match rules, free-kick and penalty aiming                   |
+| 11    | [#15](https://github.com/doig80/fc94/issues/15) | Score, clock, goal replay, pause                            |
+| 12    | [#25](https://github.com/doig80/fc94/issues/25) | Juice and readability, red kit fix                          |
+| 13    | [#26](https://github.com/doig80/fc94/issues/26) | Balance bots: CPU-vs-CPU matches and exploit tests in CI    |
 
 ## 2. Full match (11 v 11)
 
 Full-size pitch and goals, 11 v 11 with a 4-4-2 shape, offside, cards, advantage, extra time + shoot-out
 option, full AI (shape, offside line, crosses), gamepad support, ref character.
 
+Starts with a **character test**: one real player model with retargeted Mixamo animation
+([#27](https://github.com/doig80/fc94/issues/27)), because animation is the top quality risk. Also: perfect-timing
+reward and corner aiming ([#28](https://github.com/doig80/fc94/issues/28)), floodlight pools for night matches
+([#29](https://github.com/doig80/fc94/issues/29)).
+
 ## 3. Alpha
 
 Menus and match settings ([12](12-modes.md)), local multiplayer 2–4, touch controls (1P vs CPU),
-Practice/tutorial, all 24 nations with placeholder kits and flags, weather and time of day affecting the
-match, quality presets, celebrations.
+practice challenges that double as the tutorial ([#30](https://github.com/doig80/fc94/issues/30)), all 24 nations
+with placeholder kits and flags and an automatic kit contrast check ([#31](https://github.com/doig80/fc94/issues/31)),
+weather and time of day affecting the match, quality presets, celebrations.
 
 ## 4. Beta
 
 Final player models and animations, stadium art, kits and flags, crowd and stadium audio, UI polish,
-accessibility pass, performance work (including [#6](https://github.com/doig80/fc94/issues/6)), phone testing.
+accessibility pass, performance work (including the smaller download, [#6](https://github.com/doig80/fc94/issues/6)),
+phone testing, graphics polish: TAA and wet-pitch reflections, grass, animated crowd, light beams on Ultra
+([#32](https://github.com/doig80/fc94/issues/32)).
 
 ## 5. v1.0 launch checklist
 
@@ -53,4 +79,5 @@ browsers ([01 §1](01-platform-and-tech.md#1-platform)) · README and Pages link
 ## 6. v1.1
 
 World tournament ([12](12-modes.md)), **preset formations** to choose from (e.g. 4-4-2, 4-3-3, 3-5-2, 5-3-2),
-**substitutes** (bench, manual and automatic subs, sent-off players not replaced).
+**substitutes** (bench, manual and automatic subs, sent-off players not replaced), **share a goal** as a
+replay link ([#33](https://github.com/doig80/fc94/issues/33)).
