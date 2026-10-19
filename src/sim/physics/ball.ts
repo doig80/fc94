@@ -1,5 +1,5 @@
-import type { SimParams } from "../params";
-import type { MatchState } from "../state";
+import type { BallParams, SimParams } from "../params";
+import type { BallState, MatchState } from "../state";
 import { cross3 } from "../vec";
 import { collideGoals } from "./goal";
 
@@ -7,7 +7,6 @@ import { collideGoals } from "./goal";
 export function stepBall(state: MatchState, params: SimParams, dt: number): void {
   const ball = state.ball;
   const p = params.ball;
-  const prev = { ...ball.pos };
   const onGround = ball.pos.y <= p.radius + 1e-6 && Math.abs(ball.vel.y) < 1e-6;
 
   if (onGround) {
@@ -25,25 +24,37 @@ export function stepBall(state: MatchState, params: SimParams, dt: number): void
     scaleSpin(state, keep > 0 ? keep : 0);
   }
 
-  ball.pos.x += ball.vel.x * dt;
-  ball.pos.y += ball.vel.y * dt;
-  ball.pos.z += ball.vel.z * dt;
-
-  if (ball.pos.y < p.radius) {
-    ball.pos.y = p.radius;
-    if (ball.vel.y < 0) {
-      const up = -ball.vel.y * p.restitution;
-      if (up < p.rollThreshold) {
-        ball.vel.y = 0;
-      } else {
-        ball.vel.y = up;
-        ball.vel.x *= p.bounceFriction;
-        ball.vel.z *= p.bounceFriction;
-      }
-    }
+  // Move in short hops: a full-power shot travels about half a metre per tick, enough to skip clean past a
+  // post, the crossbar or the net if they were only checked once per tick.
+  const vel = ball.vel;
+  const travel = Math.sqrt(vel.x * vel.x + vel.y * vel.y + vel.z * vel.z) * dt;
+  const hops = travel > MAX_HOP ? Math.ceil(travel / MAX_HOP) : 1;
+  const h = dt / hops;
+  for (let i = 0; i < hops; i++) {
+    const prev = { ...ball.pos };
+    ball.pos.x += ball.vel.x * h;
+    ball.pos.y += ball.vel.y * h;
+    ball.pos.z += ball.vel.z * h;
+    bounceOffGround(ball, p);
+    collideGoals(ball, prev, state.pitch, p);
   }
+}
 
-  collideGoals(ball, prev, state.pitch, p);
+/** Longest distance the ball moves between collision checks: well under the thinnest obstacle (the net). */
+const MAX_HOP = 0.08;
+
+function bounceOffGround(ball: BallState, p: BallParams): void {
+  if (ball.pos.y >= p.radius) return;
+  ball.pos.y = p.radius;
+  if (ball.vel.y >= 0) return;
+  const up = -ball.vel.y * p.restitution;
+  if (up < p.rollThreshold) {
+    ball.vel.y = 0;
+  } else {
+    ball.vel.y = up;
+    ball.vel.x *= p.bounceFriction;
+    ball.vel.z *= p.bounceFriction;
+  }
 }
 
 function rollingFriction(state: MatchState, params: SimParams, dt: number): void {

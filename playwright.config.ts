@@ -7,6 +7,8 @@ export default defineConfig({
   testDir: "e2e",
   timeout: 90_000,
   fullyParallel: false,
+  // One browser at a time on CI: software rendering is CPU-bound, and parallel tests starve each other.
+  workers: process.env.CI ? 1 : undefined,
   reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "list",
   use: {
     baseURL: "http://localhost:4173",

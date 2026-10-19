@@ -55,14 +55,14 @@ async function main(): Promise<void> {
   }
 }
 
-// `?mode=match` is the vertical-slice match, `?mode=physics` the top-down physics sandbox.
+// The match is the default page; `?mode=looktest` is the art look-test, `?mode=physics` the physics sandbox.
 const mode = new URLSearchParams(window.location.search).get("mode");
 const start =
   mode === "physics"
     ? import("./sandbox/sandbox").then((m) => m.startSandbox())
-    : mode === "match"
-      ? import("./game/matchApp").then((m) => m.startMatch())
-      : main();
+    : mode === "looktest"
+      ? main()
+      : import("./game/matchApp").then((m) => m.startMatch());
 
 start.catch((err) => {
   console.error(err);

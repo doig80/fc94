@@ -9,7 +9,7 @@ test("look-test boots and renders without errors", async ({ page }) => {
   page.on("console", (m) => {
     if (m.type() === "error" && !m.text().startsWith("Failed to load resource")) errors.push(m.text());
   });
-  await page.goto("./?renderer=webgl&quality=low");
+  await page.goto("./?mode=looktest&renderer=webgl&quality=low");
   await page.waitForFunction(() => window.__looktest?.ready === true, null, { timeout: 60_000 });
   await expect(page.locator("#panel button", { hasText: "Toon" })).toBeVisible();
   await page.locator("#panel button", { hasText: "Toon" }).click();

@@ -36,16 +36,20 @@ export function collideGoals(ball: BallState, prev: Vec3, pitch: PitchSpec, p: B
   }
 }
 
-/** Bounce off a cylinder of radius POST_RADIUS around segment a-b. */
+/**
+ * Bounce off a cylinder of radius POST_RADIUS around segment a-b. The ball is tested as drawn (larger than
+ * its collision size, with its bottom on the ground), so what looks like a hit is a hit.
+ */
 function collideSegment(ball: BallState, a: Vec3, b: Vec3, p: BallParams): void {
+  const lift = p.drawRadius - p.radius;
   const ab = { x: b.x - a.x, y: b.y - a.y, z: b.z - a.z };
-  const ap = { x: ball.pos.x - a.x, y: ball.pos.y - a.y, z: ball.pos.z - a.z };
+  const ap = { x: ball.pos.x - a.x, y: ball.pos.y + lift - a.y, z: ball.pos.z - a.z };
   const lenSq = ab.x * ab.x + ab.y * ab.y + ab.z * ab.z;
   let t = (ap.x * ab.x + ap.y * ab.y + ap.z * ab.z) / lenSq;
   t = t < 0 ? 0 : t > 1 ? 1 : t;
   const d = { x: ap.x - ab.x * t, y: ap.y - ab.y * t, z: ap.z - ab.z * t };
   const dist = Math.sqrt(d.x * d.x + d.y * d.y + d.z * d.z);
-  const minDist = p.radius + POST_RADIUS;
+  const minDist = p.drawRadius + POST_RADIUS;
   if (dist >= minDist || dist < 1e-9) return;
   const n = { x: d.x / dist, y: d.y / dist, z: d.z / dist };
   // Push out of the post, then reflect the velocity component going into it.
@@ -53,6 +57,7 @@ function collideSegment(ball: BallState, a: Vec3, b: Vec3, p: BallParams): void 
   ball.pos.x += n.x * push;
   ball.pos.y += n.y * push;
   ball.pos.z += n.z * push;
+  if (ball.pos.y < p.radius) ball.pos.y = p.radius;
   const vn = ball.vel.x * n.x + ball.vel.y * n.y + ball.vel.z * n.z;
   if (vn < 0) {
     const k = (1 + p.postRestitution) * vn;

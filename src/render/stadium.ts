@@ -12,6 +12,7 @@ import {
 import { Rng } from "../sim/rng";
 import type { SurfaceLibrary } from "./materials";
 import type { PitchSpec } from "../sim/params";
+import { boxesHidingPlay, type Box, type CameraView } from "./occlusion";
 import { pitchMargin } from "./pitch";
 import type { Quality } from "./types";
 
@@ -22,6 +23,8 @@ export interface Stadium {
   lamps: Vector3[];
   /** Ad boards and lamp panels: glow at night. */
   setLampPower(power: number): void;
+  /** Fade out roofs that stand between the camera and the pitch, so they never block the view of play. */
+  fadeOccluders(view: CameraView, dt: number): void;
 }
 
 const TIER_H = 0.75;
@@ -59,6 +62,7 @@ export function buildStadium(scene: Scene, lib: SurfaceLibrary, quality: Quality
   const halfW = pitch.width / 2 + margin + 1.5;
   const casters: Mesh[] = [];
   const receivers: Mesh[] = [];
+  const roofs: Mesh[] = [];
   const crowdMatrices: number[] = [];
   const crowdColors: number[] = [];
   const rng = new Rng(1994);
@@ -119,6 +123,7 @@ export function buildStadium(scene: Scene, lib: SurfaceLibrary, quality: Quality
     roof.parent = pivot;
     lib.assign(roof, "roof");
     casters.push(roof);
+    roofs.push(roof);
 
     // Crowd on every tier, as thin instances (one draw call per stand).
     const rot = Quaternion.RotationAxis(Vector3.Up(), side.rot + Math.PI);
@@ -214,8 +219,28 @@ export function buildStadium(scene: Scene, lib: SurfaceLibrary, quality: Quality
     }
   }
 
+  // Roof outlines in world space, for testing which roofs hide the pitch from the camera.
+  const roofBoxes: Box[] = roofs.map((r) => {
+    (r.parent as Mesh).computeWorldMatrix(true);
+    r.computeWorldMatrix(true);
+    const b = r.getBoundingInfo().boundingBox;
+    return { min: b.minimumWorld.clone(), max: b.maximumWorld.clone() };
+  });
+  // The playing area plus the grass around it: a roof that hides any of it fades out.
+  const playX = pitch.length / 2 + margin;
+  const playZ = pitch.width / 2 + margin;
+
   return {
     shadowCasters: casters,
+    fadeOccluders(view: CameraView, dt: number) {
+      const hidden = boxesHidingPlay(view, roofBoxes, playX, playZ);
+      const k = 1 - Math.exp(-dt * 6);
+      roofs.forEach((roof, i) => {
+        // In the way → nearly invisible; otherwise solid.
+        const goal = hidden[i] ? 0.08 : 1;
+        roof.visibility += (goal - roof.visibility) * k;
+      });
+    },
     receivers,
     lamps,
     setLampPower(power: number) {

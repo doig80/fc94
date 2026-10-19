@@ -20,7 +20,17 @@ export function stepPlayers(
       mx /= mag;
       mz /= mag;
     }
-    const moving = mag > 0.05;
+    // Busy players (sliding, getting up, heading) don't follow the stick.
+    const act = pl.action.kind;
+    const busy =
+      act === "slide" ||
+      act === "recover" ||
+      act === "stumble" ||
+      act === "header" ||
+      act === "bicycle" ||
+      act === "volley";
+    if (busy) mx = mz = 0;
+    const moving = mag > 0.05 && !busy;
 
     const wantsSprint = !!intent?.sprint && moving;
     const sprinting = wantsSprint && pl.stamina >= p.minSprintStamina;
@@ -28,7 +38,15 @@ export function stepPlayers(
 
     let top = sprinting ? p.sprintSpeed : p.runSpeed;
     if (state.ball.owner === i) top *= p.dribbleSpeedFactor;
-    accelerate(pl, mx * top, mz * top, moving ? p.accel : p.decel, dt);
+    if (act === "tackle") top *= 0.5;
+    if (act === "slide") {
+      // A slide can't be steered: it carries on in its direction, slowing down.
+      const k = pl.action.ticks / pl.action.total;
+      pl.vel.x = pl.action.dir.x * params.action.slideSpeed * k;
+      pl.vel.z = pl.action.dir.z * params.action.slideSpeed * k;
+    } else {
+      accelerate(pl, mx * top, mz * top, moving ? p.accel : p.decel, dt);
+    }
 
     if (moving) turn(pl, mx, mz, p.turnRate * dt);
 

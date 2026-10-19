@@ -13,6 +13,71 @@ export interface PlayerState {
   facing: Vec2;
   /** 0..1; sprinting uses it up. */
   stamina: number;
+  /** Buttons held last tick (bit flags, see `Button`), to detect presses and releases. */
+  held: number;
+  /** Ticks the shoot button has been held while on the ball, or -1. */
+  charge: number;
+  /** What the player is busy with; most actions stop normal running for a moment. */
+  action: PlayerAction;
+  /** A pass or shot asked for just before the ball arrived: played first time on the next touch. */
+  queued: QueuedAction | null;
+}
+
+/** `recover` is getting up after a slide; `stumble` is losing balance (failed tackle, being tackled). */
+export type ActionKind =
+  "none" | "tackle" | "slide" | "recover" | "stumble" | "header" | "bicycle" | "volley";
+
+export interface PlayerAction {
+  kind: ActionKind;
+  /** Ticks left. */
+  ticks: number;
+  /** Ticks the action lasts in total. */
+  total: number;
+  /** Direction of a slide or dive. */
+  dir: Vec2;
+}
+
+export interface QueuedAction {
+  kind: "pass" | "shoot";
+  /** Tick after which the request expires. */
+  until: number;
+  /** Stick direction when the button was pressed (aims the pass or shot), or null. */
+  dir: Vec2 | null;
+}
+
+/** Button bit flags for `PlayerState.held`. */
+export const Button = { pass: 1, shoot: 2, lob: 4 } as const;
+
+/** A human player and the footballer they currently control. */
+export interface Controller {
+  team: 0 | 1;
+  player: number;
+  /** No automatic switch before this tick (stops the ring jumping around). */
+  switchLockUntil: number;
+  assists: Assists;
+}
+
+/** Help options (docs/specs/11 §3). */
+export interface Assists {
+  autoSwitch: boolean;
+  aimHelp: boolean;
+  passLead: boolean;
+  autoSprint: boolean;
+}
+
+/** Defaults for Normal difficulty (docs/specs/11 §2). */
+export const NORMAL_ASSISTS: Assists = {
+  autoSwitch: true,
+  aimHelp: false,
+  passLead: true,
+  autoSprint: false,
+};
+
+/** A give-and-go in progress: the receiver plays the ball straight back into the passer's run. */
+export interface OneTwo {
+  passer: number;
+  receiver: number;
+  until: number;
 }
 
 export interface BallState {
@@ -24,8 +89,10 @@ export interface BallState {
   owner: number;
   /** Index of the last player to touch the ball, or -1. */
   lastTouch: number;
-  /** Tick of the last kick (for the kicker's cooldown). */
-  lastKickTick: number;
+  /** `lastTouch` cannot touch the ball again before this tick (stops a kicker re-trapping their own kick). */
+  touchBlockUntil: number;
+  /** The teammate a pass is meant for, or -1. */
+  intendedReceiver: number;
 }
 
 /**
@@ -42,6 +109,9 @@ export interface MatchState {
   half: 1 | 2;
   players: PlayerState[];
   ball: BallState;
+  /** Human players (keyboard, gamepad, touch). Everyone else is run by the AI. */
+  controllers: Controller[];
+  oneTwo: OneTwo | null;
 }
 
 export interface MatchConfig {
@@ -50,6 +120,8 @@ export interface MatchConfig {
   /** Players per team including the goalkeeper. */
   teamSize: number;
   weather?: Weather;
+  /** Which team each human plays for (default: one human on team 0). */
+  humans?: (0 | 1)[];
 }
 
 /** Kick-off formation for one team, as fractions of the half-length (x) and half-width (z), attacking +x. */
@@ -80,6 +152,10 @@ export function createMatch(config: MatchConfig, params: SimParams = DEFAULT_PAR
         vel: { x: 0, z: 0 },
         facing: { x: dir, z: 0 },
         stamina: 1,
+        held: 0,
+        charge: -1,
+        action: { kind: "none", ticks: 0, total: 0, dir: { x: dir, z: 0 } },
+        queued: null,
       });
     });
   }
@@ -97,8 +173,17 @@ export function createMatch(config: MatchConfig, params: SimParams = DEFAULT_PAR
       spin: { x: 0, y: 0, z: 0 },
       owner: -1,
       lastTouch: -1,
-      lastKickTick: -1000,
+      touchBlockUntil: 0,
+      intendedReceiver: -1,
     },
+    controllers: (config.humans ?? [0]).map((team) => ({
+      team,
+      // Start on the most advanced outfield player.
+      player: team * formation.length + formation.length - 1,
+      switchLockUntil: 0,
+      assists: { ...NORMAL_ASSISTS },
+    })),
+    oneTwo: null,
   };
 }
 

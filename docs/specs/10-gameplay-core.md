@@ -58,12 +58,14 @@ Decided in [01 §6](01-platform-and-tech.md#6-physics-decided-custom-arcade-phys
 TypeScript in `src/sim/`, runs at a fixed 60 Hz, and is deterministic.
 
 - **Ball:** a sphere with gravity, air drag, spin (Magnus curve), bounce and rolling friction.
-  Drawn larger than life (0.36 m) so it's easy to follow; collisions use the real 0.22 m size.
+  Drawn larger than life (0.36 m) so it's easy to follow; collisions use the real 0.22 m size, except against
+  the goal frame, which uses the drawn size so a shot that looks like it clips the post does hit it.
 - **Dribbling:** the ball stays "attached" just ahead of the controlling player's feet at low speed;
   sprinting pushes it further ahead (easier to steal).
 - **Players:** capsules with acceleration, top speed, turning rate and sprint stamina _(tune)_.
   They push each other gently; no ragdoll falls except after fouls/slides.
-- **Goal frame:** posts and crossbar bounce the ball; the net absorbs it.
+- **Goal frame:** posts and crossbar bounce the ball; the net absorbs it. Fast balls are moved in short hops
+  (≤ 8 cm) so even a full-power shot can't skip through a post, the bar or the net between two ticks.
 - **Weather effects** (from [00](00-vision.md)): rain → less rolling friction (ball skids);
   snow → more friction and a slightly slower ball. Visual only for players.
 

@@ -8,28 +8,58 @@ export interface PitchSpec {
   goalWidth: number;
   goalHeight: number;
   goalDepth: number;
+  /** Penalty area, measured from the goal line (depth) and across the pitch (total width). */
+  penaltyAreaDepth: number;
+  penaltyAreaWidth: number;
+  /** Goal area ("six-yard box"). */
+  goalAreaDepth: number;
+  goalAreaWidth: number;
+  /** Penalty spot distance from the goal line. */
+  penaltySpot: number;
+  /** Radius of the centre circle; also the radius of the arc ("D") at the edge of the penalty area. */
+  centreCircle: number;
 }
 
-/** Vertical-slice pitch: 5-a-side (docs/specs/30 §1). */
+/**
+ * Vertical-slice pitch: 5-a-side (docs/specs/30 §1). The markings are a miniature of the full-size layout,
+ * so the penalty spot sits inside the box with a "D" beyond it.
+ */
 export const PITCH_5_A_SIDE: PitchSpec = {
   length: 40,
   width: 25,
   goalWidth: 3,
   goalHeight: 2,
   goalDepth: 1.2,
+  penaltyAreaDepth: 6.5,
+  penaltyAreaWidth: 14,
+  goalAreaDepth: 2.2,
+  goalAreaWidth: 6.5,
+  penaltySpot: 4.5,
+  centreCircle: 3.5,
 };
-/** Full-size pitch for 11 v 11 (docs/specs/10 §1). */
+/** Full-size pitch for 11 v 11 (docs/specs/10 §1), standard markings. */
 export const PITCH_FULL: PitchSpec = {
   length: 105,
   width: 68,
   goalWidth: 7.32,
   goalHeight: 2.44,
   goalDepth: 2,
+  penaltyAreaDepth: 16.5,
+  penaltyAreaWidth: 40.32,
+  goalAreaDepth: 5.5,
+  goalAreaWidth: 18.32,
+  penaltySpot: 11,
+  centreCircle: 9.15,
 };
 
 export interface BallParams {
   /** Collision radius (the ball is drawn larger, see docs/specs/10 §5). */
   radius: number;
+  /**
+   * Radius the ball is drawn with: larger than life so it is easy to follow. The goal frame collides with
+   * the ball as drawn, so a shot that looks like it clips the post does hit it.
+   */
+  drawRadius: number;
   gravity: number;
   /** Quadratic air drag: deceleration = airDrag × speed². */
   airDrag: number;
@@ -93,6 +123,67 @@ export interface DribbleParams {
   loseDistance: number;
 }
 
+export interface ActionParams {
+  /** A ground pass is hit so it still has this speed when it reaches the receiver. */
+  passArrivalSpeed: number;
+  passMinSpeed: number;
+  passMaxSpeed: number;
+  /** Teammates within this cone (cosine of the half-angle) of the aim direction are pass candidates. */
+  passConeCos: number;
+  /** Pass-lead assist: how far ahead of a running receiver to aim (1 = exactly where they'll be). */
+  passLead: number;
+  /** Through balls lead the receiver this much more. */
+  throughLead: number;
+  /** Upward speed of a lob and of a cross. */
+  lobLift: number;
+  crossLift: number;
+  /** Lofted balls are hit a bit harder to make up for air drag. */
+  loftDragComp: number;
+  /** Shoot button: ticks to reach full power. */
+  shotChargeTicks: number;
+  shotMinSpeed: number;
+  shotMaxSpeed: number;
+  shotMinLift: number;
+  shotMaxLift: number;
+  /** Above this power the shot rises extra (risk of going over the bar). */
+  overpowerAt: number;
+  overpowerLift: number;
+  /** Spin from steering sideways at the moment of the shot. */
+  curlSpin: number;
+  /** A curled shot is aimed this far outside the target so the curl brings it back. */
+  curlAimOffset: number;
+  /** Power of first-time shots, volleys and headers. */
+  contextShotPower: number;
+  /** A ball this close and this high can be headed or volleyed. */
+  contactReach: number;
+  volleyMinHeight: number;
+  headerMinHeight: number;
+  headerMaxHeight: number;
+  /** How long buttons pressed just before the ball arrives are remembered (first-time passes and shots). */
+  bufferTicks: number;
+  /** A second pass press within this many ticks starts a one-two. */
+  oneTwoWindowTicks: number;
+  oneTwoRunTicks: number;
+  /** Standing tackle. */
+  tackleRange: number;
+  tackleSuccess: number;
+  tackleTicks: number;
+  /** Ball speed when a tackle pokes it away. */
+  tacklePokeSpeed: number;
+  stumbleTicks: number;
+  /** Slide tackle. */
+  slideTicks: number;
+  slideSpeed: number;
+  slideReach: number;
+  slideKnockSpeed: number;
+  slideRecoveryTicks: number;
+  /** Buttons act as attacking buttons when the ball is loose and this close. */
+  attackContextRadius: number;
+  /** Auto-switch only when another teammate is this much closer to the ball. */
+  switchHysteresis: number;
+  switchLockTicks: number;
+}
+
 export interface WeatherParams {
   /** Rolling friction multipliers (docs/specs/10 §5: rain skids, snow slows). */
   rainRollingFactor: number;
@@ -103,12 +194,14 @@ export interface SimParams {
   ball: BallParams;
   player: PlayerParams;
   dribble: DribbleParams;
+  action: ActionParams;
   weather: WeatherParams;
 }
 
 export const DEFAULT_PARAMS: SimParams = {
   ball: {
     radius: 0.11,
+    drawRadius: 0.18,
     gravity: 9.81,
     airDrag: 0.012,
     magnus: 0.025,
@@ -144,6 +237,49 @@ export const DEFAULT_PARAMS: SimParams = {
     stiffness: 12,
     kickCooldownTicks: 15,
     loseDistance: 1.6,
+  },
+  action: {
+    // 8 m/s meets the feel target in docs/specs/10 §8: 10 m in ≤ 1 s, 20 m in ≤ 2 s.
+    passArrivalSpeed: 8,
+    passMinSpeed: 7,
+    passMaxSpeed: 24,
+    passConeCos: 0.45,
+    passLead: 0.8,
+    throughLead: 1.4,
+    lobLift: 8,
+    crossLift: 6.5,
+    loftDragComp: 1.12,
+    shotChargeTicks: 45,
+    shotMinSpeed: 17,
+    shotMaxSpeed: 31,
+    shotMinLift: 1,
+    shotMaxLift: 4,
+    overpowerAt: 0.92,
+    // With the 2 m small-sided goals, an overpowered shot from 8 m or further clears the bar (as drawn).
+    overpowerLift: 6.5,
+    curlSpin: 14,
+    curlAimOffset: 1.2,
+    contextShotPower: 0.6,
+    contactReach: 1.4,
+    volleyMinHeight: 0.45,
+    headerMinHeight: 1.2,
+    headerMaxHeight: 2.6,
+    bufferTicks: 18,
+    oneTwoWindowTicks: 20,
+    oneTwoRunTicks: 120,
+    tackleRange: 1.4,
+    tackleSuccess: 0.6,
+    tackleTicks: 18,
+    tacklePokeSpeed: 4,
+    stumbleTicks: 24,
+    slideTicks: 30,
+    slideSpeed: 9,
+    slideReach: 0.9,
+    slideKnockSpeed: 8,
+    slideRecoveryTicks: 24,
+    attackContextRadius: 3.5,
+    switchHysteresis: 2.5,
+    switchLockTicks: 20,
   },
   weather: {
     rainRollingFactor: 0.65,

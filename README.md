@@ -9,10 +9,13 @@ with cartoon low-poly players under modern lighting and weather.
 - 🎮 Play the latest build: https://doig80.github.io/fc94/ (published from `main`)
 - 🐞 Feedback: open an issue (Bug / Playtest feedback / Idea)
 
-## Look-test
+## Play
 
-Compare the two candidate art styles (Stylised vs Toon) across day/dusk/night and clear/rain/snow.
-Settings are in the URL, so you can share a view, e.g. `?look=toon&time=night&weather=rain&camera=broadcast`.
+The main page is the vertical-slice match: 5-a-side against the CPU on the keyboard (`H` shows the controls).
+Settings are in the URL, e.g. `?weather=rain&time=night&camera=broadcast`.
+
+- `?mode=looktest`: the art-direction look-test (Stylised chosen)
+- `?mode=physics`: top-down physics sandbox (debug view)
 
 ## Development
 
