@@ -1,0 +1,257 @@
+import type { SimParams } from "../sim/params";
+
+/** One tunable value: where it lives in SimParams and how the tuning panel shows it. */
+export interface TuningField {
+  section: keyof SimParams;
+  key: string;
+  label: string;
+  /** "ticks" are shown as seconds (60 ticks = 1 s); "%" values are stored as 0..1. */
+  unit: "m/s" | "m/s²" | "m" | "ticks" | "%" | "×" | "/s" | "";
+  min: number;
+  max: number;
+  step: number;
+  hint?: string;
+}
+
+export interface TuningGroup {
+  title: string;
+  fields: TuningField[];
+}
+
+function field<S extends keyof SimParams>(
+  section: S,
+  key: keyof SimParams[S] & string,
+  label: string,
+  unit: TuningField["unit"],
+  min: number,
+  max: number,
+  step: number,
+  hint?: string,
+): TuningField {
+  return { section, key, label, unit, min, max, step, hint };
+}
+
+/** Every gameplay constant, grouped the way a player thinks about them (docs/specs/02, tuning panel). */
+export const TUNING_GROUPS: TuningGroup[] = [
+  {
+    title: "Passing",
+    fields: [
+      field(
+        "action",
+        "passArrivalSpeed",
+        "Pass speed on arrival",
+        "m/s",
+        2,
+        20,
+        0.5,
+        "How fast a ground pass is still going when it reaches the teammate. Higher = crisper passing",
+      ),
+      field("action", "passMinSpeed", "Slowest pass", "m/s", 2, 20, 0.5),
+      field("action", "passMaxSpeed", "Fastest pass", "m/s", 10, 40, 0.5),
+      field(
+        "action",
+        "passConeCos",
+        "Pass aim width",
+        "",
+        0,
+        0.95,
+        0.05,
+        "Which teammates count as 'in the direction you steer'. Lower = a wider cone, more forgiving",
+      ),
+      field(
+        "action",
+        "passLead",
+        "Pass lead",
+        "×",
+        0,
+        2,
+        0.05,
+        "Pass-lead assist: how far ahead of a running teammate the pass goes (1 = exactly where they'll be)",
+      ),
+      field("action", "throughLead", "Through-ball lead", "×", 0, 3, 0.05),
+      field("action", "lobLift", "Lob height", "m/s", 2, 16, 0.5),
+      field("action", "crossLift", "Cross height", "m/s", 2, 14, 0.5),
+      field(
+        "action",
+        "loftDragComp",
+        "Extra power on lofted balls",
+        "×",
+        1,
+        1.5,
+        0.01,
+        "Makes up for air drag so lobs and crosses still reach their target",
+      ),
+      field(
+        "action",
+        "bufferTicks",
+        "First-time window",
+        "ticks",
+        0,
+        40,
+        1,
+        "Pass or Shoot pressed this long before the ball arrives is played first time",
+      ),
+      field("action", "oneTwoWindowTicks", "One-two double-tap window", "ticks", 4, 40, 1),
+      field("action", "oneTwoRunTicks", "One-two run length", "ticks", 30, 240, 5),
+    ],
+  },
+  {
+    title: "Shooting",
+    fields: [
+      field("action", "shotChargeTicks", "Time to full power", "ticks", 10, 120, 1),
+      field("action", "shotMinSpeed", "Weakest shot", "m/s", 8, 30, 0.5),
+      field("action", "shotMaxSpeed", "Hardest shot", "m/s", 18, 45, 0.5),
+      field("action", "shotMinLift", "Rise on a soft shot", "m/s", 0, 6, 0.1),
+      field("action", "shotMaxLift", "Rise on a hard shot", "m/s", 0, 8, 0.1),
+      field(
+        "action",
+        "overpowerAt",
+        "Overpower starts at",
+        "%",
+        0.5,
+        1,
+        0.01,
+        "Holding Shoot past this point adds extra rise: risk of going over the bar",
+      ),
+      field("action", "overpowerLift", "Overpower extra rise", "m/s", 0, 12, 0.1),
+      field(
+        "action",
+        "curlSpin",
+        "Curl strength",
+        "",
+        0,
+        30,
+        0.5,
+        "Spin from steering sideways when you release Shoot",
+      ),
+      field(
+        "action",
+        "curlAimOffset",
+        "Curl aim offset",
+        "m",
+        0,
+        3,
+        0.05,
+        "A curled shot is aimed this far outside the target so the curl brings it back",
+      ),
+      field("action", "contextShotPower", "Volley and header power", "%", 0.2, 1, 0.05),
+      field("action", "contactReach", "Volley and header reach", "m", 0.5, 3, 0.05),
+      field("action", "volleyMinHeight", "Lowest volley", "m", 0.2, 1.5, 0.05),
+      field("action", "headerMinHeight", "Lowest header", "m", 0.8, 2, 0.05),
+      field("action", "headerMaxHeight", "Highest header", "m", 1.6, 3.5, 0.05),
+    ],
+  },
+  {
+    title: "Tackling",
+    fields: [
+      field("action", "tackleRange", "Tackle reach", "m", 0.5, 3, 0.05),
+      field("action", "tackleSuccess", "Tackle success chance", "%", 0, 1, 0.05),
+      field("action", "tackleTicks", "Tackle duration", "ticks", 6, 40, 1),
+      field("action", "tacklePokeSpeed", "Ball speed after a tackle", "m/s", 0, 10, 0.5),
+      field("action", "stumbleTicks", "Stumble after being tackled", "ticks", 0, 60, 1),
+      field("action", "slideTicks", "Slide duration", "ticks", 10, 60, 1),
+      field("action", "slideSpeed", "Slide speed", "m/s", 4, 14, 0.5),
+      field("action", "slideReach", "Slide reach", "m", 0.3, 2, 0.05),
+      field("action", "slideKnockSpeed", "Ball speed after a slide", "m/s", 2, 16, 0.5),
+      field("action", "slideRecoveryTicks", "Getting up after a slide", "ticks", 0, 60, 1),
+    ],
+  },
+  {
+    title: "Players",
+    fields: [
+      field("player", "runSpeed", "Running speed", "m/s", 3, 10, 0.1),
+      field("player", "sprintSpeed", "Sprint speed", "m/s", 4, 12, 0.1),
+      field("player", "dribbleSpeedFactor", "Speed while dribbling", "%", 0.5, 1, 0.01),
+      field("player", "accel", "Acceleration", "m/s²", 4, 40, 0.5),
+      field("player", "decel", "Braking", "m/s²", 4, 50, 0.5),
+      field("player", "turnRate", "Turning speed", "/s", 2, 30, 0.5),
+      field("player", "staminaDrain", "Stamina used per second of sprint", "%", 0, 1, 0.01),
+      field("player", "staminaRecovery", "Stamina regained per second", "%", 0, 1, 0.01),
+      field("player", "minSprintStamina", "Stamina needed to start a sprint", "%", 0, 0.5, 0.01),
+      field("player", "radius", "Player size (collision)", "m", 0.2, 0.6, 0.01),
+      field("player", "boundsMargin", "Run-off beyond the lines", "m", 0, 5, 0.1),
+    ],
+  },
+  {
+    title: "Ball control and switching",
+    fields: [
+      field("dribble", "distance", "Ball distance when dribbling", "m", 0.2, 1.5, 0.05),
+      field(
+        "dribble",
+        "sprintDistance",
+        "Ball distance when sprinting",
+        "m",
+        0.3,
+        3,
+        0.05,
+        "Further ahead = easier to steal",
+      ),
+      field(
+        "dribble",
+        "stiffness",
+        "How tightly the ball sticks",
+        "/s",
+        2,
+        30,
+        0.5,
+        "Lower = looser touches",
+      ),
+      field("dribble", "controlRadius", "Reach to take the ball", "m", 0.3, 1.5, 0.05),
+      field("dribble", "controlMaxHeight", "Highest ball you can control", "m", 0.2, 1.5, 0.05),
+      field("dribble", "controlMaxRelSpeed", "Fastest ball you can control", "m/s", 2, 25, 0.5),
+      field("dribble", "loseDistance", "Ball lost beyond", "m", 0.8, 4, 0.1),
+      field("dribble", "kickCooldownTicks", "No touch after a kick", "ticks", 0, 40, 1),
+      field(
+        "action",
+        "attackContextRadius",
+        "Loose ball counts as yours within",
+        "m",
+        0.5,
+        8,
+        0.1,
+        "Buttons act as attacking buttons (pass, shoot) when a loose ball is this close",
+      ),
+      field("action", "switchHysteresis", "Auto-switch only if closer by", "m", 0, 8, 0.1),
+      field("action", "switchLockTicks", "Pause between auto-switches", "ticks", 0, 60, 1),
+    ],
+  },
+  {
+    title: "Ball",
+    fields: [
+      field("ball", "gravity", "Gravity", "m/s²", 4, 20, 0.1, "Lower = floatier ball"),
+      field("ball", "airDrag", "Air drag", "", 0, 0.05, 0.001),
+      field("ball", "magnus", "Swerve from spin", "", 0, 0.08, 0.001),
+      field("ball", "spinDecay", "Spin lost per second in the air", "%", 0, 3, 0.05),
+      field("ball", "groundSpinDecay", "Spin lost per second rolling", "%", 0, 10, 0.1),
+      field("ball", "restitution", "Bounciness", "%", 0, 1, 0.01),
+      field("ball", "bounceFriction", "Speed kept on a bounce", "%", 0, 1, 0.01),
+      field("ball", "rollThreshold", "Stops bouncing below", "m/s", 0, 3, 0.05),
+      field("ball", "rollingDecel", "Rolling friction", "m/s²", 0, 8, 0.1),
+      field("ball", "rollingDamping", "Extra friction at speed", "/s", 0, 2, 0.05),
+      field("ball", "postRestitution", "Speed kept off the post", "%", 0, 1, 0.01),
+      field("ball", "netDamping", "Speed kept by the net", "%", 0, 1, 0.01),
+    ],
+  },
+  {
+    title: "Weather",
+    fields: [
+      field(
+        "weather",
+        "rainRollingFactor",
+        "Rolling friction in rain",
+        "×",
+        0.2,
+        1.5,
+        0.05,
+        "Below 1: the ball skids on a wet pitch",
+      ),
+      field("weather", "snowRollingFactor", "Rolling friction in snow", "×", 0.5, 3, 0.05),
+    ],
+  },
+];
+
+/**
+ * Constants that are geometry, not feel: changing them would only make the picture and the physics
+ * disagree, so the panel leaves them out.
+ */
+export const NOT_TUNABLE: string[] = ["ball.radius", "ball.drawRadius"];
