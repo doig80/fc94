@@ -81,7 +81,7 @@ export async function startMatch(): Promise<void> {
   const banner = callBanner();
   const help = controlsHelp();
   const meters = hudMeters(params);
-  const board = scoreboard();
+  const board = scoreboard(params);
   const badge = replayBadge();
   const marker = offscreenMarker();
   const menu = pauseMenu({
@@ -143,7 +143,7 @@ export async function startMatch(): Promise<void> {
     if (!clip) return;
     const goalX = (Math.sign(state.ball.pos.x) * state.pitch.length) / 2;
     // A late winner is shown entirely in slow motion.
-    const slow = isLateWinner(state);
+    const slow = isLateWinner(state, params);
     replay = { player: new ReplayPlayer(clip, params, cpu), goalX, hold: 0, slow };
     badge.querySelector(".label")!.textContent = slow ? "Winning goal" : "";
     badge.hidden = false;
@@ -215,7 +215,7 @@ function newMatch(options: MatchOptions): MatchState {
     pitch: options.teamSize === 5 ? PITCH_5_A_SIDE : PITCH_FULL,
     teamSize: options.teamSize,
     weather: options.weather,
-    rules: { halfTicks: options.halfMinutes * 60 * TICK_RATE, fouls: true },
+    rules: { halfTicks: options.halfMinutes * 60 * TICK_RATE, ...options.rules },
   });
   state.controllers[0].assists = { ...DIFFICULTY[options.difficulty].assists };
   return state;
@@ -250,11 +250,12 @@ function rumble(strength: number, ms: number): void {
   }
 }
 
-/** A goal in the last minutes of the second half that puts the scorer ahead. */
-function isLateWinner(state: MatchState): boolean {
+/** A goal in the last minutes of the second half (or of extra time) that puts the scorer ahead. */
+function isLateWinner(state: MatchState, params: SimParams): boolean {
   const e = state.lastEvent;
-  if (e?.kind !== "goal" || state.half !== 2 || !state.rules) return false;
-  const late = state.clock >= state.rules.halfTicks * 0.85;
+  if (e?.kind !== "goal" || (state.half !== 2 && state.half !== 4) || !state.rules) return false;
+  const length = state.rules.halfTicks * (state.half === 4 ? params.referee.extraTimeShare : 1);
+  const late = state.clock >= length * 0.85;
   const lead = state.score[e.team] - state.score[e.team === 0 ? 1 : 0];
   return late && lead === 1;
 }

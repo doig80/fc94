@@ -275,6 +275,19 @@ export interface RefereeParams {
   foulOnMiss: number;
   /** How fast the stick moves the free-kick and penalty aiming marker. */
   aimSpeed: number;
+  /** Offside only when this far beyond the line: level, or nearly, is onside (the benefit of the doubt). */
+  offsideMargin: number;
+  /**
+   * A foul on a player through on goal (on the ball, this close to goal, no defender goal side but the keeper) is
+   * a red card, or a yellow if it gives away a penalty.
+   */
+  clearRunDistance: number;
+  /** Each half of extra time, as a share of a normal half (15 of 45 minutes). */
+  extraTimeShare: number;
+  /** Pause between the kicks of a penalty shoot-out. */
+  shootoutBreakTicks: number;
+  /** A shoot-out kick that hasn't gone in after this long has missed. */
+  shootoutKickTicks: number;
 }
 
 /**
@@ -461,6 +474,11 @@ export const DEFAULT_PARAMS: SimParams = {
     halftimeTicks: 180,
     foulOnMiss: 0.3,
     aimSpeed: 2.5,
+    offsideMargin: 0.2,
+    clearRunDistance: 30,
+    extraTimeShare: 1 / 3,
+    shootoutBreakTicks: 120,
+    shootoutKickTicks: 150,
   },
   juice: {
     powerShotSpeed: 24,

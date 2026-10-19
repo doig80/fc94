@@ -1,10 +1,10 @@
-import { applyActions, attackSign, pass, playQueued, tickActions } from "./actions";
+import { applyActions, pass, playQueued, tickActions } from "./actions";
 import { updateControl } from "./control";
 import { IDLE, type Intent } from "./intent";
 import type { SimParams } from "./params";
 import { applyAftertouch } from "./physics/ball";
-import type { MatchState } from "./state";
-import { holdDeadBall, holdRestart, pauseTick, referee } from "./rules";
+import { attackSign, type MatchState } from "./state";
+import { holdDeadBall, holdRestart, holdShootout, pauseTick, referee } from "./rules";
 import { DT, step } from "./step";
 
 /**
@@ -32,6 +32,7 @@ export function stepMatch(
   });
   oneTwoRun(state, intents);
   holdRestart(state, intents, params);
+  holdShootout(state, intents);
 
   const assistsFor = (i: number) => state.controllers.find((c) => c.player === i)?.assists ?? null;
   applyActions(state, intents, params, assistsFor);

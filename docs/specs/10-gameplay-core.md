@@ -97,7 +97,26 @@ All rules default **on** at Normal/Hard and can be toggled in match settings.
 | Advantage                      | On                                            | The ref waves play on when the fouled team keeps the ball                               |
 
 **Referee:** a visible ref character on the pitch, **fair and consistent** (no random cards).
-Can be switched to "no ref" for arcade chaos (no fouls or offside at all).
+Can be switched to "no ref" for arcade chaos (no fouls, offside or cards at all).
+
+How each rule is called ([#46](https://github.com/doig80/fc94/issues/46)):
+
+- **Offside** is judged the moment a teammate plays the ball: a player in the opponents' half who is beyond
+  both the ball and the second-last opponent (the keeper counts) is offside if they're the next to touch it.
+  Level is onside, with a 0.2 m margin _(tune)_ in the attacker's favour. Never from a kick-in, corner or goal
+  kick. The defending team gets a free kick where the offside player was, and a yellow line on the grass shows
+  for 3 seconds where the line was. The computer players don't pass to a teammate standing offside, and their
+  runs stop at the line.
+- **Cards** follow fixed rules, the same every time: a foul that stops a player who is through on goal (on the
+  ball, within 30 m _(tune)_, no defender but the keeper goal side) is a **red**, or a yellow if it gives away a
+  penalty; a **slide from behind** is a yellow; other fouls get no card. Two yellows make a red. A sent-off
+  player leaves the pitch and the team plays on with one fewer. Cards show under the referee's call and on the
+  scoreboard.
+- **Must have a winner:** a draw after 90 minutes goes to **extra time**, two halves of 15 minutes (a third of a
+  normal half _(tune)_), then a **penalty shoot-out** at one goal: five kicks each, then sudden death. Forwards
+  take the first kicks, the keeper the last. You take your team's kicks with the aiming marker; keepers stay AI.
+  A ball the taker plays again after a save doesn't count.
+- Until the menus arrive (Alpha), these are URL options: `?offside=0`, `?cards=0`, `?winner=1`, `?ref=0`.
 
 ## 7. Signature moments
 

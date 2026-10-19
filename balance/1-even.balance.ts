@@ -110,6 +110,19 @@ it("an even match plays like football (docs/specs/10 §8)", () => {
         enforced: true,
       },
       {
+        label: "Offsides per match",
+        value: mean(all.map((m) => m.calls.offside ?? 0)),
+        unit: "",
+        enforced: false,
+      },
+      {
+        label: "Yellow cards per match",
+        value: mean(all.map((m) => m.cards.yellow)),
+        unit: "",
+        enforced: false,
+      },
+      { label: "Red cards per match", value: mean(all.map((m) => m.cards.red)), unit: "", enforced: false },
+      {
         label: "Penalties per match",
         value: mean(all.map((m) => m.calls.penalty ?? 0)),
         unit: "",

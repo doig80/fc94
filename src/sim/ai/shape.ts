@@ -1,5 +1,5 @@
-import { attackSign } from "../actions";
-import { FORMATIONS, type MatchState } from "../state";
+import { offsideLine, offsideOn } from "../offside";
+import { attackSign, FORMATIONS, type MatchState } from "../state";
 import { clamp, type Vec2 } from "../vec";
 
 /** A player's line in the team's shape (docs/specs/11 §4), from where they line up at kick-off. */
@@ -43,7 +43,7 @@ export function teamLines(state: MatchState, team: 0 | 1, attacking: boolean): R
 
 /** Outfield players of the other team. */
 function opponents(state: MatchState, team: 0 | 1): Vec2[] {
-  return state.players.filter((p) => p.team !== team && p.role !== "gk").map((p) => p.pos);
+  return state.players.filter((p) => p.team !== team && p.role !== "gk" && !p.sentOff).map((p) => p.pos);
 }
 
 /** Where player `i` stands in the shape: on its line, at its width, shifted towards the ball's side. */
@@ -58,4 +58,12 @@ export function shapeSpot(state: MatchState, i: number, attacking: boolean): Vec
   const width = attacking ? 1.05 : 0.75;
   const z = clamp(base[1] * s * halfW * width + state.ball.pos.z * 0.3, -0.92 * halfW, 0.92 * halfW);
   return { x: x * s, z };
+}
+
+/** `spot` for a player of `team`, held back level with the offside line when offside is on, so runs stay onside. */
+export function keepOnside(state: MatchState, team: 0 | 1, spot: Vec2): Vec2 {
+  if (!offsideOn(state)) return spot;
+  const s = attackSign(state, team);
+  const limit = offsideLine(state, team) - 0.5;
+  return spot.x * s > limit ? { x: limit * s, z: spot.z } : spot;
 }

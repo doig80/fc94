@@ -66,6 +66,8 @@ export class MatchView {
   private readonly stadium: Stadium;
   private readonly weather: WeatherFx;
   private readonly aimMarker: Mesh;
+  /** Where the offside line was when offside was called, shown on the grass for a moment. */
+  private readonly offsideLine: Mesh;
   /** The replay angle shown last frame, to cut (not pan) between angles. */
   private lastShot: CinematicShot["kind"] | null = null;
   private readonly juice: JuiceParams;
@@ -113,6 +115,7 @@ export class MatchView {
     this.ball = buildBall(scene, this.lib);
     this.ballShadow = buildBallShadow(scene);
     this.aimMarker = buildAimMarker(scene);
+    this.offsideLine = buildOffsideLine(scene, initial.pitch.width);
     this.trail = buildTrail(scene, this.ball);
     this.ball.rotationQuaternion = Quaternion.Identity();
 
@@ -186,7 +189,9 @@ export class MatchView {
       const x = lerp(before.pos.x, pl.pos.x);
       const z = lerp(before.pos.z, pl.pos.z);
       const moved = Math.hypot(x - view.root.position.x, z - view.root.position.z);
-      view.root.position.set(x, 0, z);
+      // A sent-off player has left the pitch: out of sight.
+      const gone = pl.sentOff ? -50 : 0;
+      view.root.position.set(x, gone, z);
       // A diving keeper faces the way they dive.
       const diving = pl.action.kind === "dive";
       const fx = diving ? pl.action.dir.x : lerp(before.facing.x, pl.facing.x);
@@ -202,7 +207,11 @@ export class MatchView {
         view.poseAction("kick", 1 - this.kickTimers[i] / KICK_SECONDS);
         this.kickTimers[i] -= dt;
       }
-      this.blobs?.thinInstanceSetMatrixAt(i, Matrix.Translation(x, 0.015, z), i === curr.players.length - 1);
+      this.blobs?.thinInstanceSetMatrixAt(
+        i,
+        Matrix.Translation(x, 0.015 + gone, z),
+        i === curr.players.length - 1,
+      );
     });
     this.squad.update();
 
@@ -235,6 +244,15 @@ export class MatchView {
     const aim = curr.phase.kind === "restart" ? curr.phase.restart.aim : null;
     this.aimMarker.setEnabled(aim !== null);
     if (aim) this.aimMarker.position.set(aim.x, curr.pitch.goalHeight * 0.5, aim.z);
+
+    // Offside: the line across the pitch where it was, fading out.
+    const e = curr.lastEvent;
+    const since = e?.kind === "offside" && e.line !== undefined ? (curr.tick - e.tick) / 60 : Infinity;
+    this.offsideLine.setEnabled(since < OFFSIDE_LINE_SECONDS);
+    if (e?.line !== undefined && since < OFFSIDE_LINE_SECONDS) {
+      this.offsideLine.position.x = e.line;
+      this.offsideLine.visibility = Math.min(1, (OFFSIDE_LINE_SECONDS - since) * 2);
+    }
 
     this.rings.forEach((ring, slot) => {
       const index = controlled[slot] ?? -1;
@@ -329,6 +347,22 @@ function buildAimMarker(scene: Scene): Mesh {
   ring.isPickable = false;
   ring.setEnabled(false);
   return ring;
+}
+
+/** How long the offside line stays on the grass. */
+const OFFSIDE_LINE_SECONDS = 3;
+
+/** A bright strip across the pitch, from touchline to touchline. */
+function buildOffsideLine(scene: Scene, pitchWidth: number): Mesh {
+  const line = MeshBuilder.CreateGround("offsideLine", { width: 0.2, height: pitchWidth }, scene);
+  line.position.y = 0.03;
+  const mat = new StandardMaterial("offsideLineMat", scene);
+  mat.disableLighting = true;
+  mat.emissiveColor = Color3.FromHexString("#ffd23f");
+  line.material = mat;
+  line.isPickable = false;
+  line.setEnabled(false);
+  return line;
 }
 
 /** A soft round shadow under each player (Low quality), one thin instance per player. */

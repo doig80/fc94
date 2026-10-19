@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { parseMatchOptions } from "../src/game/options";
 import { parseOptions, toSearch } from "../src/looktest/options";
 
 describe("look-test options", () => {
@@ -30,5 +31,33 @@ describe("look-test options", () => {
   it("round-trips through the share link", () => {
     const o = parseOptions("?look=toon&time=dusk&weather=snow&quality=low&camera=orbit", false);
     expect(parseOptions(toSearch(o), false)).toEqual(o);
+  });
+});
+
+describe("match options: the rules (docs/specs/10 §6)", () => {
+  it("plays every rule except extra time by default; offside is off on Easy", () => {
+    expect(parseMatchOptions("", false).rules).toEqual({
+      fouls: true,
+      offside: true,
+      cards: true,
+      winner: false,
+    });
+    expect(parseMatchOptions("?difficulty=easy", false).rules.offside).toBe(false);
+    expect(parseMatchOptions("?difficulty=easy&offside=1", false).rules.offside).toBe(true);
+  });
+
+  it("switches each rule from the URL, and no ref turns off fouls, offside and cards", () => {
+    expect(parseMatchOptions("?offside=0&cards=0&winner=1", false).rules).toEqual({
+      fouls: true,
+      offside: false,
+      cards: false,
+      winner: true,
+    });
+    expect(parseMatchOptions("?ref=0&winner=1", false).rules).toEqual({
+      fouls: false,
+      offside: false,
+      cards: false,
+      winner: true,
+    });
   });
 });
