@@ -39,6 +39,12 @@ Three action buttons + sprint, with meanings that depend on whether your team ha
 | Pause      | Start      | `Esc`         | Pause menu                           | Pause menu                            |
 
 - Keyboard player 2 uses the arrow keys + `1` `2` `3` + `0` (numpad), all remappable.
+- **Gamepad** ([#48](https://github.com/doig80/fc94/issues/48)): any standard pad (Xbox, PlayStation and most
+  others) in Chrome, Edge, Firefox and Safari, plugged in or out at any time; the keyboard keeps working
+  alongside it. The left stick is analogue (a small tilt is ignored, a half tilt jogs, and the direction is
+  exact, for finer aiming and curl); the d-pad runs too. RB also sprints, for pads without analogue triggers.
+  Start pauses, Back restarts, Y shows the controls, and A, B or X skip a replay. The controls help switches
+  to pad buttons when a pad is connected. Several pads for local multiplayer come in Alpha.
 - **Context actions** happen automatically, so no extra buttons are needed:
   - Shoot when the ball is at chest/head height → **diving header** or **bicycle kick** (if facing away from goal).
   - Pass or Shoot pressed up to 0.3 s _(tune)_ before the ball reaches you → played **first time**, anywhere on

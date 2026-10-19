@@ -109,7 +109,7 @@ export function callBanner(): { update(s: MatchState): void; hide(): void } {
         sub.textContent = `${TEAMS[e.team].name} · ${scoreText(s)}`;
       if (e.card) sub.textContent = `${e.card.red ? "Red" : "Yellow"} card · ${playerName(s, e.card.player)}`;
       sub.dataset.card = e.card ? (e.card.red ? "red" : "yellow") : "";
-      if (e.kind === "fulltime") sub.textContent += " · R to play again";
+      if (e.kind === "fulltime") sub.textContent += " · R (or Back) to play again";
     },
     hide() {
       el.hidden = true;
@@ -139,18 +139,37 @@ export function hudMeters(params: SimParams): { update(s: MatchState): void } {
   };
 }
 
-export function controlsHelp(): HTMLElement {
-  return element(
-    "controls-help",
-    `<strong>Controls</strong> <span class="muted">(H hides)</span><br>
+const KEYBOARD_HELP = `<strong>Controls</strong> <span class="muted">(H hides)</span><br>
     <kbd>W A S D</kbd> run · <kbd>Space</kbd> sprint<br>
     <b>With the ball:</b> <kbd>J</kbd> pass (tap twice: one-two) · hold <kbd>K</kbd> shoot (steer to curl) ·
     <kbd>L</kbd> lob / cross / through ball<br>
     <b>Just after a shot:</b> steer to bend it · pull back to lift · push on to dip<br>
     <b>Free kicks and penalties:</b> steer to move the yellow ring, hold <kbd>K</kbd> to shoot at it<br>
     <b>Defending:</b> <kbd>J</kbd> switch player · <kbd>K</kbd> tackle · <kbd>L</kbd> slide<br>
-    <kbd>Esc</kbd> pause · <kbd>R</kbd> restart${new URLSearchParams(location.search).has("tune") ? " · <kbd>T</kbd> tuning panel" : ""}`,
-  );
+    <kbd>Esc</kbd> pause · <kbd>R</kbd> restart`;
+
+/** The same, on a pad (docs/specs/10 §3): Xbox buttons, PlayStation in brackets. */
+const PAD_HELP = `<strong>Controls</strong> <span class="muted">(Y hides)</span><br>
+    <kbd>Left stick</kbd> run · <kbd>RT</kbd> (R2) sprint<br>
+    <b>With the ball:</b> <kbd>A</kbd> (✕) pass (tap twice: one-two) · hold <kbd>B</kbd> (○) shoot (steer to curl) ·
+    <kbd>X</kbd> (□) lob / cross / through ball<br>
+    <b>Just after a shot:</b> steer to bend it · pull back to lift · push on to dip<br>
+    <b>Free kicks and penalties:</b> steer to move the yellow ring, hold <kbd>B</kbd> (○) to shoot at it<br>
+    <b>Defending:</b> <kbd>A</kbd> (✕) switch player · <kbd>B</kbd> (○) tackle · <kbd>X</kbd> (□) slide<br>
+    <kbd>Start</kbd> pause · <kbd>Back</kbd> restart`;
+
+/** The controls, for the keyboard or, once a pad is connected, the pad. */
+export function controlsHelp(): HTMLElement & { usePad(on: boolean): void } {
+  const tune = new URLSearchParams(location.search).has("tune") ? " · <kbd>T</kbd> tuning panel" : "";
+  const el = element("controls-help", KEYBOARD_HELP + tune);
+  let pad = false;
+  return Object.assign(el, {
+    usePad(on: boolean) {
+      if (on === pad) return;
+      pad = on;
+      el.innerHTML = on ? PAD_HELP : KEYBOARD_HELP + tune;
+    },
+  });
 }
 
 /** The pause menu (N1): resume, restart, controls. */
