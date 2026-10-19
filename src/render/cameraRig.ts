@@ -3,6 +3,15 @@ import type { PitchSpec } from "../sim/params";
 
 export type MatchCamera = "classic" | "broadcast";
 
+/**
+ * Replay angles (docs/specs/10 §2: cinematic angles only in replays): low from the side, following the ball,
+ * and from behind the goal the ball went into. `goalX` is that goal's position on the x axis.
+ */
+export interface CinematicShot {
+  kind: "side" | "goal";
+  goalX: number;
+}
+
 interface Framing {
   alpha: number;
   beta: number;
@@ -64,6 +73,42 @@ export class CameraRig {
     );
   }
 
+  /** Frame a replay shot; `cut` jumps straight to it (a camera change) instead of easing. */
+  cinematic(shot: CinematicShot, ball: { x: number; y: number; z: number }, dt: number, cut: boolean): void {
+    const scale = this.pitch.length >= 90 ? 1 : 0.62;
+    const k = cut ? 1 : 1 - Math.exp(-dt * 4);
+    const c = this.camera;
+    let alpha: number;
+    let beta: number;
+    let radius: number;
+    let tx: number;
+    let tz: number;
+    let ty: number;
+    if (shot.kind === "side") {
+      alpha = -Math.PI / 2;
+      beta = 1.22;
+      radius = 16 * scale;
+      tx = ball.x;
+      ty = 0.6;
+      tz = ball.z * 0.6;
+    } else {
+      // High behind the goal and a little to one side, looking over the crossbar back up the pitch.
+      const side = shot.goalX > 0 ? 1 : -1;
+      alpha = (side > 0 ? 0 : Math.PI) + 0.55 * side;
+      beta = 1.1;
+      radius = 16 * scale;
+      tx = shot.goalX - side * 8 * scale;
+      ty = 0.9;
+      tz = ball.z * 0.5;
+    }
+    this.target.x += (tx - this.target.x) * k;
+    this.target.z += (tz - this.target.z) * k;
+    c.alpha += (alpha - c.alpha) * k;
+    c.beta += (beta - c.beta) * k;
+    c.radius += (radius - c.radius) * k;
+    c.target.set(this.target.x, ty, this.target.z);
+  }
+
   /** @param snap jump straight to the framing (first frame, after a goal) instead of easing. */
   update(ball: { x: number; z: number; vx: number; vz: number }, dt: number, snap = false): void {
     const f = framing(this.mode, this.pitch);
@@ -79,6 +124,7 @@ export class CameraRig {
     c.beta += (f.beta - c.beta) * k;
     c.radius += (f.radius - c.radius) * k;
     // Move the target in place: setTarget() would keep the camera position and change the angles instead.
+    this.target.y = 0;
     c.target.copyFrom(this.target);
   }
 }
