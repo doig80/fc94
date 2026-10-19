@@ -44,6 +44,8 @@ declare global {
       mode: () => "live" | "paused" | "replay";
       /** How far the replay has got (0..1), or null when none is playing. */
       replayProgress: () => number | null;
+      /** Draw calls in the last frame (docs/specs/01 §4 budget). */
+      drawCalls: () => number;
     };
   }
 }
@@ -92,6 +94,7 @@ export async function startMatch(): Promise<void> {
   let freeze = 0;
   let replayedGoal = -1;
 
+  const drawCalls = new SceneInstrumentation(view.scene).drawCallsCounter;
   window.__match = {
     ready: false,
     renderer,
@@ -99,9 +102,9 @@ export async function startMatch(): Promise<void> {
     params: () => params,
     mode: () => (paused ? "paused" : replay ? "replay" : "live"),
     replayProgress: () => (replay ? replay.player.progress : null),
+    drawCalls: () => drawCalls.current,
   };
   const status = options.debug ? element("debug-overlay") : undefined;
-  const drawCalls = options.debug ? new SceneInstrumentation(view.scene).drawCallsCounter : undefined;
   if (options.inspector) void showInspector(view.scene);
 
   window.addEventListener("keydown", (e) => {
@@ -198,7 +201,7 @@ export async function startMatch(): Promise<void> {
       document.body.dataset.ready = "1";
     }
     if (status && frames % 30 === 0) {
-      const calls = drawCalls?.current ?? 0;
+      const calls = drawCalls.current;
       status.textContent = `${renderer} · ${options.quality} · ${engine.getFps().toFixed(0)} fps · ${calls} draw calls · tick ${state.tick}`;
     }
   });
