@@ -28,7 +28,8 @@ export function stepPlayers(
       act === "stumble" ||
       act === "header" ||
       act === "bicycle" ||
-      act === "volley";
+      act === "volley" ||
+      act === "dive";
     if (busy) mx = mz = 0;
     const moving = mag > 0.05 && !busy;
 
@@ -39,11 +40,12 @@ export function stepPlayers(
     let top = sprinting ? p.sprintSpeed : p.runSpeed;
     if (state.ball.owner === i) top *= p.dribbleSpeedFactor;
     if (act === "tackle") top *= 0.5;
-    if (act === "slide") {
-      // A slide can't be steered: it carries on in its direction, slowing down.
+    if (act === "slide" || act === "dive") {
+      // A slide or dive can't be steered: it carries on in its direction, slowing down.
       const k = pl.action.ticks / pl.action.total;
-      pl.vel.x = pl.action.dir.x * params.action.slideSpeed * k;
-      pl.vel.z = pl.action.dir.z * params.action.slideSpeed * k;
+      const launch = act === "slide" ? params.action.slideSpeed : params.keeper.diveSpeed;
+      pl.vel.x = pl.action.dir.x * launch * k;
+      pl.vel.z = pl.action.dir.z * launch * k;
     } else {
       accelerate(pl, mx * top, mz * top, moving ? p.accel : p.decel, dt);
     }

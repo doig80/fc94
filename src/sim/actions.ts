@@ -1,6 +1,7 @@
 import type { Intent } from "./intent";
 import type { SimParams } from "./params";
 import { kickBall } from "./physics/dribble";
+import { keeperHolds } from "./physics/keeper";
 import { Rng } from "./rng";
 import { Button, type ActionKind, type Assists, type MatchState, type PlayerState } from "./state";
 import { normalize2, type Vec2 } from "./vec";
@@ -53,7 +54,8 @@ export function applyActions(
     const pressed = now & ~pl.held;
     const released = pl.held & ~now;
     pl.held = now;
-    if (pl.action.kind === "slide" || pl.action.kind === "recover" || pl.action.kind === "stumble") {
+    const busy = pl.action.kind;
+    if (busy === "slide" || busy === "recover" || busy === "stumble" || busy === "dive") {
       pl.charge = -1;
       return;
     }
@@ -74,6 +76,11 @@ export function applyActions(
       pl.charge = -1;
     }
 
+    if (pl.role === "gk" && !owns) {
+      // Keepers (always AI) dive instead of sliding.
+      if (pressed & Button.lob) startAction(pl, "dive", params.keeper.diveTicks, move ?? pl.facing);
+      return;
+    }
     if (owns) {
       if (pressed & Button.pass) pass(state, i, move, params, assists, false);
       else if (pressed & Button.lob) lob(state, i, move, params, assists);
@@ -104,6 +111,7 @@ export function tickActions(state: MatchState, params: SimParams): void {
     act.ticks--;
     if (act.ticks > 0) return;
     if (act.kind === "slide") startAction(pl, "recover", a.slideRecoveryTicks, act.dir);
+    else if (act.kind === "dive") startAction(pl, "recover", params.keeper.recoverTicks, act.dir);
     else act.kind = "none";
   });
 }
@@ -338,15 +346,19 @@ export function shoot(
   const side = { x: -toGoal.z, z: toGoal.x };
   const lateral = move ? toGoal.x * move.z - toGoal.z * move.x : 0;
   const gw = state.pitch.goalWidth;
-  let aimZ = side.z * lateral * gw * 0.35 - side.z * lateral * a.curlAimOffset;
+  const p = power < 0 ? 0 : power > 1 ? 1 : power;
+  const speed = a.shotMinSpeed + (a.shotMaxSpeed - a.shotMinSpeed) * p;
+  // Steering sideways picks a spot towards that post (fully sideways: just inside it). The shot is aimed
+  // outside that spot by the curl it will pick up on the way, so the curl brings it back in.
+  const d = Math.abs(goalX - ball.pos.x);
+  const bend = (0.5 * params.ball.magnus * a.curlSpin * Math.abs(lateral) * d * d) / speed;
+  let aimZ = side.z * (lateral * (gw / 2 - 0.35) - Math.sign(lateral) * bend * a.curlAimOffset);
   if (assists?.aimHelp && Math.abs(lateral) < 0.2) {
     // Aim help: the side of the goal away from the keeper.
     const keeper = state.players.find((p) => p.team !== pl.team && p.role === "gk");
     aimZ = (keeper && keeper.pos.z >= 0 ? -1 : 1) * gw * 0.32;
   }
   const dir = normalize2({ x: goalX - ball.pos.x, z: aimZ - ball.pos.z });
-  const p = power < 0 ? 0 : power > 1 ? 1 : power;
-  const speed = a.shotMinSpeed + (a.shotMaxSpeed - a.shotMinSpeed) * p;
   const rise =
     lift ?? a.shotMinLift + (a.shotMaxLift - a.shotMinLift) * p + (p > a.overpowerAt ? a.overpowerLift : 0);
   face(pl, dir);
@@ -408,7 +420,7 @@ export function tackle(state: MatchState, i: number, rng: Rng, params: SimParams
   const a = params.action;
   startAction(pl, "tackle", a.tackleTicks, pl.facing);
   const owner = state.ball.owner;
-  if (owner < 0 || state.players[owner].team === pl.team) return;
+  if (owner < 0 || state.players[owner].team === pl.team || keeperHolds(state)) return;
   const o = state.players[owner];
   const dx = o.pos.x - pl.pos.x;
   const dz = o.pos.z - pl.pos.z;
@@ -436,7 +448,12 @@ function slideContact(state: MatchState, i: number, params: SimParams): void {
   const bdx = ball.pos.x - foot.x;
   const bdz = ball.pos.z - foot.z;
   const ownedByTeammate = ball.owner >= 0 && state.players[ball.owner].team === pl.team;
-  if (!ownedByTeammate && ball.pos.y < 0.5 && bdx * bdx + bdz * bdz < a.slideReach * a.slideReach) {
+  if (
+    !ownedByTeammate &&
+    !keeperHolds(state) &&
+    ball.pos.y < 0.5 &&
+    bdx * bdx + bdz * bdz < a.slideReach * a.slideReach
+  ) {
     const d = pl.action.dir;
     kickBall(state, i, { x: d.x * a.slideKnockSpeed, y: 0.5, z: d.z * a.slideKnockSpeed }, undefined, {
       blockTicks: a.slideTicks,

@@ -1,4 +1,5 @@
 import type { MatchCamera } from "../render/cameraRig";
+import { DIFFICULTIES, type Difficulty } from "../sim";
 import {
   QUALITIES,
   RENDERERS,
@@ -18,6 +19,8 @@ export interface MatchOptions {
   camera: MatchCamera;
   renderer: RendererPref;
   seed: number;
+  /** `?difficulty=easy|normal|hard` (docs/specs/11 §2). */
+  difficulty: Difficulty;
   /** `?debug=1`: renderer, quality, fps and draw calls in a corner overlay. */
   debug: boolean;
   /** `?inspector=1`: open the Babylon.js Inspector. */
@@ -45,6 +48,7 @@ export function parseMatchOptions(search: string, isMobile: boolean): MatchOptio
     camera: pick(["classic", "broadcast"] as const, params.get("camera"), "classic"),
     renderer: pick(RENDERERS, params.get("renderer"), "auto"),
     seed: Number.isFinite(seed) ? seed : 1994,
+    difficulty: pick(DIFFICULTIES, params.get("difficulty"), "normal"),
     debug: flag(params, "debug"),
     inspector: flag(params, "inspector"),
     tune: flag(params, "tune"),

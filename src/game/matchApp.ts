@@ -4,11 +4,14 @@ import { createEngine } from "../render/engine";
 import { showInspector } from "../render/inspector";
 import { MatchView } from "../render/matchView";
 import {
+  aiIntents,
+  applyDifficulty,
   cloneParams,
   cloneState,
   controlledPlayers,
   createMatch,
   DEFAULT_PARAMS,
+  DIFFICULTY,
   DT,
   isInGoal,
   PITCH_5_A_SIDE,
@@ -41,6 +44,7 @@ export async function startMatch(): Promise<void> {
 
   // The live gameplay constants: the tuning panel edits this copy while the match runs.
   const params = cloneParams(DEFAULT_PARAMS);
+  applyDifficulty(params, options.difficulty);
   if (options.tune) mountTuningPanel(params);
   let state = newMatch(options);
   let prev = cloneState(state);
@@ -77,7 +81,7 @@ export async function startMatch(): Promise<void> {
     last = now;
     const alpha = stepper.advance(dt, () => {
       prev = cloneState(state);
-      stepMatch(state, [keyboard.read(view.rig.yaw)], params);
+      stepMatch(state, [keyboard.read(view.rig.yaw)], params, (s) => aiIntents(s, params));
       if (restartIn < 0) {
         const goal = isInGoal(state.ball, state.pitch, params.ball.radius);
         if (goal !== 0 || outOfPlay(state)) {
@@ -108,7 +112,14 @@ export async function startMatch(): Promise<void> {
 }
 
 function newMatch(options: MatchOptions): MatchState {
-  return createMatch({ seed: options.seed, pitch: PITCH_5_A_SIDE, teamSize: 5, weather: options.weather });
+  const state = createMatch({
+    seed: options.seed,
+    pitch: PITCH_5_A_SIDE,
+    teamSize: 5,
+    weather: options.weather,
+  });
+  state.controllers[0].assists = { ...DIFFICULTY[options.difficulty].assists };
+  return state;
 }
 
 function outOfPlay(s: MatchState): boolean {

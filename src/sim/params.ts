@@ -159,7 +159,7 @@ export interface ActionParams {
   overpowerLift: number;
   /** Spin from steering sideways at the moment of the shot. */
   curlSpin: number;
-  /** A curled shot is aimed this far outside the target so the curl brings it back. */
+  /** A curled shot is aimed outside its target by this many times the curl it will pick up, so it bends back in. */
   curlAimOffset: number;
   /** Power of first-time shots, volleys and headers. */
   contextShotPower: number;
@@ -201,6 +201,46 @@ export interface ActionParams {
   aftertouchLift: number;
 }
 
+export interface KeeperParams {
+  /** How far a keeper's hands reach from the body, standing. */
+  reach: number;
+  /** Highest ball a keeper can reach with a jump. */
+  handHeight: number;
+  /** Fastest shot a keeper can hold; harder ones are parried or tipped over. */
+  catchSpeed: number;
+  /** Speed at the start of a dive. */
+  diveSpeed: number;
+  diveTicks: number;
+  /** Getting up after a dive. */
+  recoverTicks: number;
+  /** Speed kept by a parried ball (it always goes wide, never back towards the goal). */
+  parryKeep: number;
+  /** How long the keeper holds a caught ball before playing it. */
+  holdTicks: number;
+}
+
+/** CPU behaviour (docs/specs/11). Defaults are Normal; Easy and Hard override some (ai/difficulty.ts). */
+export interface AiParams {
+  /** Ticks between decisions: the CPU's reaction time. */
+  reactionTicks: number;
+  /** How long after a shot is struck the keeper reacts to it. */
+  keeperReactionTicks: number;
+  /** Random error in CPU passes and shots (0 = perfect). */
+  aimError: number;
+  /** Chance per decision that a CPU defender in range goes for a standing tackle. */
+  tackleChance: number;
+  /** Chance per decision of a slide tackle instead. */
+  slideChance: number;
+  /** Ticks a CPU defender winds up before tackling, so humans can react (docs/specs/11 §4: readable). */
+  telegraphTicks: number;
+  /** The CPU shoots from closer than this (fraction of the pitch length). */
+  shootRange: number;
+  /** How tightly the CPU places curled shots into the far corner (0..1). */
+  shotCurl: number;
+  /** How willing the CPU is to pass to a better-placed teammate rather than keep dribbling (chance per second). */
+  passWillingness: number;
+}
+
 export interface WeatherParams {
   /** Rolling friction multipliers (docs/specs/10 §5: rain skids, snow slows). */
   rainRollingFactor: number;
@@ -212,6 +252,8 @@ export interface SimParams {
   player: PlayerParams;
   dribble: DribbleParams;
   action: ActionParams;
+  keeper: KeeperParams;
+  ai: AiParams;
   weather: WeatherParams;
 }
 
@@ -278,7 +320,7 @@ export const DEFAULT_PARAMS: SimParams = {
     // With the 2 m small-sided goals, an overpowered shot from 8 m or further clears the bar (as drawn).
     overpowerLift: 6.5,
     curlSpin: 14,
-    curlAimOffset: 1.2,
+    curlAimOffset: 1,
     contextShotPower: 0.6,
     contactReach: 1.4,
     volleyMinHeight: 0.45,
@@ -304,6 +346,27 @@ export const DEFAULT_PARAMS: SimParams = {
     aftertouchTicks: 15,
     aftertouchSwerve: 90,
     aftertouchLift: 20,
+  },
+  keeper: {
+    reach: 0.6,
+    handHeight: 2.5,
+    catchSpeed: 18,
+    diveSpeed: 6,
+    diveTicks: 24,
+    recoverTicks: 30,
+    parryKeep: 0.35,
+    holdTicks: 60,
+  },
+  ai: {
+    reactionTicks: 10,
+    keeperReactionTicks: 15,
+    aimError: 0.15,
+    tackleChance: 0.35,
+    slideChance: 0.05,
+    telegraphTicks: 6,
+    shootRange: 0.33,
+    shotCurl: 0.4,
+    passWillingness: 0.35,
   },
   weather: {
     rainRollingFactor: 0.65,

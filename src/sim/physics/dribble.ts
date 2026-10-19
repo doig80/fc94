@@ -105,6 +105,7 @@ export function kickBall(
   ball.lastTouch = kicker;
   ball.touchBlockUntil = state.tick + (options.blockTicks ?? DEFAULT_PARAMS.dribble.kickCooldownTicks);
   ball.intendedReceiver = options.receiver ?? -1;
+  ball.kickedAt = state.tick;
   ball.aftertouchUntil = state.tick + (options.aftertouchTicks ?? 0);
   // The stick that kicked keeps steering, even after control has moved on to another player.
   ball.aftertouchBy = state.controllers.findIndex((c) => c.player === kicker);
