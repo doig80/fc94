@@ -91,6 +91,10 @@ Auto-detected on first launch (GPU tier + a short benchmark), changeable in sett
 | Crowd        | Billboards      | Low-poly instanced       | Animated instanced           | Animated + flags/flares           |
 
 ¹ Many lamps per tower via clustered lighting, on WebGPU and WebGL2 ([#29](https://github.com/doig80/fc94/issues/29)).
+As built: 6 lamps per tower on High and 2 on Low (the game has only these two presets so far), each aimed at its
+own part of the pitch so the beams overlap into pools. Hardware without clustered lighting (WebGL2 without
+float render targets) gets one wide lamp per tower, as before. The toon look keeps its floodlights off: the cel
+shader washes out under them, and the match uses the stylised look.
 TAA, grass, animated crowd and light beams: [#32](https://github.com/doig80/fc94/issues/32).
 
 ## 6. Physics (decided: custom arcade physics)
