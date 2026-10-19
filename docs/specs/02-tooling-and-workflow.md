@@ -63,7 +63,8 @@ e2e/                 Playwright smoke tests + screenshot scripts
 
 - Every merge is playable at the Pages URL (desktop and phone).
 - A debug overlay (`?debug=1`) shows fps, renderer (WebGPU/WebGL2), quality preset, draw calls.
-- The Babylon.js Inspector is available in dev builds (`?inspector=1`).
+- The Babylon.js Inspector is available in dev builds (`pnpm dev`, then `?inspector=1`). Production builds leave it
+  out, so it never adds to the players' download.
 - **Real-device check** (CI has no GPU, so it only tests WebGL2). At the end of each milestone, the product owner
   opens the main link with `?debug=1` on a laptop (Chrome or Edge), an iPhone or iPad (Safari) and, if available,
   an Android phone (Chrome), and for each:
