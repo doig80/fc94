@@ -38,6 +38,7 @@ export class CameraRig {
   readonly camera: ArcRotateCamera;
   private mode: MatchCamera;
   private readonly target = new Vector3();
+  private shakeAmount = 0;
 
   constructor(
     scene: Scene,
@@ -71,6 +72,24 @@ export class CameraRig {
       c.target.y + c.radius * Math.cos(c.beta),
       c.target.z + flat * Math.sin(c.alpha),
     );
+  }
+
+  /** A camera kick (power shots, goals): a short jolt that dies away. */
+  shake(amount: number): void {
+    this.shakeAmount = Math.max(this.shakeAmount, amount);
+  }
+
+  /** Jolt the camera's aim point around its proper place; called after it's framed each frame. */
+  private applyShake(dt: number): void {
+    if (this.shakeAmount < 1e-3) return;
+    const a = this.shakeAmount;
+    const t = this.camera.target;
+    t.set(
+      t.x + (Math.random() * 2 - 1) * a,
+      t.y + (Math.random() * 2 - 1) * a * 0.5,
+      t.z + (Math.random() * 2 - 1) * a,
+    );
+    this.shakeAmount *= Math.exp(-dt * 9);
   }
 
   /** Frame a replay shot; `cut` jumps straight to it (a camera change) instead of easing. */
@@ -107,6 +126,7 @@ export class CameraRig {
     c.beta += (beta - c.beta) * k;
     c.radius += (radius - c.radius) * k;
     c.target.set(this.target.x, ty, this.target.z);
+    this.applyShake(dt);
   }
 
   /** @param snap jump straight to the framing (first frame, after a goal) instead of easing. */
@@ -126,6 +146,7 @@ export class CameraRig {
     // Move the target in place: setTarget() would keep the camera position and change the angles instead.
     this.target.y = 0;
     c.target.copyFrom(this.target);
+    this.applyShake(dt);
   }
 }
 

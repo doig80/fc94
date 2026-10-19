@@ -20,7 +20,15 @@ import {
   type SimParams,
 } from "../sim";
 import { FixedStepper } from "./fixedStepper";
-import { callBanner, controlsHelp, hudMeters, pauseMenu, replayBadge, scoreboard } from "./hud";
+import {
+  callBanner,
+  controlsHelp,
+  hudMeters,
+  offscreenMarker,
+  pauseMenu,
+  replayBadge,
+  scoreboard,
+} from "./hud";
 import { ReplayPlayer, ReplayRecorder } from "./replay";
 import { mountTuningPanel } from "../ui/tuningPanel";
 import { parseMatchOptions, type MatchOptions } from "./options";
@@ -62,7 +70,7 @@ export async function startMatch(): Promise<void> {
   const cpu = options.cpu ? (s: MatchState) => aiIntents(s, params) : undefined;
   let state = newMatch(options);
   let prev = cloneState(state);
-  const view = new MatchView(engine, state, options);
+  const view = new MatchView(engine, state, { ...options, juice: params.juice });
   const keyboard = new KeyboardInput(window);
   const stepper = new FixedStepper(DT);
   const replayStepper = new FixedStepper(DT);
@@ -72,13 +80,16 @@ export async function startMatch(): Promise<void> {
   const meters = hudMeters(params);
   const board = scoreboard();
   const badge = replayBadge();
+  const marker = offscreenMarker();
   const menu = pauseMenu({
     resume: () => setPaused(false),
     restart: () => restart(),
     help: () => (help.hidden = !help.hidden),
   });
   let paused = false;
-  let replay: { player: ReplayPlayer; goalX: number; hold: number } | null = null;
+  let replay: { player: ReplayPlayer; goalX: number; hold: number; slow: boolean } | null = null;
+  /** Seconds the picture stays frozen (hit-stop on power shots and goals). */
+  let freeze = 0;
   let replayedGoal = -1;
 
   window.__match = {
@@ -127,7 +138,10 @@ export async function startMatch(): Promise<void> {
     const clip = recorder.clip(REPLAY_SECONDS, goalTick);
     if (!clip) return;
     const goalX = (Math.sign(state.ball.pos.x) * state.pitch.length) / 2;
-    replay = { player: new ReplayPlayer(clip, params, cpu), goalX, hold: 0 };
+    // A late winner is shown entirely in slow motion.
+    const slow = isLateWinner(state);
+    replay = { player: new ReplayPlayer(clip, params, cpu), goalX, hold: 0, slow };
+    badge.querySelector(".label")!.textContent = slow ? "Winning goal" : "";
     badge.hidden = false;
     banner.hide();
   }
@@ -147,21 +161,27 @@ export async function startMatch(): Promise<void> {
     last = now;
     if (replay) {
       const r = replay.player;
-      const speed = r.progress > SLOW_FROM ? 0.5 : 1;
+      const speed = replay.slow ? 0.4 : r.progress > SLOW_FROM ? 0.5 : 1;
       const alpha = replayStepper.advance(dt * speed, () => r.step());
       const shot = { kind: r.progress < 0.55 ? ("side" as const) : ("goal" as const), goalX: replay.goalX };
       view.render(r.prev, r.state, alpha, dt, [], shot);
       if (r.done && (replay.hold += dt) > 0.8) endReplay();
     } else {
-      const alpha = paused
-        ? 1
-        : stepper.advance(dt, () => {
-            prev = cloneState(state);
-            const intents = [keyboard.read(view.rig.yaw)];
-            recorder.record(state, intents);
-            stepMatch(state, intents, params, cpu);
-          });
+      let alpha = 1;
+      if (freeze > 0) {
+        freeze -= dt;
+      } else if (!paused) {
+        alpha = stepper.advance(dt, () => {
+          prev = cloneState(state);
+          const intents = [keyboard.read(view.rig.yaw)];
+          recorder.record(state, intents);
+          stepMatch(state, intents, params, cpu);
+          freeze = Math.max(freeze, impact(state, params));
+        });
+      }
       view.render(prev, state, alpha, paused ? 0 : dt, controlledPlayers(state));
+      const me = state.players[state.controllers[0].player];
+      marker.update(view.screenPosition(me.pos.x, me.pos.z));
       banner.update(state);
       // A moment into the celebration, show the goal again.
       const e = state.lastEvent;
@@ -195,6 +215,44 @@ function newMatch(options: MatchOptions): MatchState {
   });
   state.controllers[0].assists = { ...DIFFICULTY[options.difficulty].assists };
   return state;
+}
+
+/**
+ * Hit-stop (docs/specs/10 §7): how long to freeze the picture after this tick: a power shot or a goal. Rumbles a
+ * connected gamepad too.
+ */
+function impact(state: MatchState, params: SimParams): number {
+  const j = params.juice;
+  const b = state.ball;
+  if (state.lastEvent?.kind === "goal" && state.lastEvent.tick === state.tick) {
+    rumble(1, 250);
+    return j.hitStopGoalTicks * DT;
+  }
+  const speed = Math.hypot(b.vel.x, b.vel.y, b.vel.z);
+  if (b.owner < 0 && b.kickedAt === state.tick - 1 && speed >= j.powerShotSpeed) {
+    rumble(0.6, 120);
+    return j.hitStopShotTicks * DT;
+  }
+  return 0;
+}
+
+/** Controller rumble, where the browser and the pad support it. */
+function rumble(strength: number, ms: number): void {
+  const pads = typeof navigator.getGamepads === "function" ? navigator.getGamepads() : [];
+  for (const pad of pads) {
+    pad?.vibrationActuator
+      ?.playEffect("dual-rumble", { duration: ms, strongMagnitude: strength, weakMagnitude: strength * 0.6 })
+      .catch(() => {});
+  }
+}
+
+/** A goal in the last minutes of the second half that puts the scorer ahead. */
+function isLateWinner(state: MatchState): boolean {
+  const e = state.lastEvent;
+  if (e?.kind !== "goal" || state.half !== 2 || !state.rules) return false;
+  const late = state.clock >= state.rules.halfTicks * 0.85;
+  const lead = state.score[e.team] - state.score[e.team === 0 ? 1 : 0];
+  return late && lead === 1;
 }
 
 function element(className: string): HTMLElement {

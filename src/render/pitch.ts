@@ -21,7 +21,7 @@ export function buildPitch(
   scene: Scene,
   lib: SurfaceLibrary,
   pitch: PitchSpec,
-): { shadowCasters: Mesh[]; receivers: Mesh[] } {
+): { shadowCasters: Mesh[]; receivers: Mesh[]; nets: Mesh[] } {
   const margin = pitchMargin(pitch);
   const totalL = pitch.length + margin * 2;
   const totalW = pitch.width + margin * 2;
@@ -41,7 +41,9 @@ export function buildPitch(
   ground.receiveShadows = true;
 
   const casters: Mesh[] = [];
-  for (const side of [-1, 1]) casters.push(...buildGoal(scene, lib, pitch, side));
+  // Back nets of the goals at −x and +x, in that order (they bulge when the ball goes in).
+  const nets: Mesh[] = [];
+  for (const side of [-1, 1]) casters.push(...buildGoal(scene, lib, pitch, side, nets));
   for (const x of [-1, 1]) {
     for (const z of [-1, 1]) {
       const pole = MeshBuilder.CreateCylinder(
@@ -62,10 +64,11 @@ export function buildPitch(
       casters.push(pole, flag);
     }
   }
-  return { shadowCasters: casters, receivers: [ground] };
+  return { shadowCasters: casters, receivers: [ground], nets };
 }
 
-function buildGoal(scene: Scene, lib: SurfaceLibrary, pitch: PitchSpec, side: number): Mesh[] {
+/** The goal at `side` (−1 or +1): posts and bar (returned), and the net (its back panel goes in `nets`). */
+function buildGoal(scene: Scene, lib: SurfaceLibrary, pitch: PitchSpec, side: number, nets: Mesh[]): Mesh[] {
   const root = new TransformNode(`goal${side}`, scene);
   root.position.x = (side * pitch.length) / 2;
   root.rotation.y = side > 0 ? 0 : Math.PI;
@@ -107,6 +110,7 @@ function buildGoal(scene: Scene, lib: SurfaceLibrary, pitch: PitchSpec, side: nu
     panel.position.copyFrom(pos);
     panel.rotation.copyFrom(rot);
     lib.assign(panel, "net");
+    if (name === "netBack") nets.push(panel);
     // Nets are deliberately not shadow casters: the shadow map ignores transparency, so a net would
     // cast a solid black shadow over the inside of the goal.
   }

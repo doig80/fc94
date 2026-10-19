@@ -257,6 +257,24 @@ export interface RefereeParams {
   aimSpeed: number;
 }
 
+/**
+ * Game feel ("juice", docs/specs/10 §7): presentation only, the simulation never reads these. They live here so
+ * the tuning panel can adjust them with everything else.
+ */
+export interface JuiceParams {
+  /** A kick at least this fast counts as a power shot. */
+  powerShotSpeed: number;
+  /** The picture freezes for a moment on a power shot and on a goal (hit-stop). */
+  hitStopShotTicks: number;
+  hitStopGoalTicks: number;
+  /** Camera kick strength (0 = off). */
+  shake: number;
+  /** How far the net bulges when the ball hits it (0 = off). */
+  netRipple: number;
+  /** Trail behind fast balls: on (1) or off (0). */
+  trail: number;
+}
+
 export interface WeatherParams {
   /** Rolling friction multipliers (docs/specs/10 §5: rain skids, snow slows). */
   rainRollingFactor: number;
@@ -271,6 +289,7 @@ export interface SimParams {
   keeper: KeeperParams;
   ai: AiParams;
   referee: RefereeParams;
+  juice: JuiceParams;
   weather: WeatherParams;
 }
 
@@ -392,6 +411,14 @@ export const DEFAULT_PARAMS: SimParams = {
     halftimeTicks: 180,
     foulOnMiss: 0.35,
     aimSpeed: 2.5,
+  },
+  juice: {
+    powerShotSpeed: 24,
+    hitStopShotTicks: 4,
+    hitStopGoalTicks: 6,
+    shake: 1,
+    netRipple: 1,
+    trail: 1,
   },
   weather: {
     rainRollingFactor: 0.65,

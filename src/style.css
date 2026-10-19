@@ -444,3 +444,24 @@ body {
   letter-spacing: 0;
   color: var(--muted);
 }
+.replay-badge .label {
+  color: var(--accent);
+}
+.replay-badge .label:empty {
+  display: none;
+}
+.offscreen-marker {
+  position: fixed;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.offscreen-marker[hidden] {
+  display: none;
+}
+.offscreen-marker span {
+  display: block;
+  font-size: 28px;
+  line-height: 1;
+  color: #ffd23f;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
