@@ -1,4 +1,4 @@
-import type { SimParams } from "../params";
+import { skill, type SimParams } from "../params";
 import type { MatchState } from "../state";
 import type { Vec3 } from "../vec";
 
@@ -31,11 +31,11 @@ export function keeperHolds(state: MatchState): boolean {
  */
 export function keeperSaves(state: MatchState, prev: Vec3, params: SimParams): void {
   const ball = state.ball;
-  const k = params.keeper;
   for (let i = 0; i < state.players.length; i++) {
     if (ball.owner >= 0) return;
     const gk = state.players[i];
     if (gk.role !== "gk") continue;
+    const k = skill(params, gk.team).keeper;
     if (i === ball.lastTouch && state.tick < ball.touchBlockUntil) continue;
     const act = gk.action.kind;
     if (act === "recover" || act === "stumble") continue;

@@ -288,7 +288,9 @@ export function createMatch(config: MatchConfig, params: SimParams = DEFAULT_PAR
       slow: 1,
       move: { x: 0, z: 0 },
       sprint: false,
-      nextThink: i % 4,
+      // Teammates spread their first decisions over a few ticks. Both teams use the same schedule: otherwise
+      // one side always decides a tick after its opponents and wins more often (found by the balance runs).
+      nextThink: i % formation.length,
       plan: null,
     })),
     rules: config.rules ?? null,

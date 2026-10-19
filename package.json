@@ -16,6 +16,8 @@
     "test": "vitest run",
     "check:size": "node scripts/check-size.ts",
     "check:licences": "node scripts/check-licences.ts",
+    "balance": "vitest run --config balance/vitest.config.ts",
+    "balance:report": "node scripts/balance-report.ts",
     "e2e": "playwright test",
     "screenshots": "playwright test e2e/screenshots.spec.ts",
     "screenshots:match": "playwright test e2e/match-shots.spec.ts"

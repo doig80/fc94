@@ -281,6 +281,12 @@ export interface WeatherParams {
   snowRollingFactor: number;
 }
 
+/** What difficulty changes (docs/specs/11 §2): how the AI decides and how sharp the keeper is. */
+export interface Skill {
+  ai: AiParams;
+  keeper: KeeperParams;
+}
+
 export interface SimParams {
   ball: BallParams;
   player: PlayerParams;
@@ -291,6 +297,16 @@ export interface SimParams {
   referee: RefereeParams;
   juice: JuiceParams;
   weather: WeatherParams;
+  /**
+   * A team's own AI and keeper values where they differ from `ai` and `keeper` (null: those). Difficulty is
+   * the CPU team's, so the humans' teammates and keeper keep playing at Normal (see `applyDifficulty`).
+   */
+  teamSkill?: [Skill | null, Skill | null];
+}
+
+/** The AI and keeper values `team` plays with. */
+export function skill(params: SimParams, team: 0 | 1): Skill {
+  return params.teamSkill?.[team] ?? params;
 }
 
 export const DEFAULT_PARAMS: SimParams = {

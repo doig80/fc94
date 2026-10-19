@@ -15,14 +15,17 @@ import { normalize2, type Vec2 } from "../vec";
 export function aiIntents(state: MatchState, params: SimParams): Intent[] {
   const rng = new Rng(state.rng);
   const humans = new Set(state.controllers.map((c) => c.player));
+  // Each team thinks with its own difficulty.
+  const teams = [0, 1].map((t) => (params.teamSkill?.[t] ? { ...params, ...params.teamSkill[t] } : params));
   const intents = state.players.map((pl, i) => {
     if (humans.has(i)) return { ...IDLE };
     const mem = state.ai[i];
     if (state.tick >= mem.nextThink) {
-      if (pl.role === "gk") thinkKeeper(state, i, params, rng);
-      else thinkOutfield(state, i, params, rng);
+      const p = teams[pl.team];
+      if (pl.role === "gk") thinkKeeper(state, i, p, rng);
+      else thinkOutfield(state, i, p, rng);
       // Keepers watch all the time; their reaction time applies to shots (see incomingShot).
-      mem.nextThink = state.tick + (pl.role === "gk" ? 2 : params.ai.reactionTicks);
+      mem.nextThink = state.tick + (pl.role === "gk" ? 2 : p.ai.reactionTicks);
     }
     return toIntent(state, i);
   });

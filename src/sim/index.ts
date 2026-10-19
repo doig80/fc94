@@ -1,6 +1,6 @@
 export { attackSign, choosePassTarget, groundPassSpeed } from "./actions";
 export { aiIntents } from "./ai/ai";
-export { applyDifficulty, DIFFICULTIES, DIFFICULTY, type Difficulty } from "./ai/difficulty";
+export { applyDifficulty, DIFFICULTIES, DIFFICULTY, skillFor, type Difficulty } from "./ai/difficulty";
 export { controlledPlayers } from "./control";
 export { IDLE, idleIntents, type Intent } from "./intent";
 export { stepMatch } from "./match";
@@ -9,9 +9,11 @@ export {
   DEFAULT_PARAMS,
   PITCH_5_A_SIDE,
   PITCH_FULL,
+  skill,
   type JuiceParams,
   type PitchSpec,
   type SimParams,
+  type Skill,
 } from "./params";
 export { kickBall } from "./physics/dribble";
 export { isInGoal } from "./physics/goal";

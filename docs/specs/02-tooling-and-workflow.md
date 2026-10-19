@@ -83,6 +83,19 @@ AI reaction time, sprint boost, …) as sliders grouped by category. You can:
 - reset to defaults,
 - **copy settings as JSON** and paste them into an issue — Claude commits them as the new defaults.
 
+## Balance runs
+
+`pnpm balance` plays hundreds of CPU-vs-CPU matches and exploit-bot drills without graphics (about 1½ minutes),
+and checks them against targets ([10 §8](10-gameplay-core.md#8-feel-targets-for-playtesting),
+[11](11-ai.md)). The simulation is deterministic, so the numbers only change when the code or a tuning value
+changes. In CI the `balance` job:
+
+- fails when an **enforced** target is missed (✅ / ❌ in the report),
+- shows **known problems** waiting for a decision as ⚠️ without failing,
+- posts the report on the PR, next to the base branch's numbers, so a tuning change shows its effect.
+
+Targets live in `balance/*.balance.ts`. Changing one is a decision: it's written in the PR and in the spec.
+
 ## Claude Code tooling
 
 | Tool                  | Purpose                                                                          | Set up in                                                 |

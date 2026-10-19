@@ -1,5 +1,5 @@
 import type { Intent } from "../intent";
-import type { SimParams } from "../params";
+import { skill, type SimParams } from "../params";
 import type { MatchState, PlayerState } from "../state";
 import { clamp } from "../vec";
 
@@ -43,7 +43,7 @@ export function stepPlayers(
     if (act === "slide" || act === "dive") {
       // A slide or dive can't be steered: it carries on in its direction, slowing down.
       const k = pl.action.ticks / pl.action.total;
-      const launch = act === "slide" ? params.action.slideSpeed : params.keeper.diveSpeed;
+      const launch = act === "slide" ? params.action.slideSpeed : skill(params, pl.team).keeper.diveSpeed;
       pl.vel.x = pl.action.dir.x * launch * k;
       pl.vel.z = pl.action.dir.z * launch * k;
     } else {
