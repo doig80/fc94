@@ -11,8 +11,9 @@ import {
 } from "@babylonjs/core";
 import { Rng } from "../sim/rng";
 import type { SurfaceLibrary } from "./materials";
-import { PITCH } from "./pitch";
-import type { Quality } from "./options";
+import type { PitchSpec } from "../sim/params";
+import { pitchMargin } from "./pitch";
+import type { Quality } from "./types";
 
 export interface Stadium {
   shadowCasters: Mesh[];
@@ -23,11 +24,14 @@ export interface Stadium {
   setLampPower(power: number): void;
 }
 
-const TIERS = 9;
 const TIER_H = 0.75;
 const TIER_D = 1.15;
 
-export function buildStadium(scene: Scene, lib: SurfaceLibrary, quality: Quality): Stadium {
+export function buildStadium(scene: Scene, lib: SurfaceLibrary, quality: Quality, pitch: PitchSpec): Stadium {
+  // A small-sided pitch gets a compact arena: fewer tiers and shorter floodlight towers.
+  const big = pitch.length >= 90;
+  const TIERS = big ? 9 : 6;
+  const towerHeight = big ? 40 : 24;
   lib.define("concrete", {
     color: Color3.FromHexString("#b9b4aa"),
     roughness: 0.85,
@@ -50,8 +54,9 @@ export function buildStadium(scene: Scene, lib: SurfaceLibrary, quality: Quality
   });
   lib.define("seat", { color: Color3.FromHexString("#2f5d9e"), roughness: 0.6, wettable: 0.8 });
 
-  const halfL = PITCH.length / 2 + PITCH.margin + 1.5;
-  const halfW = PITCH.width / 2 + PITCH.margin + 1.5;
+  const margin = pitchMargin(pitch);
+  const halfL = pitch.length / 2 + margin + 1.5;
+  const halfW = pitch.width / 2 + margin + 1.5;
   const casters: Mesh[] = [];
   const receivers: Mesh[] = [];
   const crowdMatrices: number[] = [];
@@ -163,19 +168,19 @@ export function buildStadium(scene: Scene, lib: SurfaceLibrary, quality: Quality
     texture: adTexture(scene),
     emissive: new Color3(0.4, 0.4, 0.4),
   });
-  const boardOffset = { x: PITCH.length / 2 + 4, z: PITCH.width / 2 + 3 };
+  const boardOffset = { x: pitch.length / 2 + margin * 0.6, z: pitch.width / 2 + margin * 0.45 };
   const boards: Mesh[] = [];
   for (const s of [-1, 1]) {
     const longBoard = MeshBuilder.CreateBox(
       "adboard",
-      { width: PITCH.length, height: 0.9, depth: 0.15 },
+      { width: pitch.length, height: 0.9, depth: 0.15 },
       scene,
     );
     longBoard.position.set(0, 0.45, s * boardOffset.z);
     if (s < 0) longBoard.rotation.y = Math.PI;
     const endBoard = MeshBuilder.CreateBox(
       "adboard",
-      { width: PITCH.width - 20, height: 0.9, depth: 0.15 },
+      { width: pitch.width * 0.7, height: 0.9, depth: 0.15 },
       scene,
     );
     endBoard.position.set(s * boardOffset.x, 0.45, 0);
@@ -192,20 +197,20 @@ export function buildStadium(scene: Scene, lib: SurfaceLibrary, quality: Quality
   const lamps: Vector3[] = [];
   for (const sx of [-1, 1]) {
     for (const sz of [-1, 1]) {
-      const base = new Vector3(sx * (halfL + 9), 0, sz * (halfW + 9));
+      const base = new Vector3(sx * (halfL + (big ? 9 : 5)), 0, sz * (halfW + (big ? 9 : 5)));
       const tower = MeshBuilder.CreateCylinder(
         "tower",
-        { height: 40, diameterTop: 0.7, diameterBottom: 1.6, tessellation: 6 },
+        { height: towerHeight, diameterTop: 0.7, diameterBottom: 1.6, tessellation: 6 },
         scene,
       );
-      tower.position.set(base.x, 20, base.z);
+      tower.position.set(base.x, towerHeight / 2, base.z);
       lib.assign(tower, "steel");
       casters.push(tower);
       const panel = MeshBuilder.CreateBox("lampPanel", { width: 7, height: 3.5, depth: 0.5 }, scene);
-      panel.position.set(base.x, 41, base.z);
+      panel.position.set(base.x, towerHeight + 1, base.z);
       panel.lookAt(new Vector3(0, 0, 0));
       lib.assign(panel, "lamp");
-      lamps.push(new Vector3(base.x * 0.97, 40, base.z * 0.97));
+      lamps.push(new Vector3(base.x * 0.97, towerHeight, base.z * 0.97));
     }
   }
 
@@ -220,10 +225,11 @@ export function buildStadium(scene: Scene, lib: SurfaceLibrary, quality: Quality
   };
 }
 
-let cachedAds: DynamicTexture | undefined;
+const adTextures = new WeakMap<Scene, DynamicTexture>();
 
 function adTexture(scene: Scene): DynamicTexture {
-  if (cachedAds) return cachedAds;
+  const cached = adTextures.get(scene);
+  if (cached) return cached;
   const w = 2048;
   const h = 64;
   const tex = new DynamicTexture("adTex", { width: w, height: h }, scene, true);
@@ -251,6 +257,6 @@ function adTexture(scene: Scene): DynamicTexture {
     ctx.fillText(ad.text, i * segment + segment / 2, h / 2 + 2);
   }
   tex.update();
-  cachedAds = tex;
+  adTextures.set(scene, tex);
   return tex;
 }

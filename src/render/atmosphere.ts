@@ -20,7 +20,7 @@ import {
   Vector3,
   VertexBuffer,
 } from "@babylonjs/core";
-import type { Look, Quality, TimeOfDay, Weather } from "./options";
+import type { Look, Quality, TimeOfDay, Weather } from "./types";
 
 interface Preset {
   skyTop: Color3;

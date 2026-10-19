@@ -27,6 +27,12 @@ export const KITS: Record<string, Kit> = {
     shorts: Color3.FromHexString("#1d1d1d"),
     socks: Color3.FromHexString("#2bb24c"),
   },
+  keeperAway: {
+    id: "keeperAway",
+    shirt: Color3.FromHexString("#ff8c1a"),
+    shorts: Color3.FromHexString("#1d1d1d"),
+    socks: Color3.FromHexString("#ff8c1a"),
+  },
 };
 
 /** A procedurally built low-poly footballer with a simple run cycle (placeholder until real models). */

@@ -1,11 +1,12 @@
 import { AbstractEngine, ArcRotateCamera, Color3, Mesh, Scene, Vector3 } from "@babylonjs/core";
-import { Atmosphere } from "./atmosphere";
-import { SurfaceLibrary } from "./materials";
+import { Atmosphere } from "../render/atmosphere";
+import { SurfaceLibrary } from "../render/materials";
+import { buildPitch } from "../render/pitch";
+import { buildBall, KITS, Player } from "../render/players";
+import { buildStadium, type Stadium } from "../render/stadium";
+import { WeatherFx } from "../render/weather";
+import { PITCH_FULL } from "../sim/params";
 import type { CameraMode, LookTestOptions } from "./options";
-import { buildPitch } from "./pitch";
-import { buildBall, KITS, Player } from "./players";
-import { buildStadium, type Stadium } from "./stadium";
-import { WeatherFx } from "./weather";
 
 const FROZEN_TIME = 3.4;
 const BALL_RADIUS = 0.18;
@@ -44,8 +45,8 @@ export class LookTest {
     this.camera.pinchDeltaPercentage = 0.004;
     this.camera.attachControl(engine.getRenderingCanvas()!, true);
 
-    const pitch = buildPitch(scene, this.lib);
-    this.stadium = buildStadium(scene, this.lib, options.quality);
+    const pitch = buildPitch(scene, this.lib, PITCH_FULL);
+    this.stadium = buildStadium(scene, this.lib, options.quality, PITCH_FULL);
 
     const skin = [
       Color3.FromHexString("#f1c27d"),

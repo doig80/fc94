@@ -1,5 +1,5 @@
 import { AbstractEngine, Engine, WebGPUEngine } from "@babylonjs/core";
-import type { RendererPref } from "./options";
+import type { RendererPref } from "./types";
 
 export interface EngineResult {
   engine: AbstractEngine;
