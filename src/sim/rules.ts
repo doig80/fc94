@@ -226,9 +226,7 @@ function endOfHalf(state: MatchState, params: SimParams): void {
     state.lastEvent = { kind: "extratime", team: 0, tick };
     state.phase = { kind: "halftime", until: tick + params.referee.halftimeTicks };
   } else if (state.half === 4 && level) {
-    state.lastEvent = { kind: "shootout", team: 0, tick };
-    state.phase = { kind: "break", until: tick + params.referee.halftimeTicks };
-    state.shootout = { kicks: [[], []], next: state.firstKickoff, taker: -1, struck: -1 };
+    startShootout(state, params);
   } else {
     state.lastEvent = { kind: "fulltime", team: 0, tick };
     state.phase = { kind: "fulltime" };
@@ -371,6 +369,13 @@ function judgeOffside(state: MatchState, params: SimParams): boolean {
 }
 
 // --- Penalty shoot-out ----------------------------------------------------------------------------------
+
+/** Go to a penalty shoot-out: a pause, then the first kick (`?shootout=1` starts a match here for playtests). */
+export function startShootout(state: MatchState, params: SimParams): void {
+  state.lastEvent = { kind: "shootout", team: 0, tick: state.tick };
+  state.phase = { kind: "break", until: state.tick + params.referee.halftimeTicks };
+  state.shootout = { kicks: [[], []], next: state.firstKickoff, taker: -1, struck: -1 };
+}
 
 /** The shoot-out winner once it can't change any more, else null: best of five kicks each, then sudden death. */
 export function shootoutWinner(so: Shootout): 0 | 1 | null {

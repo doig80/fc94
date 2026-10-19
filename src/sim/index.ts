@@ -20,7 +20,7 @@ export { isInGoal } from "./physics/goal";
 export { inOwnBox, keeperHolds } from "./physics/keeper";
 export { Rng } from "./rng";
 export { inOffsidePosition, offsideLine } from "./offside";
-export { matchMinute, shootoutWinner, startRestart } from "./rules";
+export { matchMinute, shootoutWinner, startRestart, startShootout } from "./rules";
 export {
   attackSign,
   Button,

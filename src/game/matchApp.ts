@@ -15,6 +15,7 @@ import {
   DT,
   PITCH_5_A_SIDE,
   PITCH_FULL,
+  startShootout,
   stepMatch,
   TICK_RATE,
   type MatchState,
@@ -218,6 +219,7 @@ function newMatch(options: MatchOptions): MatchState {
     rules: { halfTicks: options.halfMinutes * 60 * TICK_RATE, ...options.rules },
   });
   state.controllers[0].assists = { ...DIFFICULTY[options.difficulty].assists };
+  if (options.shootout) startShootout(state, DEFAULT_PARAMS);
   return state;
 }
 

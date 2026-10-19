@@ -46,6 +46,11 @@ describe("match options: the rules (docs/specs/10 §6)", () => {
     expect(parseMatchOptions("?difficulty=easy&offside=1", false).rules.offside).toBe(true);
   });
 
+  it("can start straight at a penalty shoot-out, for playtests", () => {
+    expect(parseMatchOptions("", false).shootout).toBe(false);
+    expect(parseMatchOptions("?shootout=1", false).shootout).toBe(true);
+  });
+
   it("switches each rule from the URL, and no ref turns off fouls, offside and cards", () => {
     expect(parseMatchOptions("?offside=0&cards=0&winner=1", false).rules).toEqual({
       fouls: true,

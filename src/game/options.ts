@@ -38,6 +38,8 @@ export interface MatchOptions {
    * shoot-out after a draw) and `?ref=0` (no referee: no fouls, no offside, no cards). Offside is off on Easy.
    */
   rules: { fouls: boolean; offside: boolean; cards: boolean; winner: boolean };
+  /** `?shootout=1` starts straight at a penalty shoot-out (playtesting). */
+  shootout: boolean;
 }
 
 function flag(params: URLSearchParams, name: string): boolean {
@@ -80,5 +82,6 @@ export function parseMatchOptions(search: string, isMobile: boolean): MatchOptio
       cards: ref && onUnless(params, "cards", true),
       winner: flag(params, "winner"),
     },
+    shootout: flag(params, "shootout"),
   };
 }
