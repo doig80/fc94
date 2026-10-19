@@ -118,7 +118,12 @@ Can be switched to "no ref" for arcade chaos (no fouls or offside at all).
 - A first-time player scores against Easy CPU within their first match.
 - Average Normal-difficulty match: 3–6 goals in total. Checked automatically by CPU-vs-CPU balance runs in CI
   ([#26](https://github.com/doig80/fc94/issues/26)), along with pass times and possession balance.
-- Goalkeepers save most long shots but are beatable with curl, power and angles.
+- Goalkeepers save most long shots but are beatable with curl, power and angles: no fixed shot from outside
+  the area scores more than half the time, and long shots sometimes go in.
+- **Flowing play:** 4–8 fouls in a match, and 75–85% of CPU passes reach a teammate, so defenders win the
+  ball by reading play, not only by tackling ([#45](https://github.com/doig80/fc94/issues/45)).
+- **Pace:** the vertical slice felt too fast on the small pitch. It is checked again on the full pitch; if it's
+  still quick, one _game speed_ value slows players and ball together ([#44](https://github.com/doig80/fc94/issues/44)).
 
 ## Out of scope for v1
 
