@@ -40,7 +40,9 @@ Fonts: SIL Open Font License or similar only. Audio: CC0/CC-BY or self-made.
 
 - The repository is **public**. Code is licensed **MIT** (`LICENSE`); third-party assets keep their own
   licences (`assets/LICENSES.md`). Never commit secrets or assets whose licence forbids redistribution.
-- Dependencies must use permissive licences (MIT, Apache-2.0, BSD). Babylon.js is Apache-2.0.
+- Dependencies that ship to players must use permissive licences (MIT, Apache-2.0, BSD, ISC and similar).
+  Build and test tools, which never reach players, may also use file-level copyleft such as MPL-2.0.
+  Babylon.js is Apache-2.0. CI checks both lists on every PR (`pnpm check:licences`).
 
 ## Privacy
 

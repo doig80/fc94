@@ -6,6 +6,8 @@ export default defineConfig({
   build: {
     target: "es2022",
     chunkSizeWarningLimit: 8000,
+    // Read by scripts/check-size.mjs to work out what loads at startup.
+    manifest: true,
   },
   test: {
     include: ["tests/**/*.test.ts"],

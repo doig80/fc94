@@ -18,7 +18,15 @@ export interface MatchOptions {
   camera: MatchCamera;
   renderer: RendererPref;
   seed: number;
+  /** `?debug=1`: renderer, quality, fps and draw calls in a corner overlay. */
   debug: boolean;
+  /** `?inspector=1`: open the Babylon.js Inspector. */
+  inspector: boolean;
+}
+
+function flag(params: URLSearchParams, name: string): boolean {
+  const raw = params.get(name);
+  return raw !== null && raw !== "0" && raw !== "false";
 }
 
 function pick<T extends string>(values: readonly T[], raw: string | null, fallback: T): T {
@@ -28,7 +36,6 @@ function pick<T extends string>(values: readonly T[], raw: string | null, fallba
 export function parseMatchOptions(search: string, isMobile: boolean): MatchOptions {
   const params = new URLSearchParams(search);
   const seed = Number.parseInt(params.get("seed") ?? "", 10);
-  const debug = params.get("debug");
   return {
     time: pick(TIMES, params.get("time"), "day"),
     weather: pick(WEATHERS, params.get("weather"), "clear"),
@@ -36,6 +43,7 @@ export function parseMatchOptions(search: string, isMobile: boolean): MatchOptio
     camera: pick(["classic", "broadcast"] as const, params.get("camera"), "classic"),
     renderer: pick(RENDERERS, params.get("renderer"), "auto"),
     seed: Number.isFinite(seed) ? seed : 1994,
-    debug: debug !== null && debug !== "0" && debug !== "false",
+    debug: flag(params, "debug"),
+    inspector: flag(params, "inspector"),
   };
 }

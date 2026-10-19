@@ -1,5 +1,7 @@
+import { SceneInstrumentation } from "@babylonjs/core";
 import { KeyboardInput } from "../input/keyboard";
 import { createEngine } from "../render/engine";
+import { showInspector } from "../render/inspector";
 import { MatchView } from "../render/matchView";
 import {
   cloneState,
@@ -46,6 +48,8 @@ export async function startMatch(): Promise<void> {
 
   window.__match = { ready: false, renderer, state: () => state };
   const status = options.debug ? overlay("debug-overlay") : undefined;
+  const drawCalls = options.debug ? new SceneInstrumentation(view.scene).drawCallsCounter : undefined;
+  if (options.inspector) void showInspector(view.scene);
 
   window.addEventListener("keydown", (e) => {
     if (e.code === "KeyR") restart();
@@ -90,7 +94,8 @@ export async function startMatch(): Promise<void> {
       document.body.dataset.ready = "1";
     }
     if (status && frames % 30 === 0) {
-      status.textContent = `${renderer} · ${engine.getFps().toFixed(0)} fps · tick ${state.tick}`;
+      const calls = drawCalls?.current ?? 0;
+      status.textContent = `${renderer} · ${options.quality} · ${engine.getFps().toFixed(0)} fps · ${calls} draw calls · tick ${state.tick}`;
     }
   });
   window.addEventListener("resize", () => engine.resize());

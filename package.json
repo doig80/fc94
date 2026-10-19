@@ -14,14 +14,18 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "vitest run",
+    "check:size": "node scripts/check-size.ts",
+    "check:licences": "node scripts/check-licences.ts",
     "e2e": "playwright test",
-    "screenshots": "playwright test e2e/screenshots.spec.ts"
+    "screenshots": "playwright test e2e/screenshots.spec.ts",
+    "screenshots:match": "playwright test e2e/match-shots.spec.ts"
   },
   "dependencies": {
     "@babylonjs/core": "9.31.0",
     "@babylonjs/materials": "9.31.0"
   },
   "devDependencies": {
+    "@babylonjs/inspector": "9.31.0",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.64.1",
     "@types/node": "^22.20.5",
