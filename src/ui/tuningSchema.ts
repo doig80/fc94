@@ -5,8 +5,8 @@ export interface TuningField {
   section: keyof SimParams;
   key: string;
   label: string;
-  /** "ticks" are shown as seconds (60 ticks = 1 s); "%" values are stored as 0..1. */
-  unit: "m/s" | "m/s²" | "m" | "ticks" | "%" | "×" | "/s" | "";
+  /** "ticks" are shown as seconds (60 ticks = 1 s); "%" values are stored as 0..1; "switch" is 0 (off) or 1 (on). */
+  unit: "m/s" | "m/s²" | "m" | "ticks" | "%" | "×" | "/s" | "switch" | "";
   min: number;
   max: number;
   step: number;
@@ -33,6 +33,36 @@ function field<S extends keyof SimParams>(
 
 /** Every gameplay constant, grouped the way a player thinks about them (docs/specs/02, tuning panel). */
 export const TUNING_GROUPS: TuningGroup[] = [
+  {
+    title: "Feel options (being tested)",
+    fields: [
+      field(
+        "action",
+        "aftertouch",
+        "Aftertouch",
+        "switch",
+        0,
+        1,
+        1,
+        "For a moment after a shot, steering still bends the ball; pull back to lift it, push further on to dip it",
+      ),
+      field("action", "aftertouchTicks", "Aftertouch lasts", "ticks", 0, 40, 1),
+      field("action", "aftertouchSwerve", "Aftertouch bend", "", 0, 120, 1),
+      field("action", "aftertouchLift", "Aftertouch lift and dip", "m/s²", 0, 30, 0.5),
+      field(
+        "dribble",
+        "looseness",
+        "Looser dribbling",
+        "%",
+        0,
+        1,
+        0.05,
+        "0 = the ball sticks to your feet; higher = you push it ahead in touches and run onto it (Kick Off style)",
+      ),
+      field("dribble", "touchBoost", "Touch strength (loose dribbling)", "m/s", 0, 10, 0.25),
+      field("dribble", "touchDelayTicks", "Time between touches", "ticks", 2, 40, 1),
+    ],
+  },
   {
     title: "Passing",
     fields: [

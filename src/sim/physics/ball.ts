@@ -1,4 +1,5 @@
 import type { BallParams, SimParams } from "../params";
+import type { Intent } from "../intent";
 import type { BallState, MatchState } from "../state";
 import { cross3 } from "../vec";
 import { collideGoals } from "./goal";
@@ -78,4 +79,39 @@ function scaleSpin(state: MatchState, k: number): void {
   state.ball.spin.x *= k;
   state.ball.spin.y *= k;
   state.ball.spin.z *= k;
+}
+
+/**
+ * Aftertouch (Sensible Soccer style, docs/specs/10 §3): for a moment after a shot, the shooter's stick still
+ * steers the ball. Sideways bends it; pulling back lifts it; pushing on (further than at the kick) dips it.
+ * A player who simply keeps running at goal doesn't change the shot. Passes have none: by then the stick is
+ * already steering the receiver. Only human kicks have aftertouch: `humanIntents[k]` is controller k's stick.
+ */
+export function applyAftertouch(
+  state: MatchState,
+  humanIntents: readonly Intent[],
+  params: SimParams,
+  dt: number,
+): void {
+  const ball = state.ball;
+  if (ball.owner >= 0 || state.tick >= ball.aftertouchUntil || ball.aftertouchBy < 0) return;
+  const move = humanIntents[ball.aftertouchBy];
+  if (!move) return;
+  const v = ball.vel;
+  const speed = Math.sqrt(v.x * v.x + v.z * v.z);
+  if (speed < 1) return;
+  const dx = v.x / speed;
+  const dz = v.z / speed;
+  // Positive spin curves the ball towards (dz, -dx); `side` is how far the stick points that way.
+  const side = move.moveX * dz - move.moveZ * dx;
+  const along = move.moveX * dx + move.moveZ * dz;
+  const a = params.action;
+  ball.spin.y += side * a.aftertouchSwerve * dt;
+  if (along < 0) {
+    v.y -= along * a.aftertouchLift * dt;
+  } else {
+    const atKick = ball.aftertouchStick.x * dx + ball.aftertouchStick.z * dz;
+    const extra = along - (atKick > 0 ? atKick : 0);
+    if (extra > 0 && ball.pos.y > params.ball.radius + 0.05) v.y -= extra * a.aftertouchLift * dt;
+  }
 }

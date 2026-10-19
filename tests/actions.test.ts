@@ -344,6 +344,167 @@ describe("defending", () => {
   });
 });
 
+describe("aftertouch (docs/specs/10 §3)", () => {
+  /** A shot from 14 m straight at goal, then `after` held on the stick for `ticks`. */
+  function shotThen(after: Partial<Intent>, p: SimParams = DEFAULT_PARAMS, ticks = 30): MatchState {
+    const s = setup();
+    onBall(s, 4, L - 14, 0);
+    s.controllers[0].assists.aimHelp = false;
+    tap(s, intent({ shoot: true }), 20, p);
+    run(s, ticks, intent(after), p);
+    return s;
+  }
+
+  it("steering sideways after the shot bends it", () => {
+    const left = shotThen({ moveZ: -1 });
+    const straight = shotThen({});
+    const right = shotThen({ moveZ: 1 });
+    expect(left.ball.pos.z).toBeLessThan(straight.ball.pos.z - 0.3);
+    expect(right.ball.pos.z).toBeGreaterThan(straight.ball.pos.z + 0.3);
+  });
+
+  it("pulling back lifts the ball, pushing on keeps it down", () => {
+    /** Highest point of the shot while `after` is held. */
+    const peak = (after: Partial<Intent>) => {
+      const s = shotThen({}, DEFAULT_PARAMS, 0);
+      let top = 0;
+      for (let t = 0; t < 30; t++) {
+        run(s, 1, intent(after));
+        top = Math.max(top, s.ball.pos.y);
+      }
+      return top;
+    };
+    const straight = peak({});
+    expect(peak({ moveX: -1 })).toBeGreaterThan(straight + 0.3);
+    expect(peak({ moveX: 1 })).toBeLessThan(straight - 0.1);
+  });
+
+  it("leaves the shot alone if you keep running at goal", () => {
+    const shot = (after: Partial<Intent>) => {
+      const s = setup();
+      onBall(s, 4, L - 14, 0);
+      s.controllers[0].assists.aimHelp = false;
+      tap(s, intent({ shoot: true, moveX: 1 }), 20);
+      run(s, 30, intent(after));
+      return s.ball.pos;
+    };
+    expect(shot({ moveX: 1 })).toEqual(shot({}));
+  });
+
+  it("is for shots only: steering the receiver doesn't bend a pass", () => {
+    const passThen = (after: Partial<Intent>) => {
+      const s = setup();
+      onBall(s, 4, 0, 0);
+      s.players[3].pos = { x: 12, z: 0 };
+      tap(s, intent({ pass: true, moveX: 1 }));
+      run(s, 15, intent(after));
+      return s.ball.pos;
+    };
+    expect(passThen({ moveZ: 1 })).toEqual(passThen({ moveZ: -1 }));
+  });
+
+  it("does nothing when switched off", () => {
+    const p = cloneParams(DEFAULT_PARAMS);
+    p.action.aftertouch = 0;
+    expect(shotThen({ moveZ: -1 }, p).ball.pos).toEqual(shotThen({ moveZ: 1 }, p).ball.pos);
+  });
+
+  it("only lasts a moment after the kick", () => {
+    const late = (after: Partial<Intent>) => {
+      const s = shotThen({}, DEFAULT_PARAMS, DEFAULT_PARAMS.action.aftertouchTicks + 1);
+      run(s, 10, intent(after));
+      return s.ball.pos;
+    };
+    expect(late({ moveZ: -1 })).toEqual(late({ moveZ: 1 }));
+  });
+});
+
+describe("looser dribbling (docs/specs/10 §5)", () => {
+  /** Dribble player 4 forward for 1.5 s; returns the biggest gap to the ball and who has it at the end. */
+  function dribble(looseness: number): { maxGap: number; owner: number } {
+    const p = cloneParams(DEFAULT_PARAMS);
+    p.dribble.looseness = looseness;
+    const s = setup();
+    onBall(s, 4, -10, 0);
+    let maxGap = 0;
+    for (let t = 0; t < 90; t++) {
+      run(s, 1, intent({ moveX: 1 }), p);
+      const pl = s.players[4];
+      maxGap = Math.max(maxGap, Math.hypot(s.ball.pos.x - pl.pos.x, s.ball.pos.z - pl.pos.z));
+    }
+    return { maxGap, owner: s.ball.owner };
+  }
+
+  it("keeps the ball at the feet by default", () => {
+    const { maxGap, owner } = dribble(0);
+    expect(maxGap).toBeLessThan(DEFAULT_PARAMS.dribble.distance + 0.3);
+    expect(owner).toBe(4);
+  });
+
+  it("pushes the ball ahead in touches when loose, and the dribbler runs onto it", () => {
+    const { maxGap, owner } = dribble(1);
+    expect(maxGap).toBeGreaterThan(1.2);
+    expect(maxGap).toBeLessThan(DEFAULT_PARAMS.dribble.loseDistance + 1.5);
+    // Either at the feet again or just touched ahead: never lost to anyone else.
+    expect([4, -1]).toContain(owner);
+  });
+});
+
+describe("responsive controls (docs/specs/10 §8: button to kick ≤ 50 ms)", () => {
+  // At 60 ticks per second, 50 ms is 3 ticks. Input is read every tick, so a key press waits at most one tick
+  // before the simulation sees it; the kick itself must then follow within the remaining budget.
+  const BUDGET = 2;
+
+  function ticksUntil(s: MatchState, held: Intent, done: (s: MatchState) => boolean): number {
+    for (let t = 1; t <= 10; t++) {
+      run(s, 1, held);
+      if (done(s)) return t;
+    }
+    return Infinity;
+  }
+  const kicked = (s: MatchState) => s.ball.owner === -1 && Math.hypot(s.ball.vel.x, s.ball.vel.z) > 1;
+
+  it("pass", () => {
+    const s = setup();
+    onBall(s, 4, 0, 0);
+    s.players[3].pos = { x: 8, z: 0 };
+    expect(ticksUntil(s, intent({ pass: true }), kicked)).toBeLessThanOrEqual(BUDGET);
+  });
+
+  it("shot, from releasing Shoot", () => {
+    const s = setup();
+    onBall(s, 4, L - 12, 0);
+    run(s, 20, intent({ shoot: true }));
+    expect(ticksUntil(s, intent(), kicked)).toBeLessThanOrEqual(BUDGET);
+  });
+
+  it("lob", () => {
+    const s = setup();
+    onBall(s, 4, 0, 0);
+    s.players[3].pos = { x: 12, z: 0 };
+    expect(ticksUntil(s, intent({ lob: true }), kicked)).toBeLessThanOrEqual(BUDGET);
+  });
+
+  it("standing and slide tackles", () => {
+    for (const [button, kind] of [
+      ["shoot", "tackle"],
+      ["lob", "slide"],
+    ] as const) {
+      const s = setup();
+      s.players[9].pos = { x: 1.5, z: 0 };
+      s.players[9].facing = { x: -1, z: 0 };
+      s.ball.pos = { x: 1, y: DEFAULT_PARAMS.ball.radius, z: 0 };
+      s.ball.owner = 9;
+      s.players[1].pos = { x: -0.5, z: 0 };
+      s.players[1].facing = { x: 1, z: 0 };
+      s.controllers[0].player = 1;
+      s.controllers[0].assists.autoSwitch = false;
+      const started = (m: MatchState) => m.players[1].action.kind === kind;
+      expect(ticksUntil(s, intent({ [button]: true }), started), kind).toBeLessThanOrEqual(BUDGET);
+    }
+  });
+});
+
 describe("determinism with controls", () => {
   it("identical inputs give identical matches", () => {
     const play = () => {

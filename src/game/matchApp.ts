@@ -171,6 +171,7 @@ function controlsHelp(): HTMLElement {
     <kbd>W A S D</kbd> run · <kbd>Space</kbd> sprint<br>
     <b>With the ball:</b> <kbd>J</kbd> pass (tap twice: one-two) · hold <kbd>K</kbd> shoot (steer to curl) ·
     <kbd>L</kbd> lob / cross / through ball<br>
+    <b>Just after a shot:</b> steer to bend it · pull back to lift · push on to dip<br>
     <b>Defending:</b> <kbd>J</kbd> switch player · <kbd>K</kbd> tackle · <kbd>L</kbd> slide<br>
     <kbd>R</kbd> restart${new URLSearchParams(location.search).has("tune") ? " · <kbd>T</kbd> tuning panel" : ""}`;
   document.body.append(el);

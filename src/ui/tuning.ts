@@ -42,6 +42,7 @@ export function applyChanges(params: SimParams, input: unknown): number {
 
 /** A value as the panel shows it: ticks in seconds, fractions in percent. */
 export function formatValue(f: TuningField, value: number): string {
+  if (f.unit === "switch") return value > 0 ? "on" : "off";
   if (f.unit === "ticks") return `${(value / 60).toFixed(2)} s`;
   if (f.unit === "%") return `${Math.round(value * 100)} %`;
   const decimals = f.step >= 1 ? 0 : f.step >= 0.1 ? 1 : f.step >= 0.01 ? 2 : 3;

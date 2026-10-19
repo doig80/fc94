@@ -56,7 +56,7 @@ export function mountTuningPanel(params: SimParams): void {
     if (f.hint) el.title = f.hint;
     el.innerHTML = `<span class="tuning-label"></span><span class="tuning-value"></span>
       <button type="button" class="tuning-undo" title="Back to default">↺</button>
-      <input type="range" min="${f.min}" max="${f.max}" step="${f.step}" data-key="${f.section}.${f.key}">`;
+      <input type="${f.unit === "switch" ? "checkbox" : "range"}" min="${f.min}" max="${f.max}" step="${f.step}" data-key="${f.section}.${f.key}">`;
     el.querySelector(".tuning-label")!.textContent = f.label;
     const value = el.querySelector<HTMLElement>(".tuning-value")!;
     const slider = el.querySelector("input")!;
@@ -64,11 +64,12 @@ export function mountTuningPanel(params: SimParams): void {
     const update = () => {
       const v = getValue(params, f);
       slider.value = String(v);
+      slider.checked = v > 0;
       value.textContent = formatValue(f, v);
       el.classList.toggle("changed", v !== getValue(defaults, f));
     };
     slider.addEventListener("input", () => {
-      setValue(params, f, Number(slider.value));
+      setValue(params, f, slider.type === "checkbox" ? Number(slider.checked) : Number(slider.value));
       update();
       saved();
     });

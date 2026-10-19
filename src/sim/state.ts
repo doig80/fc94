@@ -93,6 +93,14 @@ export interface BallState {
   touchBlockUntil: number;
   /** The teammate a pass is meant for, or -1. */
   intendedReceiver: number;
+  /** Until this tick the kicker's stick still bends, lifts or dips the ball (aftertouch, docs/specs/10 §3). */
+  aftertouchUntil: number;
+  /** The human controller (index into `controllers`) whose stick steers the ball, or -1. */
+  aftertouchBy: number;
+  /** That stick at the moment of the kick: pushing on only dips the ball if it's pushed further than this. */
+  aftertouchStick: Vec2;
+  /** Tick when `owner` took the ball; looser dribbling pushes it ahead a few ticks later. */
+  ownedSince: number;
 }
 
 /**
@@ -175,6 +183,10 @@ export function createMatch(config: MatchConfig, params: SimParams = DEFAULT_PAR
       lastTouch: -1,
       touchBlockUntil: 0,
       intendedReceiver: -1,
+      aftertouchUntil: 0,
+      aftertouchBy: -1,
+      aftertouchStick: { x: 0, z: 0 },
+      ownedSince: 0,
     },
     controllers: (config.humans ?? [0]).map((team) => ({
       team,
