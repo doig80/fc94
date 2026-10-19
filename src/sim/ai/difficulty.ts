@@ -1,4 +1,4 @@
-import type { AiParams, KeeperParams, SimParams } from "../params";
+import { DEFAULT_PARAMS, type AiParams, type KeeperParams, type SimParams, type Skill } from "../params";
 import type { Assists } from "../state";
 
 export type Difficulty = "easy" | "normal" | "hard";
@@ -50,8 +50,23 @@ export const DIFFICULTY: Record<Difficulty, Preset> = {
   },
 };
 
-/** Apply a difficulty on top of `params` (in place). */
-export function applyDifficulty(params: SimParams, difficulty: Difficulty): void {
+/** The AI and keeper values of a level. */
+export function skillFor(difficulty: Difficulty): Skill {
+  const preset = DIFFICULTY[difficulty];
+  return {
+    ai: { ...DEFAULT_PARAMS.ai, ...preset.ai },
+    keeper: { ...DEFAULT_PARAMS.keeper, ...preset.keeper },
+  };
+}
+
+/**
+ * Make `cpuTeam` play at `difficulty` (in place). Its values go into `params.ai` and `params.keeper`, which the
+ * tuning panel edits, so the panel tunes the opponent; the other team (the humans' teammates and keeper) plays
+ * at Normal whatever the level.
+ */
+export function applyDifficulty(params: SimParams, difficulty: Difficulty, cpuTeam: 0 | 1 = 1): void {
   Object.assign(params.ai, DIFFICULTY[difficulty].ai);
   Object.assign(params.keeper, DIFFICULTY[difficulty].keeper);
+  const normal = skillFor("normal");
+  params.teamSkill = cpuTeam === 1 ? [normal, null] : [null, normal];
 }

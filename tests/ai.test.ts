@@ -11,6 +11,8 @@ import {
   kickBall,
   PITCH_5_A_SIDE,
   Rng,
+  skill,
+  skillFor,
   stepMatch,
   type Difficulty,
   type Intent,
@@ -137,7 +139,19 @@ describe("CPU players (docs/specs/11)", () => {
       expect(p.player).toEqual(DEFAULT_PARAMS.player);
       expect(p.ai).not.toEqual(DEFAULT_PARAMS.ai);
     }
-    expect(paramsFor("normal")).toEqual(DEFAULT_PARAMS);
+    const { teamSkill, ...normal } = paramsFor("normal");
+    expect(normal).toEqual(DEFAULT_PARAMS);
+    expect(teamSkill?.[0]).toEqual({ ai: DEFAULT_PARAMS.ai, keeper: DEFAULT_PARAMS.keeper });
+  });
+
+  it("difficulty is the CPU team's: the human's teammates and keeper play at Normal", () => {
+    for (const d of ["easy", "hard"] as const) {
+      const p = paramsFor(d);
+      expect(skill(p, 0)).toEqual({ ai: DEFAULT_PARAMS.ai, keeper: DEFAULT_PARAMS.keeper });
+      const cpu = skill(p, 1);
+      expect({ ai: cpu.ai, keeper: cpu.keeper }).toEqual(skillFor(d));
+      expect(cpu.keeper).toBe(p.keeper); // the tuning panel tunes the opponent
+    }
   });
 });
 

@@ -32,6 +32,7 @@ Use the Context7 MCP for current Babylon.js/Vite/Playwright APIs instead of rely
 
 - `pnpm dev` — dev server · `pnpm build` — typecheck + production build
 - `pnpm lint` · `pnpm typecheck` · `pnpm test` (Vitest)
+- `pnpm balance` — CPU-vs-CPU balance matches and exploit bots (~1½ min); `pnpm balance:report` prints the table
 - `pnpm check:size` (after a build: startup download vs budget) · `pnpm check:licences` (dependency licences)
 - `pnpm e2e e2e/smoke.spec.ts` — boots the game in headless Chromium
 - Pages: `/` the match (`src/game/matchApp.ts`), `?mode=looktest` the look-test, `?mode=physics` the physics sandbox

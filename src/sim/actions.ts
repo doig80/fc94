@@ -1,5 +1,5 @@
 import type { Intent } from "./intent";
-import type { SimParams } from "./params";
+import { skill, type SimParams } from "./params";
 import { kickBall } from "./physics/dribble";
 import { keeperHolds } from "./physics/keeper";
 import { Rng } from "./rng";
@@ -78,7 +78,8 @@ export function applyActions(
 
     if (pl.role === "gk" && !owns) {
       // Keepers (always AI) dive instead of sliding.
-      if (pressed & Button.lob) startAction(pl, "dive", params.keeper.diveTicks, move ?? pl.facing);
+      if (pressed & Button.lob)
+        startAction(pl, "dive", skill(params, pl.team).keeper.diveTicks, move ?? pl.facing);
       return;
     }
     if (owns) {
@@ -111,7 +112,8 @@ export function tickActions(state: MatchState, params: SimParams): void {
     act.ticks--;
     if (act.ticks > 0) return;
     if (act.kind === "slide") startAction(pl, "recover", a.slideRecoveryTicks, act.dir);
-    else if (act.kind === "dive") startAction(pl, "recover", params.keeper.recoverTicks, act.dir);
+    else if (act.kind === "dive")
+      startAction(pl, "recover", skill(params, pl.team).keeper.recoverTicks, act.dir);
     else act.kind = "none";
   });
 }

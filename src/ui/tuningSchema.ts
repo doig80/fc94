@@ -263,7 +263,7 @@ export const TUNING_GROUPS: TuningGroup[] = [
     ],
   },
   {
-    title: "Computer players",
+    title: "Computer team (your teammates play at Normal)",
     fields: [
       field(
         "ai",
@@ -321,7 +321,7 @@ export const TUNING_GROUPS: TuningGroup[] = [
     ],
   },
   {
-    title: "Goalkeepers",
+    title: "Computer team's goalkeeper",
     fields: [
       field("ai", "keeperReactionTicks", "Reaction to a shot", "ticks", 0, 40, 1),
       field(
