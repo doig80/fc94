@@ -48,8 +48,9 @@ Three action buttons + sprint, with meanings that depend on whether your team ha
   the teammate you're facing. So you can pass sideways without turning first.
 - **Curl & power shots:** holding Shoot fills a power bar; the direction you steer at the moment you
   **release** Shoot curls the ball. Overpowering sends it over the bar.
-- **Aftertouch** (option being tested, [#24](https://github.com/doig80/fc94/issues/24)): for a split second
-  after a shot or pass, steering still bends the ball or lifts and drops it, as in Sensible Soccer.
+- **Aftertouch** (on by default, switchable while being tested, [#24](https://github.com/doig80/fc94/issues/24)):
+  for a split second after a **shot**, steering still bends the ball, pulling back lifts it and pushing further
+  on dips it, as in Sensible Soccer. Passes have none, because by then the stick steers the receiver.
 - **Touch (phone, 1P vs CPU):** virtual stick on the left; Pass / Shoot / Lob + Sprint buttons on the right.
 - Every binding is **remappable**; settings remember the player's choice.
 
