@@ -11,6 +11,7 @@ import {
   type Assists,
   type MatchState,
   type PlayerState,
+  type QueuedAction,
 } from "./state";
 import { normalize2, type Vec2 } from "./vec";
 
@@ -93,7 +94,8 @@ export function applyActions(
     }
     if (attacking) {
       if (pressed & Button.shoot) {
-        if (!contactShot(state, i, move, params, assists)) queue(state, pl, "shoot", move, params);
+        // Pressed with the ball in reach: struck at once, so the timing is perfect.
+        if (!contactShot(state, i, move, params, assists, true)) queue(state, pl, "shoot", move, params);
       }
       if (pressed & Button.pass && !startOneTwo(state, i, params)) queue(state, pl, "pass", move, params);
       return;
@@ -136,7 +138,9 @@ export function playQueued(
     const i = state.ball.intendedReceiver;
     const q = i >= 0 ? state.players[i].queued : null;
     if (q?.kind !== "shoot" || state.tick > q.until || state.players[i].action.kind !== "none") return;
-    if (contactShot(state, i, q.dir, params, assistsFor(i))) state.players[i].queued = null;
+    if (contactShot(state, i, q.dir, params, assistsFor(i), perfectTiming(state, q, params))) {
+      state.players[i].queued = null;
+    }
     return;
   }
   const pl = state.players[owner];
@@ -145,7 +149,28 @@ export function playQueued(
   if (!q || state.tick > q.until) return;
   const dir = q.dir ?? { ...pl.facing };
   if (q.kind === "pass") pass(state, owner, dir, params, assistsFor(owner), false);
-  else shoot(state, owner, params.action.contextShotPower, q.dir, params, assistsFor(owner));
+  else firstTimeShot(state, owner, q.dir, params, assistsFor(owner), perfectTiming(state, q, params));
+}
+
+/** Was Shoot pressed only a moment before the ball arrived (M4)? Pressed early still works, but isn't perfect. */
+function perfectTiming(state: MatchState, q: QueuedAction, params: SimParams): boolean {
+  const pressedAt = q.until - params.action.bufferTicks;
+  return state.tick - pressedAt <= params.action.perfectTicks;
+}
+
+/** A first-time shot, volley or header; "Perfect" timing adds power and shows a flash. */
+function firstTimeShot(
+  state: MatchState,
+  i: number,
+  move: Vec2 | null,
+  params: SimParams,
+  assists: Assists | null,
+  perfect: boolean,
+  lift?: number,
+): void {
+  const a = params.action;
+  shoot(state, i, a.contextShotPower + (perfect ? a.perfectBonus : 0), move, params, assists, lift);
+  if (perfect) state.lastPerfect = { player: i, tick: state.tick };
 }
 
 // --- Passing -------------------------------------------------------------------------------------
@@ -287,6 +312,13 @@ export function lob(
   const from = { x: state.ball.pos.x, z: state.ball.pos.z };
   const dir = move ?? pl.facing;
 
+  const restart = state.phase.kind === "restart" ? state.phase.restart : null;
+  if (restart?.kind === "corner" && restart.taker === i && restart.aim) {
+    // A corner: the cross goes to the aiming marker, for the teammate nearest it to attack.
+    const to = { ...restart.aim };
+    loftedKick(state, i, from, to, a.crossLift, params, teammateNear(state, i, to, 6, params));
+    return;
+  }
   const inFinalThird = pl.pos.x * s > halfL / 3;
   const wide = Math.abs(pl.pos.z) > halfW * 0.4;
   if (inFinalThird && wide) {
@@ -401,10 +433,10 @@ export function shoot(
   let aimZ = side.z * (lateral * (gw / 2 - 0.35) - Math.sign(lateral) * bend * a.curlAimOffset);
   // A free kick or penalty goes where the aiming marker is.
   const restart = state.phase.kind === "restart" ? state.phase.restart : null;
-  if (restart && restart.taker === i && restart.aim) {
+  if (restart && restart.taker === i && restart.aim && restart.kind !== "corner") {
     aimZ = restart.aim.z - side.z * Math.sign(lateral) * bend * a.curlAimOffset;
   }
-  if (!restart?.aim && assists?.aimHelp && Math.abs(lateral) < 0.2) {
+  if ((!restart?.aim || restart.kind === "corner") && assists?.aimHelp && Math.abs(lateral) < 0.2) {
     // Aim help: the side of the goal away from the keeper.
     const keeper = state.players.find((p) => p.team !== pl.team && p.role === "gk");
     aimZ = (keeper && keeper.pos.z >= 0 ? -1 : 1) * gw * 0.32;
@@ -432,6 +464,7 @@ function contactShot(
   move: Vec2 | null,
   params: SimParams,
   assists: Assists | null,
+  perfect: boolean,
 ): boolean {
   const pl = state.players[i];
   const ball = state.ball;
@@ -462,7 +495,7 @@ function contactShot(
     pl.vel.x = (dx / dist) * 5;
     pl.vel.z = (dz / dist) * 5;
   }
-  shoot(state, i, a.contextShotPower, move, params, assists, lift);
+  firstTimeShot(state, i, move, params, assists, perfect, lift);
   return true;
 }
 

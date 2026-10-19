@@ -125,7 +125,10 @@ export interface Restart {
   taker: number;
   /** Tick the restart began. */
   since: number;
-  /** Free kicks and penalties: the aiming marker on the goal line, moved with the stick (M7). */
+  /**
+   * The aiming marker, moved with the stick (M7): on the goal line for a free kick or penalty, in the box for a
+   * corner (where the cross goes).
+   */
   aim: Vec2 | null;
 }
 
@@ -269,6 +272,8 @@ export interface MatchState {
   firstKickoff: 0 | 1;
   lastEvent: MatchEvent | null;
   foul: Foul | null;
+  /** The latest "Perfect" first-time strike (M4), for the flash on screen. */
+  lastPerfect: { player: number; tick: number } | null;
   /** The latest pass being judged for offside, and the last kick the referee has seen. */
   offside: OffsideWatch | null;
   kickSeen: number;
@@ -394,6 +399,7 @@ export function createMatch(config: MatchConfig, params: SimParams = DEFAULT_PAR
     firstKickoff: 0,
     lastEvent: null,
     foul: null,
+    lastPerfect: null,
     offside: null,
     kickSeen: -1,
     shootout: null,

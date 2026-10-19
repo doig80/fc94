@@ -59,7 +59,22 @@ export function holdRestart(state: MatchState, intents: Intent[], params: SimPar
   const mx = intent.moveX;
   const mz = intent.moveZ;
   const len = Math.sqrt(mx * mx + mz * mz);
-  if (r.aim) {
+  if (r.aim && r.kind === "corner") {
+    // Corner: the stick moves the marker around the box, the taker faces it.
+    const s = attackSign(state, r.team);
+    const halfL = state.pitch.length / 2;
+    const step = params.referee.cornerAimSpeed / 60;
+    const front = halfL - state.pitch.penaltyAreaDepth;
+    const x = r.aim.x * s + mx * s * step;
+    const z = r.aim.z + mz * step;
+    const halfBox = state.pitch.penaltyAreaWidth / 2;
+    r.aim.x = s * (x < front ? front : x > halfL - 1 ? halfL - 1 : x);
+    r.aim.z = z < -halfBox ? -halfBox : z > halfBox ? halfBox : z;
+    const dx = r.aim.x - r.spot.x;
+    const dz = r.aim.z - r.spot.z;
+    const d = Math.sqrt(dx * dx + dz * dz) || 1;
+    taker.facing = { x: dx / d, z: dz / d };
+  } else if (r.aim) {
     // Free kick or penalty: the stick slides the marker along the goal, the taker faces it.
     const s = attackSign(state, r.team);
     const across = mz * s;
@@ -489,7 +504,14 @@ export function startRestart(
   const who = taker >= 0 ? taker : nearestOutfield(state, team, spot);
   const s = attackSign(state, team);
   const pl = state.players[who];
-  const aim = kind === "freekick" || kind === "penalty" ? { x: s * (state.pitch.length / 2), z: 0 } : null;
+  // The aiming marker: on the goal line for a free kick or penalty, on the penalty spot to start with for a corner.
+  const halfL = state.pitch.length / 2;
+  const aim =
+    kind === "freekick" || kind === "penalty"
+      ? { x: s * halfL, z: 0 }
+      : kind === "corner"
+        ? { x: s * (halfL - state.pitch.penaltySpot), z: 0 }
+        : null;
   // Face the goal at a free kick or penalty, otherwise up the pitch.
   const fx = aim ? aim.x - spot.x : s;
   const fz = aim ? aim.z - spot.z : 0;

@@ -117,6 +117,27 @@ export function callBanner(): { update(s: MatchState): void; hide(): void } {
   };
 }
 
+/** "Perfect!" for a first-time shot struck at just the right moment (M4); a quick pop over the play. */
+export function perfectPop(): { update(s: MatchState): void } {
+  const el = element("perfect-pop", "Perfect!");
+  el.hidden = true;
+  let shown = -1;
+  return {
+    update(s) {
+      const p = s.lastPerfect;
+      const fresh = p !== null && s.tick - p.tick < 50;
+      el.hidden = !fresh;
+      if (fresh && p.tick !== shown) {
+        shown = p.tick;
+        // Restart the pop animation.
+        el.classList.remove("pop");
+        void el.offsetWidth;
+        el.classList.add("pop");
+      }
+    },
+  };
+}
+
 /** Shot power (fills while shoot is held, docs/specs/10 §3) and sprint stamina of the controlled player. */
 export function hudMeters(params: SimParams): { update(s: MatchState): void } {
   const el = element(
@@ -144,7 +165,8 @@ const KEYBOARD_HELP = `<strong>Controls</strong> <span class="muted">(H hides)</
     <b>With the ball:</b> <kbd>J</kbd> pass (tap twice: one-two) · hold <kbd>K</kbd> shoot (steer to curl) ·
     <kbd>L</kbd> lob / cross / through ball<br>
     <b>Just after a shot:</b> steer to bend it · pull back to lift · push on to dip<br>
-    <b>Free kicks and penalties:</b> steer to move the yellow ring, hold <kbd>K</kbd> to shoot at it<br>
+    <b>Free kicks and penalties:</b> steer to move the yellow ring, hold <kbd>K</kbd> to shoot at it ·
+    <b>corners:</b> steer the ring, <kbd>L</kbd> to cross to it<br>
     <b>Defending:</b> <kbd>J</kbd> switch player · <kbd>K</kbd> tackle · <kbd>L</kbd> slide<br>
     <kbd>Esc</kbd> pause · <kbd>R</kbd> restart`;
 
@@ -154,7 +176,8 @@ const PAD_HELP = `<strong>Controls</strong> <span class="muted">(Y hides)</span>
     <b>With the ball:</b> <kbd>A</kbd> (✕) pass (tap twice: one-two) · hold <kbd>B</kbd> (○) shoot (steer to curl) ·
     <kbd>X</kbd> (□) lob / cross / through ball<br>
     <b>Just after a shot:</b> steer to bend it · pull back to lift · push on to dip<br>
-    <b>Free kicks and penalties:</b> steer to move the yellow ring, hold <kbd>B</kbd> (○) to shoot at it<br>
+    <b>Free kicks and penalties:</b> steer to move the yellow ring, hold <kbd>B</kbd> (○) to shoot at it ·
+    <b>corners:</b> steer the ring, <kbd>X</kbd> (□) to cross to it<br>
     <b>Defending:</b> <kbd>A</kbd> (✕) switch player · <kbd>B</kbd> (○) tackle · <kbd>X</kbd> (□) slide<br>
     <kbd>Start</kbd> pause · <kbd>Back</kbd> restart`;
 

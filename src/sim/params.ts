@@ -174,6 +174,12 @@ export interface ActionParams {
   curlAimOffset: number;
   /** Power of first-time shots, volleys and headers. */
   contextShotPower: number;
+  /**
+   * A first-time shot, volley or header struck within this many ticks of pressing Shoot is "Perfect" (M4): it
+   * gets `perfectBonus` more power.
+   */
+  perfectTicks: number;
+  perfectBonus: number;
   /** A ball this close and this high can be headed or volleyed. */
   contactReach: number;
   volleyMinHeight: number;
@@ -275,6 +281,8 @@ export interface RefereeParams {
   foulOnMiss: number;
   /** How fast the stick moves the free-kick and penalty aiming marker. */
   aimSpeed: number;
+  /** How fast the stick moves the corner's aiming marker around the box. */
+  cornerAimSpeed: number;
   /** Offside only when this far beyond the line: level, or nearly, is onside (the benefit of the doubt). */
   offsideMargin: number;
   /**
@@ -418,6 +426,8 @@ export const DEFAULT_PARAMS: SimParams = {
     curlSpin: 14,
     curlAimOffset: 1,
     contextShotPower: 0.6,
+    perfectTicks: 6,
+    perfectBonus: 0.25,
     contactReach: 1.4,
     volleyMinHeight: 0.45,
     headerMinHeight: 1.2,
@@ -474,6 +484,7 @@ export const DEFAULT_PARAMS: SimParams = {
     halftimeTicks: 180,
     foulOnMiss: 0.3,
     aimSpeed: 2.5,
+    cornerAimSpeed: 9,
     offsideMargin: 0.2,
     clearRunDistance: 30,
     extraTimeShare: 1 / 3,

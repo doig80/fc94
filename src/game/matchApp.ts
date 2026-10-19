@@ -29,6 +29,7 @@ import {
   hudMeters,
   offscreenMarker,
   pauseMenu,
+  perfectPop,
   replayBadge,
   scoreboard,
 } from "./hud";
@@ -87,6 +88,7 @@ export async function startMatch(): Promise<void> {
   const board = scoreboard(params);
   const badge = replayBadge();
   const marker = offscreenMarker();
+  const perfect = perfectPop();
   const menu = pauseMenu({
     resume: () => setPaused(false),
     restart: () => restart(),
@@ -97,6 +99,7 @@ export async function startMatch(): Promise<void> {
   /** Seconds the picture stays frozen (hit-stop on power shots and goals). */
   let freeze = 0;
   let replayedGoal = -1;
+  let perfectSeen = -1;
 
   const drawCalls = new SceneInstrumentation(view.scene).drawCallsCounter;
   window.__match = {
@@ -201,6 +204,13 @@ export async function startMatch(): Promise<void> {
           recorder.record(state, intents);
           stepMatch(state, intents, params, cpu);
           freeze = Math.max(freeze, impact(state, params));
+          // A "Perfect" first-time strike (M4) freezes the picture like a power shot.
+          const p = state.lastPerfect;
+          if (p && p.tick !== perfectSeen) {
+            perfectSeen = p.tick;
+            rumble(0.6, 120);
+            freeze = Math.max(freeze, params.juice.hitStopShotTicks * DT);
+          }
         });
       }
       view.render(prev, state, alpha, paused ? 0 : dt, controlledPlayers(state));
@@ -216,6 +226,7 @@ export async function startMatch(): Promise<void> {
     }
     meters.update(state);
     board.update(state);
+    perfect.update(state);
     view.scene.render();
     if (++frames === 30) {
       window.__match!.ready = true;

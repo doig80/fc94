@@ -525,3 +525,58 @@ describe("must have a winner: extra time, then a penalty shoot-out", () => {
     expect(s.controllers[0].player).toBe(s.shootout?.taker);
   });
 });
+
+describe("corner aiming (M7)", () => {
+  /** A corner for team 0 at the goal they attack (+x), the human on the ball. */
+  function corner(): MatchState {
+    const s = match();
+    inPlay(s);
+    s.players[3].pos = { x: L - 6, z: 2 };
+    startRestart(s, "corner", 0, { x: L - 0.3, z: W - 0.3 }, 4);
+    return s;
+  }
+
+  it("the marker starts on the penalty spot and the stick moves it around the box, never out of it", () => {
+    const s = corner();
+    const aim = () => (s.phase.kind === "restart" ? s.phase.restart.aim! : { x: NaN, z: NaN });
+    expect(aim()).toEqual({ x: L - PITCH_5_A_SIDE.penaltySpot, z: 0 });
+    run(s, 20, intent({ moveZ: 1 }));
+    expect(aim().z).toBeGreaterThan(1);
+    run(s, 60, intent({ moveX: -1 }));
+    expect(aim().x).toBeCloseTo(L - PITCH_5_A_SIDE.penaltyAreaDepth, 1);
+    expect(s.phase.kind).toBe("restart");
+  });
+
+  it("the cross goes to the marker, for the teammate nearest it", () => {
+    const s = corner();
+    if (s.phase.kind !== "restart") return;
+    s.phase.restart.aim = { x: L - 5, z: -2 };
+    run(s, 1, intent({ lob: true }));
+    expect(s.ball.intendedReceiver).toBe(3);
+    let landed: { x: number; z: number } | null = null;
+    for (let t = 0; t < 120 && !landed; t++) {
+      const high = s.ball.pos.y > 0.3;
+      run(s, 1);
+      if (high && s.ball.pos.y <= 0.3 && s.ball.vel.y < 0) landed = { x: s.ball.pos.x, z: s.ball.pos.z };
+    }
+    expect(landed).not.toBeNull();
+    expect(dist(landed!, { x: L - 5, z: -2 })).toBeLessThan(2.5);
+  });
+
+  it("the CPU picks a target in the box for its corners", () => {
+    const p = cloneParams(DEFAULT_PARAMS);
+    const s = match();
+    inPlay(s);
+    // Team 1 attacks −x in the first half.
+    startRestart(s, "corner", 1, { x: -L + 0.3, z: W - 0.3 }, 9);
+    let aimed: { x: number; z: number } | null = null;
+    for (let t = 0; t < 200 && s.phase.kind === "restart"; t++) {
+      stepMatch(s, [intent()], p, (m) => aiIntents(m, p));
+      if (s.phase.kind === "restart" && s.phase.restart.aim) aimed = { ...s.phase.restart.aim };
+    }
+    expect(aimed).not.toBeNull();
+    expect(aimed!.x).toBeLessThan(-L + PITCH_5_A_SIDE.penaltyAreaDepth);
+    expect(Math.abs(aimed!.z)).toBeLessThan(PITCH_5_A_SIDE.penaltyAreaWidth / 2);
+    expect(s.phase.kind).toBe("play");
+  });
+});
