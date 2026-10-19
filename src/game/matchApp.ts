@@ -15,38 +15,36 @@ import {
   DT,
   PITCH_5_A_SIDE,
   stepMatch,
-  matchMinute,
   TICK_RATE,
-  type MatchEvent,
   type MatchState,
   type SimParams,
 } from "../sim";
 import { FixedStepper } from "./fixedStepper";
+import { callBanner, controlsHelp, hudMeters, pauseMenu, replayBadge, scoreboard } from "./hud";
+import { ReplayPlayer, ReplayRecorder } from "./replay";
 import { mountTuningPanel } from "../ui/tuningPanel";
 import { parseMatchOptions, type MatchOptions } from "./options";
 
 declare global {
   interface Window {
     /** Test hooks: `ready` after the first frames, plus read access to the live match. */
-    __match?: { ready: boolean; renderer: string; state: () => MatchState; params: () => SimParams };
+    __match?: {
+      ready: boolean;
+      renderer: string;
+      state: () => MatchState;
+      params: () => SimParams;
+      mode: () => "live" | "paused" | "replay";
+      /** How far the replay has got (0..1), or null when none is playing. */
+      replayProgress: () => number | null;
+    };
   }
 }
 
-/** What the banner says for each referee call (none for a kick-off). */
-const CALLS: Partial<Record<MatchEvent["kind"], string>> = {
-  goal: "GOAL!",
-  foul: "Foul",
-  advantage: "Advantage",
-  freekick: "Free kick",
-  penalty: "Penalty!",
-  corner: "Corner",
-  kickin: "Kick-in",
-  goalkick: "Goal kick",
-  halftime: "Half-time",
-  fulltime: "Full time",
-};
-/** How long a call stays on screen. */
-const BANNER_TICKS = 100;
+/** How long into a goal celebration the replay starts, and how much play it shows. */
+const REPLAY_AFTER_TICKS = 60;
+const REPLAY_SECONDS = 5;
+/** The last part of a replay runs in slow motion. */
+const SLOW_FROM = 0.75;
 
 /** The vertical-slice match: 5-a-side on a small pitch, 1 player vs CPU on the keyboard (docs/specs/30 §1). */
 export async function startMatch(): Promise<void> {
@@ -61,30 +59,84 @@ export async function startMatch(): Promise<void> {
   const params = cloneParams(DEFAULT_PARAMS);
   applyDifficulty(params, options.difficulty);
   if (options.tune) mountTuningPanel(params);
+  const cpu = options.cpu ? (s: MatchState) => aiIntents(s, params) : undefined;
   let state = newMatch(options);
   let prev = cloneState(state);
   const view = new MatchView(engine, state, options);
   const keyboard = new KeyboardInput(window);
   const stepper = new FixedStepper(DT);
-  const banner = overlay("match-banner");
+  const replayStepper = new FixedStepper(DT);
+  const recorder = new ReplayRecorder();
+  const banner = callBanner();
   const help = controlsHelp();
   const meters = hudMeters(params);
   const board = scoreboard();
+  const badge = replayBadge();
+  const menu = pauseMenu({
+    resume: () => setPaused(false),
+    restart: () => restart(),
+    help: () => (help.hidden = !help.hidden),
+  });
+  let paused = false;
+  let replay: { player: ReplayPlayer; goalX: number; hold: number } | null = null;
+  let replayedGoal = -1;
 
-  window.__match = { ready: false, renderer, state: () => state, params: () => params };
-  const status = options.debug ? overlay("debug-overlay") : undefined;
+  window.__match = {
+    ready: false,
+    renderer,
+    state: () => state,
+    params: () => params,
+    mode: () => (paused ? "paused" : replay ? "replay" : "live"),
+    replayProgress: () => (replay ? replay.player.progress : null),
+  };
+  const status = options.debug ? element("debug-overlay") : undefined;
   const drawCalls = options.debug ? new SceneInstrumentation(view.scene).drawCallsCounter : undefined;
   if (options.inspector) void showInspector(view.scene);
 
   window.addEventListener("keydown", (e) => {
+    if (replay) {
+      // Any action key skips the replay.
+      if (["Space", "Escape", "KeyJ", "KeyK", "KeyL", "Enter"].includes(e.code)) endReplay();
+      return;
+    }
+    if (e.code === "Escape") setPaused(!paused);
     if (e.code === "KeyR") restart();
     if (e.code === "KeyH") help.hidden = !help.hidden;
   });
+  // Leaving the tab pauses the match.
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) setPaused(true);
+  });
+
+  function setPaused(on: boolean): void {
+    paused = on && !replay;
+    menu.hidden = !paused;
+  }
 
   function restart(): void {
     state = newMatch(options);
     prev = cloneState(state);
-    banner.hidden = true;
+    recorder.clear();
+    replay = null;
+    badge.hidden = true;
+    banner.hide();
+    setPaused(false);
+  }
+
+  function startReplay(goalTick: number): void {
+    const clip = recorder.clip(REPLAY_SECONDS, goalTick);
+    if (!clip) return;
+    const goalX = (Math.sign(state.ball.pos.x) * state.pitch.length) / 2;
+    replay = { player: new ReplayPlayer(clip, params, cpu), goalX, hold: 0 };
+    badge.hidden = false;
+    banner.hide();
+  }
+
+  function endReplay(): void {
+    replay = null;
+    badge.hidden = true;
+    // Straight on to the kick-off.
+    if (state.phase.kind === "goal") state.phase.until = Math.min(state.phase.until, state.tick + 30);
   }
 
   let last = performance.now();
@@ -93,13 +145,31 @@ export async function startMatch(): Promise<void> {
     const now = performance.now();
     const dt = Math.min((now - last) / 1000, 0.1);
     last = now;
-    const alpha = stepper.advance(dt, () => {
-      prev = cloneState(state);
-      const cpu = options.cpu ? (s: MatchState) => aiIntents(s, params) : undefined;
-      stepMatch(state, [keyboard.read(view.rig.yaw)], params, cpu);
-      showCall(state, banner);
-    });
-    view.render(prev, state, alpha, dt, controlledPlayers(state));
+    if (replay) {
+      const r = replay.player;
+      const speed = r.progress > SLOW_FROM ? 0.5 : 1;
+      const alpha = replayStepper.advance(dt * speed, () => r.step());
+      const shot = { kind: r.progress < 0.55 ? ("side" as const) : ("goal" as const), goalX: replay.goalX };
+      view.render(r.prev, r.state, alpha, dt, [], shot);
+      if (r.done && (replay.hold += dt) > 0.8) endReplay();
+    } else {
+      const alpha = paused
+        ? 1
+        : stepper.advance(dt, () => {
+            prev = cloneState(state);
+            const intents = [keyboard.read(view.rig.yaw)];
+            recorder.record(state, intents);
+            stepMatch(state, intents, params, cpu);
+          });
+      view.render(prev, state, alpha, paused ? 0 : dt, controlledPlayers(state));
+      banner.update(state);
+      // A moment into the celebration, show the goal again.
+      const e = state.lastEvent;
+      if (e?.kind === "goal" && e.tick !== replayedGoal && state.tick - e.tick >= REPLAY_AFTER_TICKS) {
+        replayedGoal = e.tick;
+        startReplay(e.tick);
+      }
+    }
     meters.update(state);
     board.update(state);
     view.scene.render();
@@ -127,72 +197,9 @@ function newMatch(options: MatchOptions): MatchState {
   return state;
 }
 
-/** Show the referee's latest call in the banner for a moment (full time stays up). */
-function showCall(state: MatchState, banner: HTMLElement): void {
-  const e = state.lastEvent;
-  const text = e ? CALLS[e.kind] : undefined;
-  if (!e || !text) {
-    banner.hidden = true;
-    return;
-  }
-  const [home, away] = state.score;
-  banner.textContent = e.kind === "fulltime" ? `Full time ${home}–${away}` : text;
-  banner.hidden = e.kind !== "fulltime" && state.tick - e.tick > BANNER_TICKS;
-}
-
-/** Score and match clock, top centre. */
-function scoreboard(): { update(s: MatchState): void } {
-  const el = document.createElement("div");
-  el.className = "scoreboard";
-  document.body.append(el);
-  return {
-    update(s) {
-      el.textContent = `Home ${s.score[0]} – ${s.score[1]} Away · ${matchMinute(s)}'`;
-    },
-  };
-}
-
-function overlay(className: string): HTMLElement {
+function element(className: string): HTMLElement {
   const el = document.createElement("div");
   el.className = className;
-  el.hidden = className === "match-banner";
-  document.body.append(el);
-  return el;
-}
-
-/** Shot power (fills while shoot is held, docs/specs/10 §3) and sprint stamina of the controlled player. */
-function hudMeters(params: SimParams): { update(s: MatchState): void } {
-  const el = document.createElement("div");
-  el.className = "hud-meters";
-  el.innerHTML = `<div class="meter power" hidden><span></span></div><div class="meter stamina"><span></span></div>`;
-  document.body.append(el);
-  const power = el.querySelector<HTMLElement>(".power")!;
-  const powerFill = power.querySelector("span")!;
-  const staminaFill = el.querySelector<HTMLElement>(".stamina span")!;
-  return {
-    update(s) {
-      const p = s.players[s.controllers[0].player];
-      power.hidden = p.charge < 0;
-      const level = Math.max(0, p.charge) / params.action.shotChargeTicks;
-      powerFill.style.width = `${level * 100}%`;
-      power.classList.toggle("over", level > params.action.overpowerAt);
-      staminaFill.style.width = `${p.stamina * 100}%`;
-      staminaFill.classList.toggle("low", p.stamina < 0.25);
-    },
-  };
-}
-
-function controlsHelp(): HTMLElement {
-  const el = document.createElement("div");
-  el.className = "controls-help";
-  el.innerHTML = `<strong>Controls</strong> <span class="muted">(H hides)</span><br>
-    <kbd>W A S D</kbd> run · <kbd>Space</kbd> sprint<br>
-    <b>With the ball:</b> <kbd>J</kbd> pass (tap twice: one-two) · hold <kbd>K</kbd> shoot (steer to curl) ·
-    <kbd>L</kbd> lob / cross / through ball<br>
-    <b>Just after a shot:</b> steer to bend it · pull back to lift · push on to dip<br>
-    <b>Free kicks and penalties:</b> steer to move the yellow ring, hold <kbd>K</kbd> to shoot at it<br>
-    <b>Defending:</b> <kbd>J</kbd> switch player · <kbd>K</kbd> tackle · <kbd>L</kbd> slide<br>
-    <kbd>R</kbd> restart${new URLSearchParams(location.search).has("tune") ? " · <kbd>T</kbd> tuning panel" : ""}`;
   document.body.append(el);
   return el;
 }

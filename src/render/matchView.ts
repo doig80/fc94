@@ -11,7 +11,7 @@ import {
 } from "@babylonjs/core";
 import { DEFAULT_PARAMS, type MatchState } from "../sim";
 import { Atmosphere } from "./atmosphere";
-import { CameraRig, type MatchCamera } from "./cameraRig";
+import { CameraRig, type CinematicShot, type MatchCamera } from "./cameraRig";
 import { SurfaceLibrary } from "./materials";
 import { buildPitch } from "./pitch";
 import { buildBall, KITS, Player, type PoseAction } from "./players";
@@ -58,6 +58,8 @@ export class MatchView {
   private readonly stadium: Stadium;
   private readonly weather: WeatherFx;
   private readonly aimMarker: Mesh;
+  /** The replay angle shown last frame, to cut (not pan) between angles. */
+  private lastShot: CinematicShot["kind"] | null = null;
   private first = true;
 
   constructor(engine: AbstractEngine, initial: MatchState, options: MatchViewOptions) {
@@ -141,6 +143,7 @@ export class MatchView {
     alpha: number,
     dt: number,
     controlled: readonly number[] = [],
+    shot: CinematicShot | null = null,
   ): void {
     const lerp = (a: number, b: number) => a + (b - a) * alpha;
     // A kick happened this tick if the ball was released with a new touch block.
@@ -205,7 +208,12 @@ export class MatchView {
     });
 
     this.weather.follow(new Vector3(bx, 0, bz));
-    this.rig.update({ x: bx, z: bz, vx: b1.vel.x, vz: b1.vel.z }, dt, this.first);
+    if (shot) {
+      this.rig.cinematic(shot, { x: bx, y: by, z: bz }, dt, this.first || shot.kind !== this.lastShot);
+    } else {
+      this.rig.update({ x: bx, z: bz, vx: b1.vel.x, vz: b1.vel.z }, dt, this.first || this.lastShot !== null);
+    }
+    this.lastShot = shot?.kind ?? null;
     const cam = this.rig.camera;
     this.stadium.fadeOccluders(
       {
