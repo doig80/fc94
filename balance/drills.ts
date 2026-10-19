@@ -3,14 +3,13 @@ import {
   createMatch,
   IDLE,
   isInGoal,
-  PITCH_5_A_SIDE,
   Rng,
   stepMatch,
   type Intent,
   type MatchState,
   type SimParams,
 } from "../src/sim";
-import { TEAM_SIZE } from "./match";
+import { PITCH, TEAM_SIZE } from "./match";
 
 /**
  * Exploit bots (docs/specs/11 §4, §6): scripted attackers that try known cheese against the CPU keeper, over and
@@ -18,7 +17,7 @@ import { TEAM_SIZE } from "./match";
  */
 export type Bot = (s: MatchState) => Intent;
 
-const L = PITCH_5_A_SIDE.length / 2;
+const L = PITCH.length / 2;
 /** Team 0 attacks the goal at +x; the CPU keeper defending it. */
 const SHOOTER = TEAM_SIZE - 1;
 const PARTNER = TEAM_SIZE - 2;
@@ -26,9 +25,9 @@ export const KEEPER = TEAM_SIZE;
 
 /** Team 0's shooter on the ball at `at`, alone with the keeper; everyone else waits out of the way. */
 function drill(seed: number, at: { x: number; z: number }, partner?: { x: number; z: number }): MatchState {
-  const s = createMatch({ seed, pitch: PITCH_5_A_SIDE, teamSize: TEAM_SIZE, humans: [] });
+  const s = createMatch({ seed, pitch: PITCH, teamSize: TEAM_SIZE, humans: [] });
   s.players.forEach((pl, i) => {
-    if (i !== SHOOTER && i !== KEEPER) pl.pos = { x: -L + 2 + i * 1.5, z: PITCH_5_A_SIDE.width / 2 + 1 };
+    if (i !== SHOOTER && i !== KEEPER) pl.pos = { x: -L + 2 + i * 1.5, z: PITCH.width / 2 + 1 };
   });
   const sh = s.players[SHOOTER];
   sh.pos = { ...at };
@@ -57,7 +56,7 @@ function play(s: MatchState, params: SimParams, bots: Record<number, Bot>, ticks
     if (s.ball.lastTouch === KEEPER) keeperTouched = true;
     if (isInGoal(s.ball, s.pitch, params.ball.radius) === 1) return keeperTouched ? "rebound goal" : "goal";
     if (s.ball.owner === KEEPER) return "saved";
-    const out = Math.abs(s.ball.pos.x) > L + 0.5 || Math.abs(s.ball.pos.z) > PITCH_5_A_SIDE.width / 2 + 0.5;
+    const out = Math.abs(s.ball.pos.x) > L + 0.5 || Math.abs(s.ball.pos.z) > PITCH.width / 2 + 0.5;
     if (out) return keeperTouched ? "saved" : "off target";
   }
   return keeperTouched ? "saved" : "blocked";

@@ -81,11 +81,12 @@ export function keeperSaves(state: MatchState, prev: Vec3, params: SimParams): v
       v.z *= 0.5;
       v.y = (v.y > 0 ? v.y : 0) + 4.5;
     } else {
-      // Parried wide, to the side the ball is on.
+      // Pushed wide, to the side the ball is on: along the goal line towards the post, not out in front where an
+      // attacker could be waiting.
       const side = pz > 0.05 ? 1 : pz < -0.05 ? -1 : dz >= 0 ? 1 : -1;
       const keep = speed * k.parryKeep;
-      v.x = out * keep * 0.45;
-      v.z = side * keep * 0.9;
+      v.x = out * keep * k.parryOut;
+      v.z = side * keep;
       v.y = 1.5;
     }
   }

@@ -211,10 +211,14 @@ export interface KeeperParams {
   /** Speed at the start of a dive. */
   diveSpeed: number;
   diveTicks: number;
+  /** A keeper dives when the shot is this close to arriving; before that they move across on their feet. */
+  diveLeadTicks: number;
   /** Getting up after a dive. */
   recoverTicks: number;
   /** Speed kept by a parried ball (it always goes wide, never back towards the goal). */
   parryKeep: number;
+  /** How much a parry pushes the ball out in front as well as wide (0 = along the goal line). */
+  parryOut: number;
   /** How long the keeper holds a caught ball before playing it. */
   holdTicks: number;
 }
@@ -233,7 +237,7 @@ export interface AiParams {
   slideChance: number;
   /** Ticks a CPU defender winds up before tackling, so humans can react (docs/specs/11 §4: readable). */
   telegraphTicks: number;
-  /** The CPU shoots from closer than this (fraction of the pitch length). */
+  /** The CPU shoots from closer than this to the goal (m). */
   shootRange: number;
   /** How tightly the CPU places curled shots into the far corner (0..1). */
   shotCurl: number;
@@ -273,6 +277,11 @@ export interface JuiceParams {
   netRipple: number;
   /** Trail behind fast balls: on (1) or off (0). */
   trail: number;
+  /**
+   * How fast the whole game runs, players, ball and clock together (1 = normal). Like the game-speed option in
+   * arcade football games; the simulation itself is unchanged, it just runs at a slower or faster real-time pace.
+   */
+  gameSpeed: number;
 }
 
 export interface WeatherParams {
@@ -403,10 +412,12 @@ export const DEFAULT_PARAMS: SimParams = {
     reach: 0.6,
     handHeight: 2.5,
     catchSpeed: 18,
-    diveSpeed: 6,
+    diveSpeed: 7,
     diveTicks: 24,
+    diveLeadTicks: 18,
     recoverTicks: 30,
     parryKeep: 0.35,
+    parryOut: 0.45,
     holdTicks: 60,
   },
   ai: {
@@ -416,7 +427,7 @@ export const DEFAULT_PARAMS: SimParams = {
     tackleChance: 0.35,
     slideChance: 0.05,
     telegraphTicks: 6,
-    shootRange: 0.33,
+    shootRange: 22,
     shotCurl: 0.4,
     passWillingness: 0.35,
   },
@@ -435,6 +446,7 @@ export const DEFAULT_PARAMS: SimParams = {
     shake: 1,
     netRipple: 1,
     trail: 1,
+    gameSpeed: 1,
   },
   weather: {
     rainRollingFactor: 0.65,

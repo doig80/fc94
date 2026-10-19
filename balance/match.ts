@@ -1,7 +1,7 @@
 import {
   aiIntents,
   createMatch,
-  PITCH_5_A_SIDE,
+  PITCH_FULL,
   TICK_RATE,
   stepMatch,
   type Intent,
@@ -24,8 +24,9 @@ export interface MatchStats {
   passesTried: number;
 }
 
-/** Players per team and the length of a half, as in the game's default match (`?minutes=5`). */
-export const TEAM_SIZE = 5;
+/** The game's default match: 11 v 11 on the full pitch, 5 minutes a half (docs/specs/10 §1). */
+export const PITCH = PITCH_FULL;
+export const TEAM_SIZE = 11;
 export const HALF_TICKS = 5 * 60 * TICK_RATE;
 
 /** Volleys, headers and bicycle kicks are shots too (docs/specs/10 §3). */
@@ -42,7 +43,7 @@ export function playMatch(
 ): MatchStats {
   const state = createMatch({
     seed,
-    pitch: PITCH_5_A_SIDE,
+    pitch: PITCH,
     teamSize: TEAM_SIZE,
     humans: options.humans ?? [],
     rules: { halfTicks: options.halfTicks ?? HALF_TICKS, fouls: true },
