@@ -13,6 +13,9 @@ are starting values in the tuning panel, not final balance.
 - **Kick-off → half-time → second half → full time.** Teams swap ends at half-time.
 - **Restarts** (throw-in, corner, goal kick, free kick, penalty) are quick: the right player auto-runs to
   the ball, and play resumes on one button press or after 3 seconds _(tune)_.
+- **Set pieces are aimed** with a target marker on the pitch (as in 1994): free kicks and penalties in the
+  vertical slice ([#13](https://github.com/doig80/fc94/issues/13)), corners in Full match
+  ([#28](https://github.com/doig80/fc94/issues/28)).
 
 ## 2. Camera
 
@@ -26,22 +29,28 @@ are starting values in the tuning panel, not final balance.
 
 Three action buttons + sprint, with meanings that depend on whether your team has the ball (like 1994).
 
-| Button     | Gamepad    | Keyboard (P1) | Attacking                                          | Defending                             |
-| ---------- | ---------- | ------------- | -------------------------------------------------- | ------------------------------------- |
-| **A**      | A / ✕      | `J`           | Pass (ground) — aims at the teammate you're facing | Switch to the player nearest the ball |
-| **B**      | B / ○      | `K`           | Shoot — hold to power up                           | Tackle (standing)                     |
-| **C**      | X / □      | `L`           | Lob / cross / through ball                         | Slide tackle                          |
-| **Sprint** | RT / R2    | `Space`       | Sprint (limited stamina)                           | Sprint                                |
-| Move       | Left stick | `WASD`        | Run / dribble                                      | Run / jockey                          |
-| Pause      | Start      | `Esc`         | Pause menu                                         | Pause menu                            |
+| Button     | Gamepad    | Keyboard (P1) | Attacking                            | Defending                             |
+| ---------- | ---------- | ------------- | ------------------------------------ | ------------------------------------- |
+| **A**      | A / ✕      | `J`           | Pass (ground) — aims where you steer | Switch to the player nearest the ball |
+| **B**      | B / ○      | `K`           | Shoot — hold to power up             | Tackle (standing)                     |
+| **C**      | X / □      | `L`           | Lob / cross / through ball           | Slide tackle                          |
+| **Sprint** | RT / R2    | `Space`       | Sprint (limited stamina)             | Sprint                                |
+| Move       | Left stick | `WASD`        | Run / dribble                        | Run / jockey                          |
+| Pause      | Start      | `Esc`         | Pause menu                           | Pause menu                            |
 
 - Keyboard player 2 uses the arrow keys + `1` `2` `3` + `0` (numpad), all remappable.
 - **Context actions** happen automatically, so no extra buttons are needed:
   - Shoot when the ball is at chest/head height → **diving header** or **bicycle kick** (if facing away from goal).
-  - Pass while sprinting near the box → first-time ball.
+  - Pass or Shoot pressed up to 0.3 s _(tune)_ before the ball reaches you → played **first time**, anywhere on
+    the pitch.
   - Double-tap pass → one-two (give and go).
-- **Curl & power shots:** holding Shoot fills a power bar; steering left/right during the shot
-  curls the ball. Overpowering sends it over the bar.
+- **Passing direction:** a pass goes to the teammate in the direction you steer; with no direction held, to
+  the teammate you're facing. So you can pass sideways without turning first.
+- **Curl & power shots:** holding Shoot fills a power bar; the direction you steer at the moment you
+  **release** Shoot curls the ball. Overpowering sends it over the bar.
+- **Aftertouch** (on by default, switchable while being tested, [#24](https://github.com/doig80/fc94/issues/24)):
+  for a split second after a **shot**, steering still bends the ball, pulling back lifts it and pushing further
+  on dips it, as in Sensible Soccer. Passes have none, because by then the stick steers the receiver.
 - **Touch (phone, 1P vs CPU):** virtual stick on the left; Pass / Shoot / Lob + Sprint buttons on the right.
 - Every binding is **remappable**; settings remember the player's choice.
 
@@ -61,7 +70,9 @@ TypeScript in `src/sim/`, runs at a fixed 60 Hz, and is deterministic.
   Drawn larger than life (0.36 m) so it's easy to follow; collisions use the real 0.22 m size, except against
   the goal frame, which uses the drawn size so a shot that looks like it clips the post does hit it.
 - **Dribbling:** the ball stays "attached" just ahead of the controlling player's feet at low speed;
-  sprinting pushes it further ahead (easier to steal).
+  sprinting pushes it further ahead (easier to steal). A looseness slider (from "at your feet" to "pushed
+  ahead in touches", Kick Off style) is being tested in [#24](https://github.com/doig80/fc94/issues/24);
+  sticky stays the default until the playtest decides.
 - **Players:** capsules with acceleration, top speed, turning rate and sprint stamina _(tune)_.
   They push each other gently; no ragdoll falls except after fouls/slides.
 - **Goal frame:** posts and crossbar bounce the ball; the net absorbs it. Fast balls are moved in short hops
@@ -91,12 +102,22 @@ Can be switched to "no ref" for arcade chaos (no fouls or offside at all).
 - **Goal replays** — an instant replay after every goal (skippable), from 2–3 cinematic cameras.
   Cheap because the simulation is deterministic: replay = re-run the recorded inputs.
 - **Celebrations** — short (≤ 4 s, skippable): knee slide, team pile-on, a few more later.
+- **Impact ("juice")** — a 50–100 ms freeze on power shots and goals, a small camera kick, net ripple,
+  short slow motion on a winning goal, controller rumble where the browser supports it
+  ([#25](https://github.com/doig80/fc94/issues/25)). Strengths are tuning-panel values.
+- **Perfect timing** — first-time shots and volleys struck in a tight timing window get extra power or
+  accuracy and a flash (Full match, [#28](https://github.com/doig80/fc94/issues/28)).
+- **Readability** — the ball has a blob shadow that shows its height, fast balls leave a short trail, and
+  an off-screen marker shows where your player is ([#25](https://github.com/doig80/fc94/issues/25)).
 
 ## 8. Feel targets (for playtesting)
 
 - A pass to a teammate in open space arrives in ≤ 1 s (short) / ≤ 2 s (long).
+- **Responsive controls:** from a button press to the ball leaving the foot takes ≤ 50 ms (3 ticks), checked
+  by an automated test ([#24](https://github.com/doig80/fc94/issues/24)).
 - A first-time player scores against Easy CPU within their first match.
-- Average Normal-difficulty match: 3–6 goals in total.
+- Average Normal-difficulty match: 3–6 goals in total. Checked automatically by CPU-vs-CPU balance runs in CI
+  ([#26](https://github.com/doig80/fc94/issues/26)), along with pass times and possession balance.
 - Goalkeepers save most long shots but are beatable with curl, power and angles.
 
 ## Out of scope for v1

@@ -21,20 +21,22 @@ degrade gracefully** — no feature may exist only on WebGPU unless it is purely
 
 ## 2. Stack
 
-| Concern         | Choice                                                      | Why                                                                                                                        |
-| --------------- | ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Language        | TypeScript (strict)                                         | Type safety; Claude and tooling work best with it                                                                          |
-| 3D engine       | Babylon.js 9.x (`@babylonjs/core`, ES modules, tree-shaken) | Most complete web 3D engine: WebGPU + WebGL2, PBR, node materials, particles, post-processing, glTF, GUI, audio, inspector |
-| Build           | Vite                                                        | Fast dev server, simple static build for Pages                                                                             |
-| Package manager | pnpm                                                        | Fast, strict lockfile                                                                                                      |
-| Unit tests      | Vitest                                                      | Simulation logic is tested without a browser                                                                               |
-| Browser tests   | Playwright (Chromium)                                       | Smoke tests, automated screenshots, scripted playtests                                                                     |
-| Lint/format     | ESLint + Prettier                                           | Consistent code                                                                                                            |
-| Assets          | glTF 2.0 / GLB, KTX2 textures, Draco/meshopt compression    | Web-standard, small, fast to load                                                                                          |
-| Audio           | Web Audio via Babylon audio engine                          | Positional crowd, ball, whistle                                                                                            |
-| Physics         | Custom arcade physics (pure TypeScript) — see §6            | Arcade feel is fully tunable; identical results on every device keep online v2 possible                                    |
+| Concern         | Choice                                                   | Why                                                                                                                        |
+| --------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Language        | TypeScript (strict)                                      | Type safety; Claude and tooling work best with it                                                                          |
+| 3D engine       | Babylon.js 9.x (`@babylonjs/core`, ES modules)           | Most complete web 3D engine: WebGPU + WebGL2, PBR, node materials, particles, post-processing, glTF, GUI, audio, inspector |
+| Build           | Vite                                                     | Fast dev server, simple static build for Pages                                                                             |
+| Package manager | pnpm                                                     | Fast, strict lockfile                                                                                                      |
+| Unit tests      | Vitest                                                   | Simulation logic is tested without a browser                                                                               |
+| Browser tests   | Playwright (Chromium)                                    | Smoke tests, automated screenshots, scripted playtests                                                                     |
+| Lint/format     | ESLint + Prettier                                        | Consistent code                                                                                                            |
+| Assets          | glTF 2.0 / GLB, KTX2 textures, Draco/meshopt compression | Web-standard, small, fast to load                                                                                          |
+| Audio           | Web Audio via Babylon audio engine                       | Positional crowd, ball, whistle                                                                                            |
+| Physics         | Custom arcade physics (pure TypeScript) — see §6         | Arcade feel is fully tunable; identical results on every device keep online v2 possible                                    |
 
-Versions are pinned in `package.json`/`pnpm-lock.yaml`. Upgrades are deliberate PRs.
+Versions are pinned in `package.json`/`pnpm-lock.yaml`. Upgrades are deliberate PRs. In Beta the game imports
+only the Babylon.js parts it uses, to shrink the download ([#6](https://github.com/doig80/fc94/issues/6)).
+Until then, the download-size check in CI keeps growth in view.
 
 ## 3. Architecture
 
@@ -53,8 +55,9 @@ input  ──▶  simulation  ──▶  presentation (render, audio, UI)
   (move vector + buttons) per tick. The simulation only ever sees intents.
 - **Presentation** (`src/render/`, `src/audio/`, `src/ui/`): reads simulation state, interpolates
   between ticks for smooth visuals at any frame rate, plays animations, effects and sounds.
-- **Tuning** (`src/tuning/`): all gameplay constants live in one typed config object, editable live
-  from the in-browser tuning panel (see [02](02-tooling-and-workflow.md#tuning-panel)).
+- **Tuning:** all gameplay constants live in one typed config object in `src/sim/params.ts`. The simulation
+  owns its numbers, so they stay deterministic. The in-browser tuning panel (UI code, `src/ui/`) edits that
+  object live (see [02](02-tooling-and-workflow.md#tuning-panel)).
 
 Weather that affects play (rain → lower ball friction, snow → slightly slower ball) is
 expressed as simulation parameters, so it stays deterministic.
@@ -70,20 +73,25 @@ expressed as simulation parameters, so it stays deterministic.
 | Player model                    | ≤ 3k triangles (LOD0), 2 LODs                                                             |
 | Memory                          | ≤ 500 MB on mobile                                                                        |
 
-Budgets are checked in CI where possible (bundle size) and in Playwright perf runs.
+Budgets are checked in CI where possible (download size, from [#23](https://github.com/doig80/fc94/issues/23))
+and in Playwright perf runs.
 
 ## 5. Graphics quality presets
 
 Auto-detected on first launch (GPU tier + a short benchmark), changeable in settings.
 
-| Feature      | Low             | Medium                     | High                         | Ultra                             |
-| ------------ | --------------- | -------------------------- | ---------------------------- | --------------------------------- |
-| Render scale | 0.75            | 1.0                        | 1.0                          | 1.0 (native DPR)                  |
-| Shadows      | Blob shadows    | 1 cascade, 1k              | 2 cascades, 2k, soft         | 3 cascades, 4k, contact shadows   |
-| Lighting     | Baked + 1 sun   | + floodlights (no shadows) | + floodlight shadows         | + screen-space GI / AO            |
-| Post         | Tone mapping    | + FXAA, bloom              | + SSAO, colour grading       | + SSR (wet pitch), DOF in replays |
-| Weather      | Light particles | Full particles             | + wet-pitch shader, splashes | + puddle reflections              |
-| Crowd        | Billboards      | Low-poly instanced         | Animated instanced           | Animated + flags/flares           |
+| Feature      | Low             | Medium                   | High                         | Ultra                             |
+| ------------ | --------------- | ------------------------ | ---------------------------- | --------------------------------- |
+| Render scale | 0.75            | 1.0                      | 1.0                          | 1.0 (native DPR)                  |
+| Shadows      | Blob shadows    | 1 cascade, 1k            | 2 cascades, 2k, soft         | 3 cascades, 4k, contact shadows   |
+| Lighting     | Baked + 1 sun   | + floodlight pools¹      | + floodlight shadows         | + screen-space GI / AO            |
+| Post         | Tone mapping    | + FXAA, bloom            | + SSAO, TAA, colour grading  | + SSR (wet pitch), DOF in replays |
+| Weather      | Light particles | Full particles           | + wet-pitch shader, splashes | + puddle reflections, light beams |
+| Pitch        | Grass texture   | + hex tiling, wear, snow | + normal map                 | same as High                      |
+| Crowd        | Billboards      | Low-poly instanced       | Animated instanced           | Animated + flags/flares           |
+
+¹ Many lamps per tower via clustered lighting, on WebGPU and WebGL2 ([#29](https://github.com/doig80/fc94/issues/29)).
+TAA, grass, animated crowd and light beams: [#32](https://github.com/doig80/fc94/issues/32).
 
 ## 6. Physics (decided: custom arcade physics)
 
@@ -112,9 +120,9 @@ later for purely cosmetic effects (net cloth, debris) that never feed back into 
 
 ## 8. Risks
 
-| Risk                                             | Mitigation                                                                                               |
-| ------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
-| Mobile GPUs struggle with lighting/weather       | Quality presets, auto-detect, Low preset tested on real phones                                           |
-| iOS Safari quirks (audio unlock, memory limits)  | Tap-to-start screen, memory budget, regular iPhone playtests                                             |
-| Animation quality (few football moves in Mixamo) | Stylised characters hide imperfections; procedural blending (aimed kicks, leaning); animation spec in 20 |
-| WebGPU/WebGL2 visual differences                 | Screenshot tests on both backends                                                                        |
+| Risk                                             | Mitigation                                                                                                                                                                                     |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mobile GPUs struggle with lighting/weather       | Quality presets, auto-detect, Low preset tested on real phones                                                                                                                                 |
+| iOS Safari quirks (audio unlock, memory limits)  | Tap-to-start screen, memory budget, regular iPhone playtests                                                                                                                                   |
+| Animation quality (few football moves in Mixamo) | Early character test in Full match ([#27](https://github.com/doig80/fc94/issues/27)); stylised characters hide imperfections; procedural blending (aimed kicks, leaning); animation spec in 20 |
+| WebGPU/WebGL2 visual differences                 | CI screenshot tests run on WebGL2 (CI has no GPU); WebGPU is checked by the product owner on real devices from the checklist in [02](02-tooling-and-workflow.md#playtesting)                   |
