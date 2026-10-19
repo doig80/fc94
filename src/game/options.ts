@@ -22,6 +22,8 @@ export interface MatchOptions {
   debug: boolean;
   /** `?inspector=1`: open the Babylon.js Inspector. */
   inspector: boolean;
+  /** `?tune=1`: the tuning panel (docs/specs/02). */
+  tune: boolean;
 }
 
 function flag(params: URLSearchParams, name: string): boolean {
@@ -45,5 +47,6 @@ export function parseMatchOptions(search: string, isMobile: boolean): MatchOptio
     seed: Number.isFinite(seed) ? seed : 1994,
     debug: flag(params, "debug"),
     inspector: flag(params, "inspector"),
+    tune: flag(params, "tune"),
   };
 }

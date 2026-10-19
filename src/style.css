@@ -206,3 +206,107 @@ body {
 .meter span.low {
   background: #ff5a3c;
 }
+#tuning {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
+  bottom: max(12px, env(safe-area-inset-bottom));
+  width: min(340px, calc(100vw - 24px));
+  overflow-y: auto;
+  background: var(--panel-bg);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 12px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+}
+#tuning[hidden] {
+  display: none;
+}
+#tuning header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+#tuning header strong {
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.tuning-count {
+  flex: 1;
+  color: var(--muted);
+}
+#tuning button {
+  border: 0;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font: inherit;
+  color: var(--panel-fg);
+  background: var(--btn-bg);
+  cursor: pointer;
+}
+#tuning button:hover {
+  background: var(--btn-hover);
+}
+.tuning-actions {
+  display: flex;
+  gap: 6px;
+  margin: 8px 0;
+}
+.tuning-io textarea {
+  box-sizing: border-box;
+  width: 100%;
+  height: 110px;
+  font:
+    11px/1.4 ui-monospace,
+    monospace;
+  color: var(--panel-fg);
+  background: rgba(0, 0, 0, 0.35);
+  border: 0;
+  border-radius: 6px;
+  padding: 6px;
+}
+.tuning-msg {
+  color: var(--muted);
+}
+#tuning details {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 6px 0;
+}
+#tuning summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+.tuning-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 2px 6px;
+  margin-top: 6px;
+}
+.tuning-row input {
+  grid-column: 1 / -1;
+  width: 100%;
+  margin: 0;
+  accent-color: var(--accent);
+}
+.tuning-value {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+.tuning-row.changed .tuning-label,
+.tuning-row.changed .tuning-value {
+  color: var(--accent);
+}
+#tuning .tuning-undo {
+  visibility: hidden;
+  padding: 0 6px;
+}
+#tuning .tuning-row.changed .tuning-undo {
+  visibility: visible;
+}
+.tuning-note {
+  color: var(--muted);
+  margin: 8px 0 0;
+}

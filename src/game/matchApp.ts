@@ -4,6 +4,7 @@ import { createEngine } from "../render/engine";
 import { showInspector } from "../render/inspector";
 import { MatchView } from "../render/matchView";
 import {
+  cloneParams,
   cloneState,
   controlledPlayers,
   createMatch,
@@ -13,14 +14,16 @@ import {
   PITCH_5_A_SIDE,
   stepMatch,
   type MatchState,
+  type SimParams,
 } from "../sim";
 import { FixedStepper } from "./fixedStepper";
+import { mountTuningPanel } from "../ui/tuningPanel";
 import { parseMatchOptions, type MatchOptions } from "./options";
 
 declare global {
   interface Window {
     /** Test hooks: `ready` after the first frames, plus read access to the live match. */
-    __match?: { ready: boolean; renderer: string; state: () => MatchState };
+    __match?: { ready: boolean; renderer: string; state: () => MatchState; params: () => SimParams };
   }
 }
 
@@ -36,6 +39,9 @@ export async function startMatch(): Promise<void> {
   const dpr = Math.min(window.devicePixelRatio, options.quality === "low" ? 1.25 : 2);
   engine.setHardwareScalingLevel(1 / dpr);
 
+  // The live gameplay constants: the tuning panel edits this copy while the match runs.
+  const params = cloneParams(DEFAULT_PARAMS);
+  if (options.tune) mountTuningPanel(params);
   let state = newMatch(options);
   let prev = cloneState(state);
   const view = new MatchView(engine, state, options);
@@ -43,10 +49,10 @@ export async function startMatch(): Promise<void> {
   const stepper = new FixedStepper(DT);
   const banner = overlay("match-banner");
   const help = controlsHelp();
-  const meters = hudMeters();
+  const meters = hudMeters(params);
   let restartIn = -1;
 
-  window.__match = { ready: false, renderer, state: () => state };
+  window.__match = { ready: false, renderer, state: () => state, params: () => params };
   const status = options.debug ? overlay("debug-overlay") : undefined;
   const drawCalls = options.debug ? new SceneInstrumentation(view.scene).drawCallsCounter : undefined;
   if (options.inspector) void showInspector(view.scene);
@@ -71,9 +77,9 @@ export async function startMatch(): Promise<void> {
     last = now;
     const alpha = stepper.advance(dt, () => {
       prev = cloneState(state);
-      stepMatch(state, [keyboard.read(view.rig.yaw)], DEFAULT_PARAMS);
+      stepMatch(state, [keyboard.read(view.rig.yaw)], params);
       if (restartIn < 0) {
-        const goal = isInGoal(state.ball, state.pitch, DEFAULT_PARAMS.ball.radius);
+        const goal = isInGoal(state.ball, state.pitch, params.ball.radius);
         if (goal !== 0 || outOfPlay(state)) {
           restartIn = RESTART_TICKS;
           banner.textContent = goal !== 0 ? "GOAL!" : "Out of play";
@@ -137,7 +143,7 @@ function overlay(className: string): HTMLElement {
 }
 
 /** Shot power (fills while shoot is held, docs/specs/10 §3) and sprint stamina of the controlled player. */
-function hudMeters(): { update(s: MatchState): void } {
+function hudMeters(params: SimParams): { update(s: MatchState): void } {
   const el = document.createElement("div");
   el.className = "hud-meters";
   el.innerHTML = `<div class="meter power" hidden><span></span></div><div class="meter stamina"><span></span></div>`;
@@ -149,9 +155,9 @@ function hudMeters(): { update(s: MatchState): void } {
     update(s) {
       const p = s.players[s.controllers[0].player];
       power.hidden = p.charge < 0;
-      const level = Math.max(0, p.charge) / DEFAULT_PARAMS.action.shotChargeTicks;
+      const level = Math.max(0, p.charge) / params.action.shotChargeTicks;
       powerFill.style.width = `${level * 100}%`;
-      power.classList.toggle("over", level > DEFAULT_PARAMS.action.overpowerAt);
+      power.classList.toggle("over", level > params.action.overpowerAt);
       staminaFill.style.width = `${p.stamina * 100}%`;
       staminaFill.classList.toggle("low", p.stamina < 0.25);
     },
@@ -166,7 +172,7 @@ function controlsHelp(): HTMLElement {
     <b>With the ball:</b> <kbd>J</kbd> pass (tap twice: one-two) · hold <kbd>K</kbd> shoot (steer to curl) ·
     <kbd>L</kbd> lob / cross / through ball<br>
     <b>Defending:</b> <kbd>J</kbd> switch player · <kbd>K</kbd> tackle · <kbd>L</kbd> slide<br>
-    <kbd>R</kbd> restart`;
+    <kbd>R</kbd> restart${new URLSearchParams(location.search).has("tune") ? " · <kbd>T</kbd> tuning panel" : ""}`;
   document.body.append(el);
   return el;
 }

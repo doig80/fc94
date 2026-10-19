@@ -1,5 +1,7 @@
 import { FixedStepper } from "../game/fixedStepper";
+import { mountTuningPanel } from "../ui/tuningPanel";
 import {
+  cloneParams,
   createMatch,
   DEFAULT_PARAMS,
   DT,
@@ -47,6 +49,9 @@ export function startSandbox(): void {
   document.body.append(help);
   const ctx = canvas.getContext("2d")!;
 
+  // `?mode=physics&tune=1` adds the tuning panel, handy for tuning the ball on its own.
+  const params = cloneParams(DEFAULT_PARAMS);
+  if (new URLSearchParams(window.location.search).has("tune")) mountTuningPanel(params);
   let state = newState("clear");
   let goalFlash = 0;
   const keys = new Set<string>();
@@ -109,9 +114,8 @@ export function startSandbox(): void {
       intents[CONTROLLED].moveX = m.x;
       intents[CONTROLLED].moveZ = m.z;
       intents[CONTROLLED].sprint = keys.has("Space");
-      step(state, intents, DEFAULT_PARAMS);
-      if (goalFlash === 0 && isInGoal(state.ball, state.pitch, DEFAULT_PARAMS.ball.radius) !== 0)
-        goalFlash = 90;
+      step(state, intents, params);
+      if (goalFlash === 0 && isInGoal(state.ball, state.pitch, params.ball.radius) !== 0) goalFlash = 90;
       if (goalFlash > 0 && --goalFlash === 0) state = newState(state.weather);
     });
     last = now;
