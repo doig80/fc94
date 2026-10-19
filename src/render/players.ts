@@ -34,6 +34,13 @@ export const KITS: Record<string, Kit> = {
     shorts: Color3.FromHexString("#1d1d1d"),
     socks: Color3.FromHexString("#ff8c1a"),
   },
+  /** The referee and assistants: all in black. */
+  referee: {
+    id: "referee",
+    shirt: Color3.FromHexString("#151515"),
+    shorts: Color3.FromHexString("#0b0b0b"),
+    socks: Color3.FromHexString("#151515"),
+  },
 };
 
 /** Which colour a body part takes. */
@@ -169,6 +176,43 @@ export class PlayerRig {
     for (const joint of [...this.legs, ...this.arms]) joint.computeWorldMatrix(true);
   }
 
+  /** A node at the end of the right arm, for things held in the hand (a card, a flag). */
+  hand(): TransformNode {
+    const hand = new TransformNode(`${this.root.name}:hand`, this.root.getScene());
+    hand.parent = this.arms[1];
+    hand.position.set(0, -0.64, 0);
+    return hand;
+  }
+
+  /**
+   * An official's arm signal on top of the run cycle (docs/specs/10 §6). `progress` is seconds since the call;
+   * the arm comes up quickly and stays.
+   */
+  signal(kind: Signal, progress: number): void {
+    const up = Math.min(1, progress * 5);
+    const [left, right] = this.arms;
+    switch (kind) {
+      case "whistle":
+        // Whistle to the mouth: right hand up in front of the face.
+        right.rotation.set(0, 0, 2.5 * up);
+        break;
+      case "point":
+        // Arm straight out in front, the way the root faces.
+        right.rotation.set(0, 0, 1.55 * up);
+        break;
+      case "advantage":
+        // Both arms forward: play on.
+        left.rotation.set(0, 0, 1.35 * up);
+        right.rotation.set(0, 0, 1.35 * up);
+        break;
+      case "card":
+      case "flag":
+        // Straight up above the head.
+        right.rotation.set(0, 0, 3.05 * up);
+        break;
+    }
+  }
+
   /** The joints a part hangs from: one for the body, one per side for hips and shoulders. */
   joints(part: PartSpec): TransformNode[] {
     return part.joint === "body" ? [this.body] : part.joint === "hip" ? this.legs : this.arms;
@@ -301,6 +345,9 @@ export const PART_SURFACE: Record<PartColour, { roughness: number; wettable: num
 
 export type PoseAction =
   "slide" | "recover" | "stumble" | "header" | "bicycle" | "volley" | "kick" | "tackle" | "dive";
+
+/** The referee's and assistants' arm signals. */
+export type Signal = "whistle" | "point" | "advantage" | "card" | "flag";
 
 function smoothstep(t: number): number {
   const x = t < 0 ? 0 : t > 1 ? 1 : t;

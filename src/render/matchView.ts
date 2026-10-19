@@ -15,6 +15,7 @@ import { DEFAULT_PARAMS, type JuiceParams, type MatchState } from "../sim";
 import { Atmosphere } from "./atmosphere";
 import { CameraRig, type CinematicShot, type MatchCamera } from "./cameraRig";
 import { SurfaceLibrary } from "./materials";
+import { Officials } from "./officials";
 import { buildPitch } from "./pitch";
 import { buildBall, KITS, type PoseAction } from "./players";
 import { Squad } from "./squad";
@@ -51,8 +52,9 @@ export class MatchView {
   readonly scene: Scene;
   readonly rig: CameraRig;
   private readonly lib: SurfaceLibrary;
-  /** Every player, drawn together; `squad.rigs[i]` is player i. */
+  /** Every player, drawn together; `squad.rigs[i]` is player i, then the referee and his assistants. */
   private readonly squad: Squad;
+  private readonly officials: Officials;
   /** Low quality: a soft spot under each player instead of shadow maps (docs/specs/01 §4). */
   private readonly blobs: Mesh | null;
   private readonly phases: number[] = [];
@@ -95,19 +97,28 @@ export class MatchView {
     this.squad = new Squad(
       scene,
       this.lib,
-      initial.players.map((pl, i) => ({
-        kit:
-          pl.team === 0
-            ? pl.role === "gk"
-              ? KITS.keeper
-              : KITS.home
-            : pl.role === "gk"
-              ? KITS.keeperAway
-              : KITS.away,
-        skin: SKINS[i % SKINS.length],
-        hair: HAIR[(i * 3) % HAIR.length],
-      })),
+      initial.players
+        .map((pl, i) => ({
+          kit:
+            pl.team === 0
+              ? pl.role === "gk"
+                ? KITS.keeper
+                : KITS.home
+              : pl.role === "gk"
+                ? KITS.keeperAway
+                : KITS.away,
+          skin: SKINS[i % SKINS.length],
+          hair: HAIR[(i * 3) % HAIR.length],
+        }))
+        .concat(
+          [0, 1, 2].map((k) => ({
+            kit: KITS.referee,
+            skin: SKINS[(k * 2 + 1) % SKINS.length],
+            hair: HAIR[(k + 1) % HAIR.length],
+          })),
+        ),
     );
+    this.officials = new Officials(scene, this.squad.rigs.slice(initial.players.length));
     initial.players.forEach((_, i) => {
       this.phases.push(i * 0.7);
       this.kickTimers.push(0);
@@ -136,7 +147,7 @@ export class MatchView {
 
     const shadowMaps = options.quality !== "low";
     this.atmosphere = new Atmosphere(scene, this.rig.camera, stadium.lamps, options.quality, shadowMaps);
-    this.blobs = shadowMaps ? null : buildBlobShadows(scene, initial.players.length);
+    this.blobs = shadowMaps ? null : buildBlobShadows(scene, initial.players.length + 3);
     this.lib.syncPrePassExclusions();
     this.atmosphere.addShadowCasters([
       ...pitch.shadowCasters,
@@ -207,12 +218,20 @@ export class MatchView {
         view.poseAction("kick", 1 - this.kickTimers[i] / KICK_SECONDS);
         this.kickTimers[i] -= dt;
       }
+      this.blobs?.thinInstanceSetMatrixAt(i, Matrix.Translation(x, 0.015 + gone, z), false);
+    });
+    const ballX = lerp(prev.ball.pos.x, curr.ball.pos.x);
+    const ballZ = lerp(prev.ball.pos.z, curr.ball.pos.z);
+    this.officials.update(curr, ballX, ballZ, dt);
+    const ref = curr.rules?.fouls ? 0 : -50;
+    this.officials.positions().forEach((p, k) => {
       this.blobs?.thinInstanceSetMatrixAt(
-        i,
-        Matrix.Translation(x, 0.015 + gone, z),
-        i === curr.players.length - 1,
+        curr.players.length + k,
+        Matrix.Translation(p.x, 0.015 + ref, p.z),
+        false,
       );
     });
+    this.blobs?.thinInstanceBufferUpdated("matrix");
     this.squad.update();
 
     const b0 = prev.ball;
