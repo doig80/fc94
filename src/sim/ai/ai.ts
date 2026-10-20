@@ -122,8 +122,7 @@ function thinkOutfield(state: MatchState, i: number, params: SimParams, rng: Rng
   const receiver = ball.intendedReceiver;
   if (receiver === i) {
     // Meet the pass; a ball in the air in its path. A cross in the box is met first time with a header or volley.
-    const high = ball.pos.y > params.action.volleyMinHeight || ball.vel.y > 1;
-    goTo(state, i, high ? meetInFlight(state, i, params) : ahead(state, 0.25), 1);
+    goTo(state, i, meetPass(state, i, params), 1);
     attackCross(state, i, params);
     return;
   }
@@ -640,6 +639,13 @@ function ahead(state: MatchState, seconds: number): Vec2 {
   };
 }
 
+/** Where the receiver of a pass meets it: a little ahead of a ball on the ground, in the path of one in the air. */
+export function meetPass(state: MatchState, i: number, params: SimParams): Vec2 {
+  const ball = state.ball;
+  const high = ball.pos.y > params.action.volleyMinHeight || ball.vel.y > 1;
+  return high ? meetInFlight(state, i, params) : ahead(state, 0.25);
+}
+
 /**
  * Where player `i` meets a ball in the air: the point of its path nearest them, while it's still high enough to
  * volley (drag ignored), kept on the pitch.
@@ -660,7 +666,7 @@ function meetInFlight(state: MatchState, i: number, params: SimParams): Vec2 {
 }
 
 /** Stick direction towards `to`; slows down over the last `slowWithin` metres so players don't overshoot. */
-function toward(from: Vec2, to: Vec2, slowWithin: number): Vec2 {
+export function toward(from: Vec2, to: Vec2, slowWithin: number): Vec2 {
   const dx = to.x - from.x;
   const dz = to.z - from.z;
   const d = Math.sqrt(dx * dx + dz * dz);

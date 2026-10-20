@@ -62,6 +62,11 @@ export interface Controller {
   /** No automatic switch before this tick (stops the ring jumping around). */
   switchLockUntil: number;
   assists: Assists;
+  /**
+   * Run onto the pass (assist): while a pass is on its way to this player, the stick the human held when it was
+   * played (`aim`, null once let go) and whether they've taken over with a new direction.
+   */
+  receiving: { aim: Vec2 | null; own: boolean } | null;
 }
 
 /** Help options (docs/specs/11 §3). */
@@ -70,6 +75,8 @@ export interface Assists {
   aimHelp: boolean;
   passLead: boolean;
   autoSprint: boolean;
+  /** While a pass is on its way to you, your player runs to meet it until you steer a new way. */
+  runOntoPass: boolean;
 }
 
 /** Defaults for Normal difficulty (docs/specs/11 §2). */
@@ -78,6 +85,7 @@ export const NORMAL_ASSISTS: Assists = {
   aimHelp: false,
   passLead: true,
   autoSprint: false,
+  runOntoPass: true,
 };
 
 /** What a CPU player is doing between decisions (its reaction time, docs/specs/11 §2). */
@@ -382,6 +390,7 @@ export function createMatch(config: MatchConfig, params: SimParams = DEFAULT_PAR
       // Start on the most advanced outfield player.
       player: team * formation.length + formation.length - 1,
       switchLockUntil: 0,
+      receiving: null,
       assists: { ...NORMAL_ASSISTS },
     })),
     oneTwo: null,

@@ -28,12 +28,12 @@ export const DIFFICULTY: Record<Difficulty, Preset> = {
       lineMisread: 4,
     },
     keeper: { reach: 0.6, diveSpeed: 7, catchSpeed: 15 },
-    assists: { autoSwitch: true, aimHelp: true, passLead: true, autoSprint: true },
+    assists: { autoSwitch: true, aimHelp: true, passLead: true, autoSprint: true, runOntoPass: true },
   },
   normal: {
     ai: {},
     keeper: {},
-    assists: { autoSwitch: true, aimHelp: false, passLead: true, autoSprint: false },
+    assists: { autoSwitch: true, aimHelp: false, passLead: true, autoSprint: false, runOntoPass: true },
   },
   hard: {
     ai: {
@@ -48,7 +48,7 @@ export const DIFFICULTY: Record<Difficulty, Preset> = {
       lineMisread: 1,
     },
     keeper: { reach: 0.69, diveSpeed: 7.8, catchSpeed: 21 },
-    assists: { autoSwitch: true, aimHelp: false, passLead: false, autoSprint: false },
+    assists: { autoSwitch: true, aimHelp: false, passLead: false, autoSprint: false, runOntoPass: true },
   },
 };
 

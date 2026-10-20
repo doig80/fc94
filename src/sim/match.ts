@@ -1,9 +1,10 @@
 import { applyActions, pass, playQueued, tickActions } from "./actions";
 import { updateControl } from "./control";
+import { meetPass, toward } from "./ai/ai";
 import { IDLE, type Intent } from "./intent";
 import type { SimParams } from "./params";
 import { applyAftertouch } from "./physics/ball";
-import { attackSign, type MatchState } from "./state";
+import { attackSign, type Controller, type MatchState } from "./state";
 import { holdDeadBall, holdRestart, holdShootout, pauseTick, referee } from "./rules";
 import { DT, step } from "./step";
 
@@ -27,6 +28,7 @@ export function stepMatch(
   const intents: Intent[] = aiIntents ? aiIntents(state) : state.players.map(() => ({ ...IDLE }));
   state.controllers.forEach((c, k) => {
     const intent = { ...(humanIntents[k] ?? IDLE) };
+    runOntoPass(state, c, intent, params);
     if (c.assists.autoSprint && !intent.sprint) intent.sprint = openGround(state, c.player, intent);
     intents[c.player] = intent;
   });
@@ -43,6 +45,37 @@ export function stepMatch(
   playQueued(state, params, assistsFor);
   oneTwoReturn(state, params);
   referee(state, params);
+}
+
+/** The stick still counts as the one that aimed the pass within this angle of it (cosine of 45°). */
+const SAME_STICK = 0.7;
+
+/**
+ * Run onto the pass (assist, docs/specs/11 §3): while a teammate's pass is on its way to the player a human
+ * controls, he runs to meet it as a CPU receiver would. The stick held when control came to him (the one that
+ * aimed the pass) doesn't steer him; a new direction, or any push after letting go, hands control straight back.
+ */
+function runOntoPass(state: MatchState, c: Controller, intent: Intent, params: SimParams): void {
+  const ball = state.ball;
+  const passer = ball.lastTouch >= 0 ? state.players[ball.lastTouch] : null;
+  const incoming = ball.owner < 0 && ball.intendedReceiver === c.player && passer?.team === c.team;
+  if (!c.assists.runOntoPass || !incoming) {
+    c.receiving = null;
+    return;
+  }
+  const mag = Math.sqrt(intent.moveX * intent.moveX + intent.moveZ * intent.moveZ);
+  const dir = mag > 0.3 ? { x: intent.moveX / mag, z: intent.moveZ / mag } : null;
+  c.receiving ??= { aim: dir, own: false };
+  const r = c.receiving;
+  if (r.own) return;
+  if (!dir) r.aim = null;
+  else if (!r.aim || dir.x * r.aim.x + dir.z * r.aim.z < SAME_STICK) {
+    r.own = true;
+    return;
+  }
+  const move = toward(state.players[c.player].pos, meetPass(state, c.player, params), 1);
+  intent.moveX = move.x;
+  intent.moveZ = move.z;
 }
 
 /**
