@@ -29,10 +29,11 @@ describe("character test: blending the gaits by speed (issue #27)", () => {
 
   it("cycles the stride as fast as it covers the ground, so the feet don't slide", () => {
     // At a gait's own speed, one cycle per animation length.
-    expect(blendGaits(GAITS, 5.36).rate).toBeCloseTo(1 / 0.933);
-    // Faster than the sprint was made for: the same stride, cycled faster.
-    expect(blendGaits(GAITS, 9).rate).toBeCloseTo(9 / (8.25 * 0.667));
+    expect(blendGaits(GAITS, 5.36).perMetre * 5.36).toBeCloseTo(1 / 0.933);
+    // Faster than the sprint was made for: the same stride (one cycle per stride's length), cycled faster.
+    expect(blendGaits(GAITS, 9).perMetre).toBeCloseTo(1 / (8.25 * 0.667));
+    expect(blendGaits(GAITS, 9).perSecond).toBe(0);
     // Standing: the idle breathes at its own pace.
-    expect(blendGaits(GAITS, 0).rate).toBeCloseTo(1 / 2.5);
+    expect(blendGaits(GAITS, 0)).toMatchObject({ perMetre: 0, perSecond: 1 / 2.5 });
   });
 });

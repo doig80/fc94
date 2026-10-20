@@ -1,6 +1,6 @@
 import { Color3, Mesh, MeshBuilder, Scene, StandardMaterial } from "@babylonjs/core";
 import { attackSign, offsideLine, type MatchEvent, type MatchState } from "../sim";
-import type { PlayerRig, Signal } from "./players";
+import type { Rig, Signal } from "./players";
 
 /** How long an official holds a signal after a call. */
 const SIGNAL_SECONDS = 2.4;
@@ -16,7 +16,7 @@ const STRIDE = 2.6;
 const TELEPORT = 35;
 
 interface Official {
-  rig: PlayerRig;
+  rig: Rig;
   x: number;
   z: number;
   vx: number;
@@ -44,8 +44,8 @@ export class Officials {
   private readonly flags: Mesh[];
   private first = true;
 
-  constructor(scene: Scene, rigs: PlayerRig[]) {
-    const make = (rig: PlayerRig, i: number): Official => ({
+  constructor(scene: Scene, rigs: Rig[]) {
+    const make = (rig: Rig, i: number): Official => ({
       rig,
       x: 0,
       z: 0,
@@ -71,14 +71,29 @@ export class Officials {
     flagMat.disableLighting = true;
     flagMat.emissiveColor = Color3.FromHexString("#ffb400");
     this.flags = this.assistants.map((a, i) => {
-      // The cloth hangs off the end of a short stick, beyond the hand.
-      const flag = MeshBuilder.CreateBox(`flag${i}`, { width: 0.32, height: 0.24, depth: 0.015 }, scene);
+      // The cloth hangs off the end of a short stick, beyond the hand: one mesh, so one draw call.
+      const cloth = MeshBuilder.CreateBox(`flag${i}`, { width: 0.32, height: 0.24, depth: 0.015 }, scene);
+      cloth.position.set(0.12, -0.42, 0);
+      const stick = MeshBuilder.CreateBox(
+        `flagStick${i}`,
+        { width: 0.025, height: 0.6, depth: 0.025 },
+        scene,
+      );
+      stick.position.set(0, -0.25, 0);
+      const flag = Mesh.MergeMeshes([cloth, stick], true)!;
+      flag.name = `flag${i}`;
       flag.material = flagMat;
       flag.parent = a.rig.hand();
-      flag.position.set(0.12, -0.42, 0);
       flag.isPickable = false;
       return flag;
     });
+  }
+
+  /** Remove the card and the flags (when the officials are handed new rigs). */
+  dispose(): void {
+    this.card.dispose();
+    this.cardMat.dispose();
+    for (const f of this.flags) f.dispose(false, true);
   }
 
   /** Move and pose the officials for this frame; `dt` is seconds since the last frame (0 while paused). */
@@ -163,7 +178,7 @@ export class Officials {
       o.phase += Math.hypot(o.vx, o.vz) * dt * STRIDE;
     }
     o.rig.root.position.set(o.x, 0, o.z);
-    o.rig.pose(o.phase, Math.min(1, Math.hypot(o.vx, o.vz) / 8));
+    o.rig.pose(o.phase, Math.min(1, Math.hypot(o.vx, o.vz) / 8), dt);
   }
 
   private face(o: Official, dx: number, dz: number, dt: number): void {

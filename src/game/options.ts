@@ -42,6 +42,8 @@ export interface MatchOptions {
   shootout: boolean;
   /** `?runon=0` switches off the "Run onto the pass" assist (docs/specs/11 §3), on at every level. */
   runOntoPass: boolean;
+  /** `?players=new`: the character test's new player model for everyone on the pitch (issue #27). */
+  players: "old" | "new";
 }
 
 function flag(params: URLSearchParams, name: string): boolean {
@@ -86,5 +88,6 @@ export function parseMatchOptions(search: string, isMobile: boolean): MatchOptio
     },
     shootout: flag(params, "shootout"),
     runOntoPass: onUnless(params, "runon", true),
+    players: params.get("players") === "new" ? "new" : "old",
   };
 }

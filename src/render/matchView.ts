@@ -17,7 +17,9 @@ import { CameraRig, type CinematicShot, type MatchCamera } from "./cameraRig";
 import { SurfaceLibrary } from "./materials";
 import { Officials } from "./officials";
 import { buildPitch } from "./pitch";
-import { buildBall, KITS, type PoseAction } from "./players";
+import { CharacterRig } from "./characterRig";
+import { HAIRSTYLES, loadCharacterAssets } from "./character";
+import { buildBall, KITS, type Kit, type PoseAction, type Rig } from "./players";
 import { Squad } from "./squad";
 import { buildStadium, type Stadium } from "./stadium";
 import type { Quality, TimeOfDay, Weather } from "./types";
@@ -30,6 +32,8 @@ export interface MatchViewOptions {
   camera: MatchCamera;
   /** Game-feel strengths (read live, so the tuning panel applies at once). */
   juice: JuiceParams;
+  /** The character test (issue #27): "new" swaps in the new player model once it has loaded. */
+  players?: "old" | "new";
 }
 
 /** The ball is drawn larger than its collision size so it is easy to follow (docs/specs/10 §5). */
@@ -54,7 +58,11 @@ export class MatchView {
   private readonly lib: SurfaceLibrary;
   /** Every player, drawn together; `squad.rigs[i]` is player i, then the referee and his assistants. */
   private readonly squad: Squad;
-  private readonly officials: Officials;
+  /** Who is shown: the squad's placeholders, or the new model's rigs once loaded (same order). */
+  private rigs: Rig[];
+  private officials: Officials;
+  /** Resolves once everything asked for is shown (the new players load separately). */
+  readonly loaded: Promise<void>;
   /** Low quality: a soft spot under each player instead of shadow maps (docs/specs/01 §4). */
   private readonly blobs: Mesh | null;
   private readonly phases: number[] = [];
@@ -83,6 +91,51 @@ export class MatchView {
   private lastGoalTick = -1;
   private first = true;
 
+  /** Every person on the pitch, in order: the players, then the referee and his two assistants. */
+  private static people(initial: MatchState): { kit: Kit; skin: Color3; hair: Color3 }[] {
+    return initial.players
+      .map((pl, i) => ({
+        kit:
+          pl.team === 0
+            ? pl.role === "gk"
+              ? KITS.keeper
+              : KITS.home
+            : pl.role === "gk"
+              ? KITS.keeperAway
+              : KITS.away,
+        skin: SKINS[i % SKINS.length],
+        hair: HAIR[(i * 3) % HAIR.length],
+      }))
+      .concat(
+        [0, 1, 2].map((k) => ({
+          kit: KITS.referee,
+          skin: SKINS[(k * 2 + 1) % SKINS.length],
+          hair: HAIR[(k + 1) % HAIR.length],
+        })),
+      );
+  }
+
+  /**
+   * The character test (issue #27): once the new model has loaded, it stands in for every player and official,
+   * driven exactly as the placeholders are; the placeholders hide.
+   */
+  private async showNewPlayers(people: { kit: Kit; hair: Color3 }[]): Promise<void> {
+    const assets = await loadCharacterAssets(this.scene);
+    const rigs = people.map(
+      (p, i) =>
+        new CharacterRig(this.scene, assets, `person${i}`, p.kit, {
+          hair: p.hair,
+          hairstyle: HAIRSTYLES[i % HAIRSTYLES.length],
+        }),
+    );
+    for (const m of this.squad.meshes) m.setEnabled(false);
+    this.officials.dispose();
+    this.officials = new Officials(this.scene, rigs.slice(rigs.length - 3));
+    this.rigs = rigs;
+    this.atmosphere.addShadowCasters(rigs.map((r) => r.shadowCaster));
+    for (const m of rigs.flatMap((r) => r.meshes)) m.receiveShadows = true;
+  }
+
   constructor(engine: AbstractEngine, initial: MatchState, options: MatchViewOptions) {
     const scene = new Scene(engine);
     this.scene = scene;
@@ -96,31 +149,11 @@ export class MatchView {
     const stadium = buildStadium(scene, this.lib, options.quality, initial.pitch);
     this.stadium = stadium;
 
-    this.squad = new Squad(
-      scene,
-      this.lib,
-      initial.players
-        .map((pl, i) => ({
-          kit:
-            pl.team === 0
-              ? pl.role === "gk"
-                ? KITS.keeper
-                : KITS.home
-              : pl.role === "gk"
-                ? KITS.keeperAway
-                : KITS.away,
-          skin: SKINS[i % SKINS.length],
-          hair: HAIR[(i * 3) % HAIR.length],
-        }))
-        .concat(
-          [0, 1, 2].map((k) => ({
-            kit: KITS.referee,
-            skin: SKINS[(k * 2 + 1) % SKINS.length],
-            hair: HAIR[(k + 1) % HAIR.length],
-          })),
-        ),
-    );
+    const people = MatchView.people(initial);
+    this.squad = new Squad(scene, this.lib, people);
+    this.rigs = this.squad.rigs;
     this.officials = new Officials(scene, this.squad.rigs.slice(initial.players.length));
+    this.loaded = options.players === "new" ? this.showNewPlayers(people) : Promise.resolve();
     initial.players.forEach((_, i) => {
       this.phases.push(i * 0.7);
       this.kickTimers.push(0);
@@ -199,7 +232,7 @@ export class MatchView {
     this.rippleNets(dt);
     curr.players.forEach((pl, i) => {
       const before = prev.players[i];
-      const view = this.squad.rigs[i];
+      const view = this.rigs[i];
       const x = lerp(before.pos.x, pl.pos.x);
       const z = lerp(before.pos.z, pl.pos.z);
       const moved = Math.hypot(x - view.root.position.x, z - view.root.position.z);
@@ -213,7 +246,7 @@ export class MatchView {
       view.root.rotation.y = Math.atan2(-fz, fx);
       const speed = Math.hypot(pl.vel.x, pl.vel.z);
       if (!this.first) this.phases[i] += moved * STRIDE;
-      view.pose(this.phases[i], Math.min(1, speed / DEFAULT_PARAMS.player.sprintSpeed));
+      view.pose(this.phases[i], Math.min(1, speed / DEFAULT_PARAMS.player.sprintSpeed), dt);
       const act = pl.action;
       if (act.kind !== "none") {
         view.poseAction(act.kind as PoseAction, 1 - act.ticks / act.total);
@@ -235,7 +268,7 @@ export class MatchView {
       );
     });
     this.blobs?.thinInstanceBufferUpdated("matrix");
-    this.squad.update();
+    if (this.rigs === this.squad.rigs) this.squad.update();
 
     const b0 = prev.ball;
     const b1 = curr.ball;
@@ -299,7 +332,7 @@ export class MatchView {
       const index = controlled[slot] ?? -1;
       ring.setEnabled(index >= 0);
       if (index >= 0) {
-        const p = this.squad.rigs[index].root.position;
+        const p = this.rigs[index].root.position;
         ring.position.set(p.x, 0.04, p.z);
       }
     });

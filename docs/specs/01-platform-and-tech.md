@@ -149,5 +149,20 @@ new model only; the panel has a **Players** switch).
 - **Assets:** `scripts/assets/prepare_player.py` builds `public/assets/characters/` (the model and animations,
   0.96 MB; the body texture and kit map, 75 kB) from the two packs, which are downloaded from quaternius.itch.io and
   not kept in the repo. They load only when the new players are shown, so the match's download doesn't change.
-- **For a full roll-out** (Beta, if the test is chosen): 25 such players are about 350,000 triangles and 100 draw
-  calls, so they would need a lighter version and fewer pieces per player.
+- **In the match:** `?players=new` puts every player, the referee and his assistants in the new model
+  (`src/render/characterRig.ts`, behind the same controls as the placeholders). Running is the blended gaits; kicks,
+  tackles, slides, headers, dives and the officials' signals are simple poses laid over them (bones turned in code)
+  until the Mixamo moves arrive. Only the body casts a shadow. Today's players stay the default.
+- **What it costs** (measured in a live 11 v 11 match, software rendering in CI):
+
+  |                                                              | Today's players | New players              |
+  | ------------------------------------------------------------ | --------------- | ------------------------ |
+  | Draw calls, High (budget 300)                                | 96              | 175–200                  |
+  | Draw calls, Low (budget 120)                                 | 36              | 70–95                    |
+  | Triangles, High (the shadow cascades draw each player again) | 176,000         | 1,360,000                |
+  | Triangles, Low                                               | 75,000          | 340,000                  |
+  | Animation work per frame (processor)                         | under 0.1 ms    | 5–6 ms on the CI machine |
+
+- **For a full roll-out** (Beta, if the test is chosen): blend the gaits in our own code rather than Babylon's
+  general animation system (most of the 5–6 ms), a lighter version of the model for players far from the camera and
+  for shadows, and fewer pieces per player (eyes, eyebrows and hair are separate draws today).

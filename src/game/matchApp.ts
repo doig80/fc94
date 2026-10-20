@@ -1,4 +1,4 @@
-import { SceneInstrumentation } from "@babylonjs/core";
+import { SceneInstrumentation, type Scene } from "@babylonjs/core";
 import { combine, GamepadInput, PAD } from "../input/gamepad";
 import { KeyboardInput } from "../input/keyboard";
 import { createEngine } from "../render/engine";
@@ -50,6 +50,8 @@ declare global {
       replayProgress: () => number | null;
       /** Draw calls in the last frame (docs/specs/01 §4 budget). */
       drawCalls: () => number;
+      /** The 3D scene, for close-up screenshots. */
+      scene: Scene;
     };
   }
 }
@@ -77,6 +79,15 @@ export async function startMatch(): Promise<void> {
   let state = newMatch(options);
   let prev = cloneState(state);
   const view = new MatchView(engine, state, { ...options, juice: params.juice });
+  // The new players (?players=new) load after the scene; the match is ready for tests once they show.
+  let viewLoaded = false;
+  view.loaded.then(
+    () => (viewLoaded = true),
+    (err: unknown) => {
+      console.error(err);
+      viewLoaded = true;
+    },
+  );
   const keyboard = new KeyboardInput(window);
   const pad = new GamepadInput();
   const stepper = new FixedStepper(DT);
@@ -110,6 +121,7 @@ export async function startMatch(): Promise<void> {
     mode: () => (paused ? "paused" : replay ? "replay" : "live"),
     replayProgress: () => (replay ? replay.player.progress : null),
     drawCalls: () => drawCalls.current,
+    scene: view.scene,
   };
   const status = options.debug ? element("debug-overlay") : undefined;
   if (options.inspector) void showInspector(view.scene);
@@ -228,7 +240,7 @@ export async function startMatch(): Promise<void> {
     board.update(state);
     perfect.update(state);
     view.scene.render();
-    if (++frames === 30) {
+    if (++frames >= 30 && viewLoaded && !window.__match!.ready) {
       window.__match!.ready = true;
       document.body.dataset.ready = "1";
     }

@@ -31,7 +31,7 @@ export const GAITS = [
 ] as const;
 
 /** The model faces +z; our players face +x before turning to their heading. */
-const FACING = Math.PI / 2;
+export const FACING = Math.PI / 2;
 
 /** The hairstyles in player.glb; each player shows one. */
 export const HAIRSTYLES = ["Hair_SimpleParted", "Hair_Buzzed"] as const;
@@ -108,25 +108,27 @@ function kitTexture(scene: Scene, assets: CharacterAssets, kit: Kit, name: strin
 }
 
 /**
- * How much of each gait to show at `speed` (m/s), and how many stride cycles a second: the two gaits around that
- * speed are blended, and a running gait cycles as fast as its stride covers that ground, so the feet don't slide
- * (idle breathes at its own pace). `gaits` are in order of speed, from standing.
+ * How much of each gait to show at `speed` (m/s), and how fast the cycle goes: the two gaits around that speed are
+ * blended; a running gait cycles once per stride it covers (`perMetre`), so the feet don't slide, and idle breathes
+ * at its own pace (`perSecond`). `gaits` are in order of speed, from standing.
  */
 export function blendGaits(
   gaits: readonly { speed: number; seconds: number }[],
   speed: number,
-): { weights: number[]; rate: number } {
+): { weights: number[]; perMetre: number; perSecond: number } {
   const weights = gaits.map(() => 0);
   let k = 0;
   while (k < gaits.length - 2 && speed > gaits[k + 1].speed) k++;
   const t = Math.min(1, Math.max(0, (speed - gaits[k].speed) / (gaits[k + 1].speed - gaits[k].speed)));
   weights[k] = 1 - t;
   weights[k + 1] = t;
-  let rate = 0;
+  let perMetre = 0;
+  let perSecond = 0;
   gaits.forEach((g, i) => {
-    if (weights[i] > 0) rate += weights[i] * (g.speed > 0 ? speed / (g.speed * g.seconds) : 1 / g.seconds);
+    if (g.speed > 0) perMetre += weights[i] / (g.speed * g.seconds);
+    else perSecond += weights[i] / g.seconds;
   });
-  return { weights, rate };
+  return { weights, perMetre, perSecond };
 }
 
 /** One player: a copy of the model in a team's kit, running with the animations blended by speed. */
@@ -134,6 +136,10 @@ export class Character {
   /** Move and turn this; the model sits under it. */
   readonly root: TransformNode;
   readonly meshes: AbstractMesh[];
+  /** The mesh that casts a shadow: the body (the hair, eyes and eyebrows are too small to show in it). */
+  readonly shadowCaster: AbstractMesh;
+  /** The skeleton's nodes by bone name ("thigh_r"…), and the model's own top node ("Armature"). */
+  readonly bones = new Map<string, TransformNode>();
   private readonly gaits: { group: AnimationGroup; speed: number; frames: number; seconds: number }[];
   private phase = 0;
 
@@ -147,6 +153,8 @@ export class Character {
     this.root = new TransformNode(name, scene);
     const copy = assets.container.instantiateModelsToScene((n) => `${name}:${n}`, true);
     for (const node of copy.rootNodes) node.parent = this.root;
+    for (const node of copy.rootNodes.flatMap((n) => n.getDescendants(false)))
+      if (node instanceof TransformNode) this.bones.set(node.name.slice(name.length + 1), node);
     const all = copy.rootNodes.flatMap((n) => n.getChildMeshes(false));
     // One hairstyle: the others go.
     for (const mesh of all) {
@@ -154,6 +162,7 @@ export class Character {
       if (style && style !== look.hairstyle) mesh.dispose();
     }
     this.meshes = all.filter((m) => !m.isDisposed());
+    this.shadowCaster = this.meshes.find((m) => m.material?.name.includes("MI_Superhero"))!;
     for (const mesh of this.meshes) {
       const m = mesh.material;
       if (!(m instanceof PBRMaterial)) continue;
@@ -193,11 +202,20 @@ export class Character {
   place(pos: Vector3, heading: Vector3, speed: number, dt: number): void {
     this.root.position.copyFrom(pos);
     this.root.rotation.y = Math.atan2(-heading.z, heading.x) + FACING;
-    const { weights, rate } = blendGaits(this.gaits, speed);
-    this.phase = (this.phase + rate * dt) % 1;
+    this.run(speed, dt);
+  }
+
+  /**
+   * Blend the gaits for `speed` m/s (`blendGaits`). The stride advances with the `distance` covered in this frame's
+   * `dt` seconds (as it would at that speed, unless given): in slow motion or a freeze it slows or holds with the play.
+   */
+  run(speed: number, dt: number, distance = speed * dt): void {
+    const { weights, perMetre, perSecond } = blendGaits(this.gaits, speed);
+    this.phase = (this.phase + perMetre * distance + perSecond * dt) % 1;
     this.gaits.forEach((gait, i) => {
       gait.group.weight = weights[i];
-      gait.group.goToFrame(gait.group.from + this.phase * gait.frames);
+      // Only the (at most two) gaits shown are worked out: Babylon skips the rest, so moving them is wasted.
+      if (weights[i] > 0) gait.group.goToFrame(gait.group.from + this.phase * gait.frames);
     });
   }
 
