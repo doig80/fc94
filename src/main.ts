@@ -1,4 +1,5 @@
 import "./style.css";
+import type { Scene } from "@babylonjs/core";
 import { createEngine } from "./render/engine";
 import { showInspector } from "./render/inspector";
 import { LookTest } from "./looktest/lookTest";
@@ -7,8 +8,8 @@ import { buildPanel } from "./looktest/ui";
 
 declare global {
   interface Window {
-    /** Set when the first frames have rendered; used by Playwright screenshot scripts. */
-    __looktest?: { ready: boolean; renderer: string };
+    /** Set when the first frames have rendered; used by Playwright screenshot scripts (and the scene, for close-ups). */
+    __looktest?: { ready: boolean; renderer: string; scene?: Scene };
   }
 }
 
@@ -22,7 +23,7 @@ async function main(): Promise<void> {
   else engine.setHardwareScalingLevel(1 / Math.min(window.devicePixelRatio, 2));
 
   const lookTest = new LookTest(engine, options);
-  window.__looktest = { ready: false, renderer };
+  window.__looktest = { ready: false, renderer, scene: lookTest.scene };
   if (options.inspector) void showInspector(lookTest.scene);
 
   const panel = options.hideUi
@@ -30,8 +31,8 @@ async function main(): Promise<void> {
     : buildPanel(options, (key, value) => {
         const next = { ...options, [key]: value } as LookTestOptions;
         window.history.replaceState(null, "", toSearch(next) + window.location.hash);
-        if (key === "quality") {
-          // Quality changes shadow maps, particle counts etc., so rebuild from scratch.
+        if (key === "quality" || key === "players") {
+          // Quality changes shadow maps, particle counts etc., and the players are loaded once: rebuild from scratch.
           window.location.reload();
           return;
         }
@@ -40,9 +41,18 @@ async function main(): Promise<void> {
   if (options.hideUi) document.getElementById("panel")?.remove();
 
   let frames = 0;
+  // Ready once the first frames are drawn and everything asked for has loaded (the character test's players).
+  let loaded = false;
+  lookTest.loaded.then(
+    () => (loaded = true),
+    (err: unknown) => {
+      console.error(err);
+      loaded = true;
+    },
+  );
   engine.runRenderLoop(() => {
     lookTest.scene.render();
-    if (++frames === 30) {
+    if (++frames >= 30 && loaded && !window.__looktest!.ready) {
       window.__looktest!.ready = true;
       document.body.dataset.ready = "1";
     }

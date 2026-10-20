@@ -13,6 +13,11 @@ for (const look of ["stylised", "toon"]) {
   SHOTS.push({ name: `${look}-dusk-snow`, query: `look=${look}&time=dusk&weather=snow` });
   SHOTS.push({ name: `${look}-day-broadcast`, query: `look=${look}&time=day&camera=broadcast` });
 }
+// The character test (issue #27): the new player model beside today's placeholders, close up.
+SHOTS.push({
+  name: "stylised-day-new-players",
+  query: "look=stylised&time=day&players=both&view=-2.3,1.3,7,32.5,7.3",
+});
 
 for (const shot of SHOTS) {
   test(`screenshot ${shot.name}`, async ({ page }) => {

@@ -19,6 +19,7 @@ import {
   StandardMaterial,
   Vector3,
   VertexBuffer,
+  type AbstractMesh,
 } from "@babylonjs/core";
 import type { Look, Quality, TimeOfDay, Weather } from "./types";
 
@@ -270,7 +271,7 @@ export class Atmosphere {
     this.pipeline.bloomWeight = look === "toon" ? 0.2 : time === "night" ? 0.6 : 0.3;
   }
 
-  addShadowCasters(meshes: Mesh[]): void {
+  addShadowCasters(meshes: AbstractMesh[]): void {
     for (const m of meshes) this.shadows?.addShadowCaster(m, false);
   }
 

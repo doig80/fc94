@@ -16,6 +16,9 @@ export { LOOKS, QUALITIES, RENDERERS, TIMES, WEATHERS };
 export type { Look, Quality, RendererPref, TimeOfDay, Weather };
 export const CAMERAS = ["classic", "broadcast", "orbit"] as const;
 export type CameraMode = (typeof CAMERAS)[number];
+/** The character test (issue #27): today's placeholder players, the new model, or both side by side. */
+export const PLAYER_SETS = ["old", "new", "both"] as const;
+export type PlayerSet = (typeof PLAYER_SETS)[number];
 
 export interface LookTestOptions {
   look: Look;
@@ -23,6 +26,8 @@ export interface LookTestOptions {
   weather: Weather;
   quality: Quality;
   camera: CameraMode;
+  /** `?players=new|both`: the character test's new player model instead of, or next to, the placeholders. */
+  players: PlayerSet;
   renderer: RendererPref;
   /** Freeze animation at a fixed moment (used for repeatable screenshots). */
   freeze: boolean;
@@ -40,6 +45,7 @@ export const DEFAULTS: Omit<LookTestOptions, "quality"> = {
   time: "day",
   weather: "clear",
   camera: "classic",
+  players: "old",
   renderer: "auto",
   freeze: false,
   hideUi: false,
@@ -69,6 +75,7 @@ export function parseOptions(search: string, isMobile: boolean): LookTestOptions
     weather: pickEnum(WEATHERS, params.get("weather"), DEFAULTS.weather),
     quality: pickEnum(QUALITIES, params.get("quality"), defaultQuality(isMobile)),
     camera: pickEnum(CAMERAS, params.get("camera"), DEFAULTS.camera),
+    players: pickEnum(PLAYER_SETS, params.get("players"), DEFAULTS.players),
     renderer: pickEnum(RENDERERS, params.get("renderer"), DEFAULTS.renderer),
     freeze: flag(params, "freeze"),
     hideUi: flag(params, "hideui"),
@@ -94,6 +101,7 @@ export function toSearch(o: LookTestOptions): string {
     weather: o.weather,
     quality: o.quality,
     camera: o.camera,
+    ...(o.players === "old" ? {} : { players: o.players }),
   });
   return `?${params.toString()}`;
 }
