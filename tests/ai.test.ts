@@ -287,6 +287,73 @@ describe("goalkeepers (docs/specs/11 §4)", () => {
   });
 });
 
+describe("run onto the pass assist (docs/specs/11 §3)", () => {
+  /**
+   * The human (player 6) passes to player 7, `d` m away at `angle`, with nobody else near, and then plays the stick
+   * as `after` says (ticks since the pass, aiming direction). Returns whether 7 got the ball and the match.
+   */
+  function passAndThen(
+    angle: number,
+    d: number,
+    runOntoPass: boolean,
+    after: (since: number, aim: { x: number; z: number }) => Intent,
+  ): { got: boolean; s: MatchState } {
+    const s = createMatch({ seed: 1, pitch: PITCH_FULL, teamSize: 11 });
+    s.players.forEach((pl, i) => {
+      if (i !== 6 && i !== 7) pl.pos = { x: -40 + (i % 11) * 2, z: i < 11 ? -30 : 30 };
+    });
+    const aim = { x: Math.cos(angle), z: Math.sin(angle) };
+    s.players[6].pos = { x: 0, z: 0 };
+    s.players[7].pos = { x: aim.x * d, z: aim.z * d };
+    s.controllers[0].player = 6;
+    s.controllers[0].assists.runOntoPass = runOntoPass;
+    s.ball.pos = { x: 0.4, y: R, z: 0 };
+    s.ball.owner = 6;
+    s.ball.lastTouch = 6;
+    let passed = -1;
+    for (let t = 0; t < 300; t++) {
+      const intent =
+        passed < 0 ? { ...IDLE, moveX: aim.x, moveZ: aim.z, pass: t === 2 } : after(s.tick - passed, aim);
+      stepMatch(s, [intent], DEFAULT_PARAMS);
+      if (passed < 0 && s.ball.owner < 0) passed = s.tick;
+      if (passed >= 0 && s.ball.owner >= 0) return { got: s.ball.owner === 7, s };
+    }
+    return { got: false, s };
+  }
+  const holdAim = (_: number, aim: { x: number; z: number }): Intent => ({
+    ...IDLE,
+    moveX: aim.x,
+    moveZ: aim.z,
+  });
+  const cases = Array.from({ length: 24 }, (_, k) => [(k % 12) * (Math.PI / 6), 10 + (k % 4) * 5] as const);
+
+  it("a pass reaches its man even if you keep holding the stick you aimed it with", () => {
+    const with_ = cases.filter(([a, d]) => passAndThen(a, d, true, holdAim).got).length;
+    const without = cases.filter(([a, d]) => passAndThen(a, d, false, holdAim).got).length;
+    expect(with_).toBe(cases.length);
+    expect(without).toBe(0); // without the assist, he runs off the way you aimed and the ball never catches him
+  });
+
+  it("a new direction hands control straight back", () => {
+    const { s } = passAndThen(0, 25, true, (since, aim) =>
+      since < 10 ? { ...IDLE, moveX: aim.x } : { ...IDLE, moveZ: 1 },
+    );
+    // Steered away across the pitch, he runs that way rather than to the ball.
+    expect(s.players[7].pos.z).toBeGreaterThan(2);
+  });
+
+  it("letting go and pushing the same way again counts as a new direction", () => {
+    const { s } = passAndThen(0, 25, true, (since, aim) =>
+      since < 10 ? { ...IDLE } : { ...IDLE, moveX: aim.x, moveZ: aim.z },
+    );
+    expect(s.players[7].pos.x).toBeGreaterThan(27); // ran on, away from the ball
+  });
+
+  it("is on at every level", () => {
+    for (const d of DIFFICULTIES) expect(DIFFICULTY[d].assists.runOntoPass).toBe(true);
+  });
+});
+
 describe("auto-sprint assist (docs/specs/11 §3)", () => {
   function run(autoSprint: boolean, blocker: boolean): number {
     const s = createMatch({ seed: 1, pitch: PITCH_5_A_SIDE, teamSize: 5 });

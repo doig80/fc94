@@ -357,6 +357,8 @@ describe("offside (docs/specs/10 §6)", () => {
     s.ball.owner = 4;
     s.ball.lastTouch = 4;
     s.controllers[0].player = 4;
+    // The receiver stays where he is (the assist would run him to meet the pass).
+    s.controllers[0].assists.runOntoPass = false;
     return s;
   }
 

@@ -248,7 +248,10 @@ function newMatch(options: MatchOptions): MatchState {
     weather: options.weather,
     rules: { halfTicks: options.halfMinutes * 60 * TICK_RATE, ...options.rules },
   });
-  state.controllers[0].assists = { ...DIFFICULTY[options.difficulty].assists };
+  state.controllers[0].assists = {
+    ...DIFFICULTY[options.difficulty].assists,
+    runOntoPass: options.runOntoPass,
+  };
   if (options.shootout) startShootout(state, DEFAULT_PARAMS);
   return state;
 }

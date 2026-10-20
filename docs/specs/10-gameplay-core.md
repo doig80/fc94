@@ -60,6 +60,8 @@ Three action buttons + sprint, with meanings that depend on whether your team ha
   - Defenders **head away** a cross or lob meant for an opponent when it comes within reach in their own area,
     automatically, like a keeper's hands ([#45](https://github.com/doig80/fc94/issues/45)). Shots are left alone.
   - Double-tap pass → one-two (give and go).
+  - A pass to the player you control: he runs to meet it until you steer a new way (the **Run onto the pass**
+    assist, [11 §3](11-ai.md#3-assists-toggle-at-any-level)).
 - **Passing direction:** a pass goes to the teammate in the direction you steer; with no direction held, to
   the teammate you're facing. So you can pass sideways without turning first.
 - **Curl & power shots:** holding Shoot fills a power bar; the direction you steer at the moment you

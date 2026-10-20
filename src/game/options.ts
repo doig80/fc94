@@ -40,6 +40,8 @@ export interface MatchOptions {
   rules: { fouls: boolean; offside: boolean; cards: boolean; winner: boolean };
   /** `?shootout=1` starts straight at a penalty shoot-out (playtesting). */
   shootout: boolean;
+  /** `?runon=0` switches off the "Run onto the pass" assist (docs/specs/11 §3), on at every level. */
+  runOntoPass: boolean;
 }
 
 function flag(params: URLSearchParams, name: string): boolean {
@@ -83,5 +85,6 @@ export function parseMatchOptions(search: string, isMobile: boolean): MatchOptio
       winner: flag(params, "winner"),
     },
     shootout: flag(params, "shootout"),
+    runOntoPass: onUnless(params, "runon", true),
   };
 }
