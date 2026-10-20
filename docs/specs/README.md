@@ -66,3 +66,4 @@ Status values: `Not started` → `Draft` → `Approved` → (`Revised` when a la
 | 2026-10-19 | Placed later: character test, perfect timing, corners aiming, floodlight pools (Full match); practice challenges, kit contrast check (Alpha); smaller download #6, graphics polish (Beta); share a goal (v1.1) |
 | 2026-10-19 | Difficulty is the CPU team's only; the humans' teammates and keeper always play at Normal (#26)                                                                                                                |
 | 2026-10-19 | Full match build order agreed ([30](30-milestones.md)); balance targets added: fouls 4–8, CPU passes 75–85%, no golden shot (#45)                                                                              |
+| 2026-10-20 | Full match review: no through balls or timed runs for now (3.5 goals a match is fine); CPU players sometimes misjudge the offside line, kept rare (#58); Easy judged by playing it                             |
