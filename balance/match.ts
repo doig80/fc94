@@ -28,6 +28,8 @@ export interface MatchStats {
   crosses: number;
   /** ...that the teammate got to first. */
   crossesReached: number;
+  /** Cards shown: yellow (including a second one) and red (straight or second yellow). */
+  cards: { yellow: number; red: number };
 }
 
 /** The game's default match: 11 v 11 on the full pitch, 5 minutes a half (docs/specs/10 §1). */
@@ -52,7 +54,7 @@ export function playMatch(
     pitch: PITCH,
     teamSize: TEAM_SIZE,
     humans: options.humans ?? [],
-    rules: { halfTicks: options.halfTicks ?? HALF_TICKS, fouls: true },
+    rules: { halfTicks: options.halfTicks ?? HALF_TICKS, fouls: true, offside: true, cards: true },
   });
   const cpu = (s: MatchState) => aiIntents(s, params);
   const watch = statsWatcher();
@@ -74,6 +76,7 @@ export function statsWatcher(): ((s: MatchState) => void) & { stats: MatchStats 
     passesTried: 0,
     crosses: 0,
     crossesReached: 0,
+    cards: { yellow: 0, red: 0 },
   };
   let pass: { to: number; tick: number; dist: number; cross: boolean } | null = null;
   const arrived = (s: MatchState, p: NonNullable<typeof pass>) => {
@@ -117,6 +120,8 @@ export function statsWatcher(): ((s: MatchState) => void) & { stats: MatchStats 
     if (e && e.tick !== lastCall) {
       lastCall = e.tick;
       stats.calls[e.kind] = (stats.calls[e.kind] ?? 0) + 1;
+      if (e.card?.red) stats.cards.red++;
+      else if (e.card) stats.cards.yellow++;
     }
     stats.score = [s.score[0], s.score[1]];
     charging = s.players.map((p) => p.charge >= 0);

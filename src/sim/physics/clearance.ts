@@ -18,7 +18,7 @@ export function clearances(state: MatchState, params: SimParams): void {
   const from = state.players[ball.intendedReceiver].team;
   for (let i = 0; i < state.players.length; i++) {
     const pl = state.players[i];
-    if (pl.team === from || pl.role === "gk" || pl.action.kind !== "none") continue;
+    if (pl.team === from || pl.role === "gk" || pl.sentOff || pl.action.kind !== "none") continue;
     if (!inOwnBox(state, pl.team, ball.pos.x, ball.pos.z)) continue;
     const dx = ball.pos.x - pl.pos.x;
     const dz = ball.pos.z - pl.pos.z;

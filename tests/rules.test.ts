@@ -9,7 +9,10 @@ import {
   kickBall,
   matchMinute,
   PITCH_5_A_SIDE,
+  shootoutWinner,
+  startRestart,
   stepMatch,
+  type Rules,
   type Intent,
   type MatchState,
   type Phase,
@@ -21,9 +24,9 @@ const W = PITCH_5_A_SIDE.width / 2;
 const R = DEFAULT_PARAMS.ball.radius;
 const HALF = 600;
 
-/** A refereed match; the human (controller 0) plays for team 0. */
-function match(fouls = true, halfTicks = HALF): MatchState {
-  return createMatch({ seed: 3, pitch: PITCH_5_A_SIDE, teamSize: 5, rules: { halfTicks, fouls } });
+/** A refereed match; the human (controller 0) plays for team 0. `more` switches on further rules. */
+function match(fouls = true, halfTicks = HALF, more: Partial<Rules> = {}): MatchState {
+  return createMatch({ seed: 3, pitch: PITCH_5_A_SIDE, teamSize: 5, rules: { halfTicks, fouls, ...more } });
 }
 
 /** Skip the kick-off: play is on, everyone parked by the touchlines, the ball loose at (x, z). */
@@ -222,7 +225,7 @@ describe("free-kick aiming (M7)", () => {
     inPlay(s);
     s.players[4].pos = { x: L - 10, z: 0 };
     // Team 0 fouled 10 m out, the ball running loose: a free kick.
-    s.foul = { by: 6, victim: 4, spot: { x: L - 10, z: 0 } };
+    s.foul = { by: 6, victim: 4, spot: { x: L - 10, z: 0 }, slide: false, fromBehind: false };
     run(s, 1);
     const phase = (s as { phase: Phase }).phase;
     expect(phase.kind).toBe("restart");
@@ -285,5 +288,240 @@ describe("CPU restarts", () => {
     for (let t = 0; t < 200 && phase() !== "play"; t++) stepMatch(s, [intent()], p, (m) => aiIntents(m, p));
     expect(phase()).toBe("play");
     expect(s.ball.lastTouch >= 5).toBe(true);
+  });
+});
+
+describe("offside (docs/specs/10 §6)", () => {
+  /**
+   * Team 0's player 4 on the ball at halfway, teammate 3 up front at `receiverX`; team 1 holds a line at
+   * x = L − 8 with the keeper behind it.
+   */
+  function attack(receiverX: number, offside = true): MatchState {
+    const s = match(true, HALF, { offside });
+    inPlay(s);
+    const spots = [
+      [-L + 1, 0],
+      [-6, -4],
+      [-6, 4],
+      [receiverX, 0],
+      [0, 0],
+      [L - 1, 0],
+      [L - 8, -5],
+      [L - 8, 5],
+      [-2, -8],
+      [-2, 8],
+    ];
+    s.players.forEach((p, i) => {
+      p.pos = { x: spots[i][0], z: spots[i][1] };
+      p.facing = { x: 1, z: 0 };
+    });
+    s.ball.pos = { x: 0.5, y: R, z: 0 };
+    s.ball.owner = 4;
+    s.ball.lastTouch = 4;
+    s.controllers[0].player = 4;
+    return s;
+  }
+
+  /** Pass towards +x and play on until the ball reaches someone or the referee stops play. */
+  function passForward(s: MatchState): void {
+    run(s, 1, intent({ pass: true, moveX: 1 }));
+    for (let t = 0; t < 150 && s.phase.kind === "play" && s.ball.owner !== 3; t++) run(s, 1);
+  }
+
+  it("a pass to a teammate beyond the defenders: free kick to them where he was, and the line shows where", () => {
+    const s = attack(L - 5);
+    passForward(s);
+    const phase = (s as { phase: Phase }).phase;
+    expect(phase.kind).toBe("restart");
+    if (phase.kind !== "restart") return;
+    expect(phase.restart).toMatchObject({ kind: "freekick", team: 1 });
+    expect(dist(phase.restart.spot, { x: L - 5, z: 0 })).toBeLessThan(1);
+    expect(s.lastEvent?.kind).toBe("offside");
+    expect(s.lastEvent?.line).toBeCloseTo(L - 8, 0);
+  });
+
+  it("level with the second-last defender is onside", () => {
+    const s = attack(L - 8);
+    passForward(s);
+    expect(s.phase.kind).toBe("play");
+    expect(s.ball.owner).toBe(3);
+  });
+
+  it("nobody is offside in their own half", () => {
+    const s = attack(-1);
+    // The defenders push up into team 0's half; the passer is behind them.
+    for (const i of [6, 7, 8, 9]) s.players[i].pos.x = -5;
+    s.players[4].pos = { x: -10, z: 0 };
+    s.ball.pos = { x: -9.5, y: R, z: 0 };
+    passForward(s);
+    expect(s.phase.kind).toBe("play");
+    expect(s.ball.owner).toBe(3);
+  });
+
+  it("not from a kick-in", () => {
+    const s = attack(L - 5);
+    startRestart(s, "kickin", 0, { x: L - 10, z: W - 0.1 }, 4);
+    run(s, 1, intent({ pass: true, moveX: 1, moveZ: -0.5 }));
+    for (let t = 0; t < 150 && s.ball.owner !== 3 && s.phase.kind !== "restart"; t++) run(s, 1);
+    expect(s.lastEvent?.kind).not.toBe("offside");
+  });
+
+  it("a restart wipes the slate: the free kick's taker isn't offside from the pass before it", () => {
+    const s = attack(L - 5);
+    run(s, 1, intent({ pass: true, moveX: 1 }));
+    expect(s.offside?.players).toEqual([3]);
+    // A foul stops play before the pass arrives; player 3 takes the free kick and plays on.
+    s.foul = { by: 9, victim: 4, spot: { x: 2, z: 0 }, slide: false, fromBehind: false };
+    s.ball.owner = -1;
+    run(s, 1);
+    startRestart(s, "freekick", 0, { x: L - 6, z: 0 }, 3);
+    s.controllers[0].player = 3;
+    run(s, 1, intent({ pass: true, moveX: -1 }));
+    run(s, 30);
+    expect(s.lastEvent?.kind).not.toBe("offside");
+  });
+
+  it("isn't called when offside is off (Easy, or no referee)", () => {
+    const s = attack(L - 5, false);
+    passForward(s);
+    expect(s.phase.kind).toBe("play");
+    expect(s.ball.owner).toBe(3);
+  });
+});
+
+describe("cards (docs/specs/10 §6)", () => {
+  const foul = (by: number, victim: number, x: number, more: { slide: boolean; fromBehind: boolean }) => ({
+    by,
+    victim,
+    spot: { x, z: 0 },
+    ...more,
+  });
+
+  it("a slide from behind is a yellow; a second yellow is a red, and the player leaves the pitch", () => {
+    const s = match(true, HALF, { cards: true });
+    inPlay(s);
+    s.foul = foul(6, 4, 0, { slide: true, fromBehind: true });
+    run(s, 1);
+    expect(s.lastEvent?.card).toEqual({ player: 6, red: false });
+    expect(s.players[6].yellows).toBe(1);
+    s.phase = { kind: "play" };
+    s.foul = foul(6, 4, 0, { slide: true, fromBehind: true });
+    run(s, 1);
+    expect(s.lastEvent?.card).toEqual({ player: 6, red: true });
+    expect(s.players[6].sentOff).toBe(true);
+    expect(Math.abs(s.players[6].pos.z)).toBeGreaterThan(W);
+    // Out of the game: the CPU leaves them be and they never touch the ball again.
+    const p = cloneParams(DEFAULT_PARAMS);
+    const at = { ...s.players[6].pos };
+    for (let t = 0; t < 600; t++) {
+      stepMatch(s, [intent()], p, (m) => aiIntents(m, p));
+      expect(s.ball.lastTouch).not.toBe(6);
+    }
+    expect(s.players[6].pos).toEqual(at);
+  });
+
+  /** Team 0's player 4 through on goal at x, ball at their feet; team 1's player 6 alongside, the rest behind. */
+  function through(x: number): MatchState {
+    const s = match(true, HALF, { cards: true });
+    inPlay(s);
+    for (const i of [7, 8, 9]) s.players[i].pos = { x: 0, z: (i - 8) * 4 };
+    s.players[5].pos = { x: L - 1, z: 0 };
+    s.players[4].pos = { x, z: 0 };
+    s.players[6].pos = { x, z: 1 };
+    // Knocked off their feet: the ball runs on a little, out of their control (so no advantage).
+    s.ball.pos = { x: x + 1.5, y: R, z: 0 };
+    s.foul = foul(6, 4, x, { slide: false, fromBehind: false });
+    return s;
+  }
+
+  it("stopping a player through on goal is a red card", () => {
+    const s = through(L - 10);
+    run(s, 1);
+    expect(s.phase.kind).toBe("restart");
+    expect(s.lastEvent).toMatchObject({ kind: "freekick", card: { player: 6, red: true } });
+    expect(s.players[6].sentOff).toBe(true);
+  });
+
+  it("...but a yellow when it gives away a penalty", () => {
+    const s = through(L - 4);
+    run(s, 1);
+    expect(s.lastEvent).toMatchObject({ kind: "penalty", card: { player: 6, red: false } });
+  });
+
+  it("an ordinary mistimed tackle is no card, and with cards off there are none", () => {
+    const s = match(true, HALF, { cards: true });
+    inPlay(s);
+    s.foul = foul(6, 4, 0, { slide: false, fromBehind: false });
+    run(s, 1);
+    expect(s.lastEvent?.card).toBeUndefined();
+    const off = through(L - 10);
+    off.rules!.cards = false;
+    run(off, 1);
+    expect(off.lastEvent?.card).toBeUndefined();
+    expect(off.players[6].sentOff).toBe(false);
+  });
+});
+
+describe("must have a winner: extra time, then a penalty shoot-out", () => {
+  it("best of five kicks, then sudden death", () => {
+    const so = (a: boolean[], b: boolean[]) =>
+      shootoutWinner({ kicks: [a, b], next: 0, taker: -1, struck: -1 });
+    const T = true;
+    const F = false;
+    expect(so([T, T, T], [F, F, F])).toBe(0);
+    expect(so([T, T, T], [F, F])).toBeNull();
+    expect(so([T, T, T, T, T], [T, T, T, T, T])).toBeNull();
+    expect(so([T, T, T, T, T, F], [T, T, T, T, T])).toBeNull();
+    expect(so([T, T, T, T, T, F], [T, T, T, T, T, T])).toBe(1);
+  });
+
+  it("a draw goes to two short halves of extra time, then the CPU plays a shoot-out to a winner", () => {
+    const p = cloneParams(DEFAULT_PARAMS);
+    const s = createMatch({
+      seed: 3,
+      pitch: PITCH_5_A_SIDE,
+      teamSize: 5,
+      humans: [],
+      rules: { halfTicks: 60, fouls: true, winner: true },
+    });
+    // Nobody plays, so it stays 0–0.
+    const calls = new Set<string>();
+    let extraTime = 0;
+    for (let t = 0; t < 5000 && !s.shootout; t++) {
+      stepMatch(s, [], p);
+      if (s.lastEvent) calls.add(s.lastEvent.kind);
+      if (s.half === 3 && s.phase.kind !== "halftime") {
+        extraTime++;
+        expect(matchMinute(s)).toBeGreaterThanOrEqual(90);
+      }
+    }
+    expect(calls).toContain("extratime");
+    expect(extraTime).toBeGreaterThan(0);
+    expect(s.shootout).not.toBeNull();
+    expect(matchMinute(s)).toBe(120);
+    // Both teams shoot at the goal at +x; only the taker and the keeper move.
+    for (let t = 0; t < 20000 && s.phase.kind !== "fulltime"; t++) {
+      const before = s.players.map((pl) => ({ ...pl.pos }));
+      const lined = s.phase.kind === "restart" || s.phase.kind === "play";
+      stepMatch(s, [], p, (m) => aiIntents(m, p));
+      const so = s.shootout!;
+      if (lined && (s.phase.kind === "restart" || s.phase.kind === "play")) {
+        expect(attackSign(s, so.next)).toBe(1);
+        s.players.forEach((pl, i) => {
+          if (i !== so.taker && pl.role !== "gk") expect(pl.pos).toEqual(before[i]);
+        });
+      }
+    }
+    expect(s.phase.kind).toBe("fulltime");
+    expect(shootoutWinner(s.shootout!)).not.toBeNull();
+    expect(s.score).toEqual([0, 0]);
+  });
+
+  it("a human takes their own team's kicks", () => {
+    const s = match(true, 30, { winner: true });
+    for (let t = 0; t < 5000 && !(s.shootout && s.phase.kind === "restart"); t++) run(s, 1);
+    expect(s.phase.kind).toBe("restart");
+    expect(s.shootout?.next).toBe(0);
+    expect(s.controllers[0].player).toBe(s.shootout?.taker);
   });
 });

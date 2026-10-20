@@ -7,16 +7,21 @@ const CALLS: Partial<Record<MatchEvent["kind"], string>> = {
   goal: "GOAL!",
   foul: "Foul",
   advantage: "Advantage",
+  offside: "Offside",
   freekick: "Free kick",
   penalty: "Penalty!",
   corner: "Corner",
   kickin: "Kick-in",
   goalkick: "Goal kick",
   halftime: "Half-time",
+  extratime: "Extra time",
+  shootout: "Penalties",
+  scored: "Scored!",
+  missed: "Missed!",
   fulltime: "Full time",
 };
 /** Big banners; the others are small, so play stays visible. */
-const BIG = new Set<MatchEvent["kind"]>(["goal", "halftime", "fulltime"]);
+const BIG = new Set<MatchEvent["kind"]>(["goal", "halftime", "extratime", "shootout", "fulltime"]);
 /** How long a call stays on screen. */
 const BANNER_TICKS = 100;
 const TEAMS = [
@@ -32,20 +37,52 @@ function element(className: string, html = ""): HTMLElement {
   return el;
 }
 
-/** Score and match clock, top centre. */
-export function scoreboard(): { update(s: MatchState): void } {
+/** The score, with the shoot-out score once there is one: "1 – 1 (4–3)". */
+function scoreText(s: MatchState): string {
+  const so = s.shootout;
+  const pens = so ? ` (${so.kicks[0].filter(Boolean).length}–${so.kicks[1].filter(Boolean).length})` : "";
+  return `${s.score[0]} – ${s.score[1]}${pens}`;
+}
+
+/** A player as the banner names them: team and shirt number (the keeper is 1). */
+function playerName(s: MatchState, i: number): string {
+  const teamSize = s.players.length / 2;
+  return `${TEAMS[s.players[i].team].name} No. ${(i % teamSize) + 1}`;
+}
+
+/** Score, match clock and each team's cards, top centre. */
+export function scoreboard(params: SimParams): { update(s: MatchState): void } {
   const chip = (i: number) => `<i style="background:${TEAMS[i].colour}"></i>`;
   const el = element(
     "scoreboard",
-    `<span class="team">${chip(0)}${TEAMS[0].name}</span><b class="score"></b>` +
-      `<span class="team">${TEAMS[1].name}${chip(1)}</span><span class="clock"></span>`,
+    `<span class="team">${chip(0)}${TEAMS[0].name}<span class="cards"></span></span><b class="score"></b>` +
+      `<span class="team"><span class="cards"></span>${TEAMS[1].name}${chip(1)}</span><span class="clock"></span>`,
   );
   const score = el.querySelector<HTMLElement>(".score")!;
   const clock = el.querySelector<HTMLElement>(".clock")!;
+  const cards = [...el.querySelectorAll<HTMLElement>(".cards")];
+  let shown = "";
   return {
     update(s) {
-      score.textContent = `${s.score[0]} – ${s.score[1]}`;
-      clock.textContent = `${matchMinute(s)}'`;
+      score.textContent = scoreText(s);
+      clock.textContent = s.shootout ? "Pens" : `${matchMinute(s, params)}'`;
+      // A yellow for each booked player still on, a red for each sent off.
+      const key = s.players.map((p) => (p.sentOff ? "r" : p.yellows > 0 ? "y" : "")).join(",");
+      if (key === shown) return;
+      shown = key;
+      cards.forEach((el, team) => {
+        const mine = s.players.filter((p) => p.team === team);
+        const card = (red: boolean) => `<b class="card ${red ? "red" : "yellow"}"></b>`;
+        el.innerHTML =
+          mine
+            .filter((p) => !p.sentOff && p.yellows > 0)
+            .map(() => card(false))
+            .join("") +
+          mine
+            .filter((p) => p.sentOff)
+            .map(() => card(true))
+            .join("");
+      });
     },
   };
 }
@@ -67,8 +104,11 @@ export function callBanner(): { update(s: MatchState): void; hide(): void } {
       el.hidden = false;
       el.classList.toggle("big", BIG.has(e.kind));
       call.textContent = text;
-      const [home, away] = s.score;
-      sub.textContent = BIG.has(e.kind) ? `${TEAMS[0].name} ${home} – ${away} ${TEAMS[1].name}` : "";
+      sub.textContent = BIG.has(e.kind) ? `${TEAMS[0].name} ${scoreText(s)} ${TEAMS[1].name}` : "";
+      if (e.kind === "scored" || e.kind === "missed")
+        sub.textContent = `${TEAMS[e.team].name} · ${scoreText(s)}`;
+      if (e.card) sub.textContent = `${e.card.red ? "Red" : "Yellow"} card · ${playerName(s, e.card.player)}`;
+      sub.dataset.card = e.card ? (e.card.red ? "red" : "yellow") : "";
       if (e.kind === "fulltime") sub.textContent += " · R to play again";
     },
     hide() {

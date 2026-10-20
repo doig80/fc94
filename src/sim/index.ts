@@ -1,4 +1,4 @@
-export { attackSign, choosePassTarget, groundPassSpeed } from "./actions";
+export { choosePassTarget, groundPassSpeed } from "./actions";
 export { aiIntents } from "./ai/ai";
 export { applyDifficulty, DIFFICULTIES, DIFFICULTY, skillFor, type Difficulty } from "./ai/difficulty";
 export { controlledPlayers } from "./control";
@@ -19,8 +19,10 @@ export { kickBall } from "./physics/dribble";
 export { isInGoal } from "./physics/goal";
 export { inOwnBox, keeperHolds } from "./physics/keeper";
 export { Rng } from "./rng";
-export { matchMinute, startRestart } from "./rules";
+export { inOffsidePosition, offsideLine } from "./offside";
+export { matchMinute, shootoutWinner, startRestart, startShootout } from "./rules";
 export {
+  attackSign,
   Button,
   cloneState,
   createMatch,
@@ -35,6 +37,7 @@ export {
   type Phase,
   type Restart,
   type RestartKind,
+  type Rules,
   type PlayerState,
   type Weather,
 } from "./state";

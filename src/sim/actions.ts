@@ -1,9 +1,17 @@
 import type { Intent } from "./intent";
 import { skill, type SimParams } from "./params";
 import { kickBall } from "./physics/dribble";
+import { inOffsidePosition, offsideOn } from "./offside";
 import { keeperHolds } from "./physics/keeper";
 import { Rng } from "./rng";
-import { Button, type ActionKind, type Assists, type MatchState, type PlayerState } from "./state";
+import {
+  attackSign,
+  Button,
+  type ActionKind,
+  type Assists,
+  type MatchState,
+  type PlayerState,
+} from "./state";
 import { normalize2, type Vec2 } from "./vec";
 
 /**
@@ -17,11 +25,6 @@ import { normalize2, type Vec2 } from "./vec";
  * | Lob    | cross / through ball / lob           | slide tackle     |
  * (*switching lives in control.ts; it only applies to humans.)
  */
-
-/** +1 if `team` attacks the goal at +x in the current half, else −1. */
-export function attackSign(state: MatchState, team: 0 | 1): 1 | -1 {
-  return (team === 0) === (state.half === 1) ? 1 : -1;
-}
 
 export function bits(intent: Intent | undefined): number {
   if (!intent) return 0;
@@ -160,7 +163,7 @@ export function choosePassTarget(
   let best = -1;
   let bestScore = -Infinity;
   state.players.forEach((t, j) => {
-    if (j === i || t.team !== pl.team) return;
+    if (j === i || t.team !== pl.team || t.sentOff) return;
     const dx = t.pos.x - pl.pos.x;
     const dz = t.pos.z - pl.pos.z;
     const dist = Math.sqrt(dx * dx + dz * dz);
@@ -290,7 +293,7 @@ export function lob(
     // Cross: to the teammate in the box nearest its middle, a little ahead of their run and dropping a few metres
     // past them, so it reaches them at volley height; with nobody there, just beyond the near post.
     const spot = { x: s * (halfL - Math.min(6, halfL * 0.3)), z: pl.pos.z > 0 ? -1 : 1 };
-    const receiver = teammateNear(state, i, spot, 12);
+    const receiver = teammateNear(state, i, spot, 12, params);
     let to = spot;
     if (receiver >= 0) {
       const r = state.players[receiver];
@@ -314,13 +317,18 @@ export function lob(
   loftedKick(state, i, from, to, a.lobLift, params, target);
 }
 
-/** The outfield teammate of player `i` nearest `spot`, if one is within `within` metres; otherwise −1. */
-function teammateNear(state: MatchState, i: number, spot: Vec2, within: number): number {
+/**
+ * The outfield teammate of player `i` nearest `spot`, if one is within `within` metres (onside, when offside is
+ * played); otherwise −1.
+ */
+function teammateNear(state: MatchState, i: number, spot: Vec2, within: number, params: SimParams): number {
   const team = state.players[i].team;
+  const offside = offsideOn(state);
   let best = -1;
   let bestDist = within;
   state.players.forEach((t, j) => {
-    if (j === i || t.team !== team || t.role === "gk") return;
+    if (j === i || t.team !== team || t.role === "gk" || t.sentOff) return;
+    if (offside && inOffsidePosition(state, j, params)) return;
     const d = Math.sqrt((t.pos.x - spot.x) * (t.pos.x - spot.x) + (t.pos.z - spot.z) * (t.pos.z - spot.z));
     if (d < bestDist) {
       best = j;
@@ -478,7 +486,8 @@ export function tackle(state: MatchState, i: number, rng: Rng, params: SimParams
   const fromBehind = dist > 1e-6 && (dx * o.facing.x + dz * o.facing.z) / dist > 0.3;
   const fouls = state.rules?.fouls ?? false;
   if (rng.next() < a.tackleSuccess) {
-    if (fouls && fromBehind) state.foul = { by: i, victim: owner, spot: { ...o.pos } };
+    if (fouls && fromBehind)
+      state.foul = { by: i, victim: owner, spot: { ...o.pos }, slide: false, fromBehind };
     // Poke the ball back towards the tackler; the dribbler is knocked off balance.
     const back = normalize2({ x: pl.pos.x - state.ball.pos.x, z: pl.pos.z - state.ball.pos.z }, pl.facing);
     kickBall(state, i, { x: back.x * a.tacklePokeSpeed, y: 0, z: back.z * a.tacklePokeSpeed }, undefined, {
@@ -489,7 +498,7 @@ export function tackle(state: MatchState, i: number, rng: Rng, params: SimParams
     startAction(pl, "stumble", a.stumbleTicks, pl.facing);
     // A mistimed tackle often catches the man instead of the ball.
     if (fouls && (fromBehind || rng.next() < params.referee.foulOnMiss)) {
-      state.foul = { by: i, victim: owner, spot: { ...o.pos } };
+      state.foul = { by: i, victim: owner, spot: { ...o.pos }, slide: false, fromBehind };
       startAction(o, "stumble", Math.round(a.stumbleTicks / 2), o.facing);
     }
   }
@@ -528,7 +537,7 @@ function slideContact(state: MatchState, i: number, params: SimParams): void {
     const d = pl.action.dir;
     const fromBehind = d.x * o.facing.x + d.z * o.facing.z > 0.3;
     if (state.rules?.fouls && !state.foul && (!wonBall || fromBehind)) {
-      state.foul = { by: i, victim: j, spot: { ...o.pos } };
+      state.foul = { by: i, victim: j, spot: { ...o.pos }, slide: true, fromBehind };
     }
   });
 }

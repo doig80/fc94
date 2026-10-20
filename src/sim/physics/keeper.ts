@@ -1,11 +1,6 @@
 import { skill, type SimParams } from "../params";
-import type { MatchState } from "../state";
+import { attackSign, type MatchState } from "../state";
 import type { Vec3 } from "../vec";
-
-/** +1 if `team` attacks the goal at +x in the current half, else −1 (so it defends the goal at −sign). */
-function attackSign(state: MatchState, team: 0 | 1): 1 | -1 {
-  return (team === 0) === (state.half === 1) ? 1 : -1;
-}
 
 /** Is (x, z) inside the penalty area of the goal that `team` defends? */
 export function inOwnBox(state: MatchState, team: 0 | 1, x: number, z: number): boolean {

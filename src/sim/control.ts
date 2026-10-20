@@ -62,7 +62,7 @@ function nearestToBall(state: MatchState, team: 0 | 1, exclude: number): number 
   let best = -1;
   let bestDist = Infinity;
   state.players.forEach((p, i) => {
-    if (p.team !== team || p.role === "gk" || i === exclude) return;
+    if (p.team !== team || p.role === "gk" || p.sentOff || i === exclude) return;
     const d = distToBall(state, i);
     if (d < bestDist) {
       best = i;

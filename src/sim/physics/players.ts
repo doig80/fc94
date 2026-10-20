@@ -3,7 +3,10 @@ import { skill, type SimParams } from "../params";
 import type { MatchState, PlayerState } from "../state";
 import { clamp } from "../vec";
 
-/** Move every player towards what their intent asks for, then separate overlapping players. */
+/**
+ * Move every player towards what their intent asks for, then separate overlapping players. Sent-off players
+ * stay where they are, off the pitch.
+ */
 export function stepPlayers(
   state: MatchState,
   intents: readonly Intent[],
@@ -12,6 +15,7 @@ export function stepPlayers(
 ): void {
   const p = params.player;
   state.players.forEach((pl, i) => {
+    if (pl.sentOff) return;
     const intent = intents[i];
     let mx = intent ? clamp(intent.moveX, -1, 1) : 0;
     let mz = intent ? clamp(intent.moveZ, -1, 1) : 0;
@@ -98,7 +102,9 @@ function separate(state: MatchState, params: SimParams): void {
   const minDist = params.player.radius * 2;
   const players = state.players;
   for (let i = 0; i < players.length; i++) {
+    if (players[i].sentOff) continue;
     for (let j = i + 1; j < players.length; j++) {
+      if (players[j].sentOff) continue;
       const a = players[i].pos;
       const b = players[j].pos;
       const dx = b.x - a.x;
@@ -122,6 +128,7 @@ function keepInBounds(state: MatchState, params: SimParams): void {
   const mx = state.pitch.length / 2 + params.player.boundsMargin;
   const mz = state.pitch.width / 2 + params.player.boundsMargin;
   for (const pl of state.players) {
+    if (pl.sentOff) continue;
     if (pl.pos.x < -mx || pl.pos.x > mx) {
       pl.pos.x = clamp(pl.pos.x, -mx, mx);
       pl.vel.x = 0;

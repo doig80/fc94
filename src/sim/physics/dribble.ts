@@ -22,7 +22,7 @@ export function updatePossession(state: MatchState, params: SimParams): void {
   let best = -1;
   let bestDistSq = d.controlRadius * d.controlRadius;
   state.players.forEach((pl, i) => {
-    if (i === ball.lastTouch && state.tick < ball.touchBlockUntil) return;
+    if (pl.sentOff || (i === ball.lastTouch && state.tick < ball.touchBlockUntil)) return;
     if (pl.action.kind === "slide" || pl.action.kind === "recover" || pl.action.kind === "stumble") return;
     const dx = ball.pos.x - pl.pos.x;
     const dz = ball.pos.z - pl.pos.z;

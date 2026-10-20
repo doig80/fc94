@@ -21,6 +21,10 @@ export interface PlayerState {
   action: PlayerAction;
   /** A pass or shot asked for just before the ball arrived: played first time on the next touch. */
   queued: QueuedAction | null;
+  /** Yellow cards this match (docs/specs/10 §6). */
+  yellows: number;
+  /** Sent off: off the pitch for the rest of the match (no substitutes in v1). */
+  sentOff: boolean;
 }
 
 /**
@@ -131,14 +135,31 @@ export type Phase =
   | { kind: "restart"; restart: Restart }
   | { kind: "goal"; team: 0 | 1; until: number }
   | { kind: "halftime"; until: number }
+  /** A short pause between the kicks of a penalty shoot-out. */
+  | { kind: "break"; until: number }
   | { kind: "fulltime" };
 
 /** The latest thing the referee called, for banners and the HUD. */
 export interface MatchEvent {
-  kind: RestartKind | "goal" | "foul" | "advantage" | "halftime" | "fulltime";
-  /** The team it is for (the scorer, or the team awarded the restart). */
+  kind:
+    | RestartKind
+    | "goal"
+    | "foul"
+    | "advantage"
+    | "offside"
+    | "halftime"
+    | "extratime"
+    | "shootout"
+    | "scored"
+    | "missed"
+    | "fulltime";
+  /** The team it is for (the scorer, the team awarded the restart, or the team that took a shoot-out kick). */
   team: 0 | 1;
   tick: number;
+  /** Offside: where the line was (x), drawn on the pitch for a moment. */
+  line?: number;
+  /** A card shown with this call. */
+  card?: { player: number; red: boolean };
 }
 
 /** A foul spotted during this tick's actions, for the referee to rule on. */
@@ -146,13 +167,45 @@ export interface Foul {
   by: number;
   victim: number;
   spot: Vec2;
+  /** A slide tackle, and from behind (both count towards a card). */
+  slide: boolean;
+  fromBehind: boolean;
 }
 
+/** The rules a match is played with (docs/specs/10 §6); "no ref" turns off fouls and offside. */
 export interface Rules {
   /** Ticks in each half (the clock shows 45 minutes per half). */
   halfTicks: number;
-  /** Fouls, free kicks and penalties ("no ref" turns them off, docs/specs/10 §6). */
+  /** Fouls, free kicks and penalties. */
   fouls: boolean;
+  /** Offside (off on Easy). Absent means off. */
+  offside?: boolean;
+  /** Yellow and red cards for the worst fouls. Absent means off. */
+  cards?: boolean;
+  /** "Must have a winner": a draw goes to extra time, then a penalty shoot-out. Absent means off. */
+  winner?: boolean;
+}
+
+/** Judging offside on the latest pass (docs/specs/10 §6): who was offside when the ball was played. */
+export interface OffsideWatch {
+  /** The kick being judged (`ball.kickedAt`), who played it and their team. */
+  kickedAt: number;
+  kicker: number;
+  team: 0 | 1;
+  /** That team's players in an offside position when it was played. */
+  players: number[];
+  /** The offside line then (x on the pitch). */
+  line: number;
+}
+
+/** A penalty shoot-out: five kicks each, then sudden death. Both teams shoot at the goal at +x. */
+export interface Shootout {
+  /** Each team's kicks so far: true = scored. */
+  kicks: [boolean[], boolean[]];
+  /** The team taking the current or next kick, its taker, and when it was struck (`ball.kickedAt`; −1 before). */
+  next: 0 | 1;
+  taker: number;
+  struck: number;
 }
 
 /** A give-and-go in progress: the receiver plays the ball straight back into the passer's run. */
@@ -198,7 +251,8 @@ export interface MatchState {
   pitch: PitchSpec;
   weather: Weather;
   score: [number, number];
-  half: 1 | 2;
+  /** 1 and 2, then 3 and 4 for extra time. */
+  half: 1 | 2 | 3 | 4;
   players: PlayerState[];
   ball: BallState;
   /** Human players (keyboard, gamepad, touch). Everyone else is run by the AI. */
@@ -215,6 +269,19 @@ export interface MatchState {
   firstKickoff: 0 | 1;
   lastEvent: MatchEvent | null;
   foul: Foul | null;
+  /** The latest pass being judged for offside, and the last kick the referee has seen. */
+  offside: OffsideWatch | null;
+  kickSeen: number;
+  shootout: Shootout | null;
+}
+
+/**
+ * +1 if `team` attacks the goal at +x right now, else −1. Ends change at half-time and again in extra time
+ * (halves 3 and 4 go like 1 and 2); in a shoot-out both teams shoot at the goal at +x.
+ */
+export function attackSign(state: MatchState, team: 0 | 1): 1 | -1 {
+  if (state.shootout) return team === state.shootout.next ? 1 : -1;
+  return (team === 0) === (state.half % 2 === 1) ? 1 : -1;
 }
 
 export interface MatchConfig {
@@ -275,6 +342,8 @@ export function createMatch(config: MatchConfig, params: SimParams = DEFAULT_PAR
         charge: -1,
         action: { kind: "none", ticks: 0, total: 0, dir: { x: dir, z: 0 } },
         queued: null,
+        yellows: 0,
+        sentOff: false,
       });
     });
   }
@@ -325,6 +394,9 @@ export function createMatch(config: MatchConfig, params: SimParams = DEFAULT_PAR
     firstKickoff: 0,
     lastEvent: null,
     foul: null,
+    offside: null,
+    kickSeen: -1,
+    shootout: null,
   };
   if (state.rules) placeForKickoff(state, 0);
   return state;
@@ -340,9 +412,10 @@ export function placeForKickoff(state: MatchState, team: 0 | 1): void {
   const halfL = state.pitch.length / 2;
   const halfW = state.pitch.width / 2;
   const circle = state.pitch.centreCircle + 0.5;
-  const taker = team * teamSize + teamSize - 1;
+  const taker = kickoffTaker(state, team);
   state.players.forEach((pl, i) => {
-    const s = (pl.team === 0) === (state.half === 1) ? 1 : -1;
+    if (pl.sentOff) return;
+    const s = attackSign(state, pl.team);
     const [fx, fz] = formation[i % teamSize];
     let x = fx * halfL * s;
     let z = fz * halfW * s;
@@ -381,12 +454,23 @@ export function placeForKickoff(state: MatchState, team: 0 | 1): void {
   ball.intendedReceiver = -1;
   ball.aftertouchUntil = 0;
   state.oneTwo = null;
+  state.offside = null;
   state.phase = {
     kind: "restart",
     restart: { kind: "kickoff", team, spot: { x: 0, z: 0 }, taker, since: state.tick, aim: null },
   };
   state.lastEvent = { kind: "kickoff", team, tick: state.tick };
   for (const c of state.controllers) if (c.team === team) c.player = taker;
+}
+
+/** The team's forward kicks off; if they've been sent off, the most advanced player left does. */
+function kickoffTaker(state: MatchState, team: 0 | 1): number {
+  const teamSize = state.players.length / 2;
+  for (let k = teamSize - 1; k > 0; k--) {
+    const i = team * teamSize + k;
+    if (!state.players[i].sentOff) return i;
+  }
+  return team * teamSize;
 }
 
 /** Independent deep copy (snapshots for replays and rollback). */

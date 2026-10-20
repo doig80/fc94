@@ -372,6 +372,32 @@ body {
   font-size: 18px;
   color: var(--accent);
 }
+.scoreboard .cards {
+  display: flex;
+  gap: 2px;
+}
+.scoreboard .card {
+  display: inline-block;
+  width: 8px;
+  height: 11px;
+  border-radius: 1px;
+  background: #f5c400;
+}
+.match-banner .sub[data-card="yellow"]::before,
+.match-banner .sub[data-card="red"]::before {
+  content: "";
+  display: inline-block;
+  width: 0.6em;
+  height: 0.85em;
+  margin-right: 0.4em;
+  vertical-align: -0.1em;
+  border-radius: 1px;
+  background: #f5c400;
+}
+.scoreboard .card.red,
+.match-banner .sub[data-card="red"]::before {
+  background: #e0201b;
+}
 .scoreboard .clock {
   padding-left: 10px;
   border-left: 1px solid rgba(255, 255, 255, 0.2);

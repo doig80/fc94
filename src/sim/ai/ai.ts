@@ -1,11 +1,11 @@
-import { attackSign } from "../actions";
 import { IDLE, type Intent } from "../intent";
 import type { SimParams } from "../params";
 import { inOwnBox } from "../physics/keeper";
 import { Rng } from "../rng";
-import type { AiPlan, MatchState, PlayerState, ShotRead } from "../state";
+import { attackSign, type AiPlan, type MatchState, type PlayerState, type ShotRead } from "../state";
 import { clamp, normalize2, type Vec2 } from "../vec";
-import { isWide, lineOf, shapeSpot } from "./shape";
+import { inOffsidePosition, offsideOn } from "../offside";
+import { isWide, keepOnside, lineOf, shapeSpot } from "./shape";
 
 /**
  * Intents for every player the AI runs (docs/specs/11): everyone a human doesn't control, keepers always.
@@ -19,7 +19,7 @@ export function aiIntents(state: MatchState, params: SimParams): Intent[] {
   // Each team thinks with its own difficulty.
   const teams = [0, 1].map((t) => (params.teamSkill?.[t] ? { ...params, ...params.teamSkill[t] } : params));
   const intents = state.players.map((pl, i) => {
-    if (humans.has(i)) return { ...IDLE };
+    if (humans.has(i) || pl.sentOff) return { ...IDLE };
     const mem = state.ai[i];
     if (state.tick >= mem.nextThink) {
       const p = teams[pl.team];
@@ -148,7 +148,7 @@ function thinkOutfield(state: MatchState, i: number, params: SimParams, rng: Rng
     return;
   }
   // Get into shape: in possession, offer the carrier an option or attack the box; out of it, hold the line.
-  const spot = ours ? supportSpot(state, i) : shapeSpot(state, i, false);
+  const spot = ours ? keepOnside(state, pl.team, supportSpot(state, i)) : shapeSpot(state, i, false);
   goTo(state, i, spot, 0.5);
   mem.sprint = dist(pl.pos, spot) > 8 && pl.stamina > 0.6;
 }
@@ -175,7 +175,11 @@ function supportSpot(state: MatchState, i: number): Vec2 {
     const attackers = state.players
       .map((_, j) => j)
       .filter(
-        (j) => state.players[j].team === pl.team && j !== state.ball.owner && lineOf(state, j) === "attack",
+        (j) =>
+          state.players[j].team === pl.team &&
+          !state.players[j].sentOff &&
+          j !== state.ball.owner &&
+          lineOf(state, j) === "attack",
       );
     if (line === "attack") {
       // The forward on the ball's side to the near post, the other to the far post.
@@ -264,8 +268,14 @@ function carry(state: MatchState, i: number, params: SimParams, rng: Rng): void 
   // Wide in the final third with a teammate in the box: cross (the lob button crosses from out wide).
   if (goalDist < 30 && Math.abs(pl.pos.z) > halfW * 0.5) {
     const other = pl.team === 0 ? 1 : 0;
+    const offside = offsideOn(state);
     const waiting = state.players.some(
-      (t) => t.team === pl.team && t !== pl && inOwnBox(state, other, t.pos.x, t.pos.z),
+      (t, j) =>
+        t.team === pl.team &&
+        t !== pl &&
+        !t.sentOff &&
+        inOwnBox(state, other, t.pos.x, t.pos.z) &&
+        !(offside && inOffsidePosition(state, j, params)),
     );
     if (waiting && rng.next() < 0.6) {
       steer(state, i, toGoal);
@@ -280,7 +290,7 @@ function carry(state: MatchState, i: number, params: SimParams, rng: Rng): void 
     nearest.player !== null &&
     nearest.dist < 2.2 &&
     (nearest.player.pos.x - pl.pos.x) * toGoal.x + (nearest.player.pos.z - pl.pos.z) * toGoal.z > 0;
-  const target = bestPassTarget(state, i, pressure);
+  const target = bestPassTarget(state, i, pressure, params);
   // `passWillingness` is a chance per second; the CPU decides several times a second.
   const passChance = (ai.passWillingness * params.ai.reactionTicks) / 60;
   if (target && ((pressure && target.score > 0) || (target.score > 1.5 && rng.next() < passChance))) {
@@ -349,7 +359,7 @@ function defend(state: MatchState, i: number, params: SimParams, rng: Rng): void
   let mark: PlayerState | null = null;
   let best = 10;
   for (const o of state.players) {
-    if (o.team === pl.team || o.role === "gk" || o === carrier) continue;
+    if (o.team === pl.team || o.role === "gk" || o.sentOff || o === carrier) continue;
     const d = dist(o.pos, spot);
     if (d < best) {
       best = d;
@@ -384,7 +394,7 @@ function presser(state: MatchState, team: 0 | 1, carrier: PlayerState): number {
   let best = -1;
   let bestScore = Infinity;
   state.players.forEach((pl, j) => {
-    if (pl.team !== team || pl.role === "gk") return;
+    if (pl.team !== team || pl.role === "gk" || pl.sentOff) return;
     const behind = (pl.pos.x - carrier.pos.x) * s > 0; // further up the pitch than the carrier
     const score = dist(pl.pos, carrier.pos) + (behind ? 6 : 0);
     if (score < bestScore) {
@@ -400,13 +410,17 @@ function bestPassTarget(
   state: MatchState,
   i: number,
   pressure: boolean,
+  params: SimParams,
 ): { index: number; score: number } | null {
   const pl = state.players[i];
   const s = attackSign(state, pl.team);
   let best: { index: number; score: number } | null = null;
+  const offside = offsideOn(state);
   state.players.forEach((t, j) => {
-    if (j === i || t.team !== pl.team) return;
+    if (j === i || t.team !== pl.team || t.sentOff) return;
     if (t.role === "gk" && !(pressure && (pl.pos.x - t.pos.x) * s > 0)) return;
+    // Never to a teammate standing offside.
+    if (offside && inOffsidePosition(state, j, params)) return;
     const d = dist(pl.pos, t.pos);
     if (d < 4 || d > 25) return;
     let space = 6;
@@ -460,7 +474,7 @@ function takeRestart(state: MatchState, i: number, params: SimParams, rng: Rng):
     plan(state, i, "lob", 0, 1);
     return;
   }
-  const target = bestPassTarget(state, i, false);
+  const target = bestPassTarget(state, i, false, params);
   const t = target ? state.players[target.index] : null;
   const dir = t ? normalize2({ x: t.pos.x - pl.pos.x, z: t.pos.z - pl.pos.z }) : { x: s, z: 0 };
   steer(state, i, dir);
@@ -485,7 +499,7 @@ function thinkKeeper(state: MatchState, i: number, params: SimParams, rng: Rng):
     steer(state, i, { x: 0, z: 0 });
     if (state.tick - ball.ownedSince < k.holdTicks) return;
     // Play it out to the most open teammate.
-    const target = bestPassTarget(state, i, false);
+    const target = bestPassTarget(state, i, false, params);
     const t = target ? state.players[target.index] : null;
     const e = (rng.next() * 2 - 1) * params.ai.aimError;
     const dir = t ? normalize2({ x: t.pos.x - gk.pos.x, z: t.pos.z - gk.pos.z }) : { x: s, z: 0 };
@@ -621,7 +635,7 @@ function closestTo(state: MatchState, team: 0 | 1, p: Vec2, exclude = -1): numbe
   let best = -1;
   let bestDist = Infinity;
   state.players.forEach((pl, j) => {
-    if (pl.team !== team || pl.role === "gk" || j === exclude) return;
+    if (pl.team !== team || pl.role === "gk" || pl.sentOff || j === exclude) return;
     const d = dist(pl.pos, p);
     if (d < bestDist) {
       best = j;
@@ -636,7 +650,7 @@ function nearestOpponent(state: MatchState, i: number): { player: PlayerState | 
   let player: PlayerState | null = null;
   let best = Infinity;
   for (const o of state.players) {
-    if (o.team === pl.team) continue;
+    if (o.team === pl.team || o.sentOff) continue;
     const d = dist(o.pos, pl.pos);
     if (d < best) {
       best = d;
