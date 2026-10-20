@@ -1,4 +1,5 @@
 import { SceneInstrumentation } from "@babylonjs/core";
+import { combine, GamepadInput, PAD } from "../input/gamepad";
 import { KeyboardInput } from "../input/keyboard";
 import { createEngine } from "../render/engine";
 import { showInspector } from "../render/inspector";
@@ -76,6 +77,7 @@ export async function startMatch(): Promise<void> {
   let prev = cloneState(state);
   const view = new MatchView(engine, state, { ...options, juice: params.juice });
   const keyboard = new KeyboardInput(window);
+  const pad = new GamepadInput();
   const stepper = new FixedStepper(DT);
   const replayStepper = new FixedStepper(DT);
   const recorder = new ReplayRecorder();
@@ -158,12 +160,27 @@ export async function startMatch(): Promise<void> {
     if (state.phase.kind === "goal") state.phase.until = Math.min(state.phase.until, state.tick + 30);
   }
 
+  /** The pad's menu buttons, as the keys do: Start pauses, Back restarts, Y shows the controls, A/B/X skip a replay. */
+  function padButtons(): void {
+    const pressed = pad.pressed();
+    help.usePad(pad.connected());
+    if (pressed.size === 0) return;
+    if (replay) {
+      if ([PAD.a, PAD.b, PAD.x, PAD.start].some((b) => pressed.has(b))) endReplay();
+      return;
+    }
+    if (pressed.has(PAD.start)) setPaused(!paused);
+    if (pressed.has(PAD.back)) restart();
+    if (pressed.has(PAD.y)) help.hidden = !help.hidden;
+  }
+
   let last = performance.now();
   let frames = 0;
   engine.runRenderLoop(() => {
     const now = performance.now();
     const dt = Math.min((now - last) / 1000, 0.1);
     last = now;
+    padButtons();
     if (replay) {
       const r = replay.player;
       const speed = replay.slow ? 0.4 : r.progress > SLOW_FROM ? 0.5 : 1;
@@ -178,7 +195,9 @@ export async function startMatch(): Promise<void> {
       } else if (!paused) {
         alpha = stepper.advance(dt * params.juice.gameSpeed, () => {
           prev = cloneState(state);
-          const intents = [keyboard.read(view.rig.yaw)];
+          const keys = keyboard.read(view.rig.yaw);
+          const stick = pad.read(view.rig.yaw);
+          const intents = [stick ? combine(keys, stick) : keys];
           recorder.record(state, intents);
           stepMatch(state, intents, params, cpu);
           freeze = Math.max(freeze, impact(state, params));
