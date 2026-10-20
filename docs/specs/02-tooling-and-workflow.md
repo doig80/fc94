@@ -5,7 +5,8 @@
 ## Roles
 
 - **Product owner (you):** vision, priorities, playtesting, approving specs and PRs.
-- **Claude:** engineering, asset integration, tests, keeping specs and issues up to date.
+- **Claude:** engineering, asset integration, tests, keeping specs and issues up to date. When a decision is
+  needed, Claude asks it as a short interview (one question at a time, with options) rather than a numbered list.
 
 ## Repository layout
 

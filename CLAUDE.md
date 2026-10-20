@@ -4,6 +4,8 @@ Arcade football for the web. "Nutmeg" is a codename (the repo is still called `f
 decided before launch (docs/specs/03). Never use "FC94", "FIFA" or "EA" in the game.
 The repo is public and the code is MIT-licensed: never commit secrets, and only commit assets whose licence allows it.
 The product owner is not a programmer: explain decisions in plain language, show screenshots for visual changes.
+When you need decisions from the product owner, ask them as a short interview (one question at a time, with options
+to pick from, using the AskUserQuestion tool) rather than a numbered list.
 
 ## Source of truth
 

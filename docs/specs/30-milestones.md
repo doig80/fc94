@@ -52,10 +52,25 @@ always something to play. Milestones group the work; each ends with a playtest b
 Full-size pitch and goals, 11 v 11 with a 4-4-2 shape, offside, cards, advantage, extra time + shoot-out
 option, full AI (shape, offside line, crosses), gamepad support, ref character.
 
-Starts with a **character test**: one real player model with retargeted Mixamo animation
+Includes a **character test**: one real player model with retargeted animation
 ([#27](https://github.com/doig80/fc94/issues/27)), because animation is the top quality risk. Also: perfect-timing
 reward and corner aiming ([#28](https://github.com/doig80/fc94/issues/28)), floodlight pools for night matches
-([#29](https://github.com/doig80/fc94/issues/29)).
+([#29](https://github.com/doig80/fc94/issues/29)), and the fixes found by the balance runs (golden shot, too few
+interceptions, too many fouls).
+
+**Build order** (one issue and one preview link each):
+
+| Order | Issue                                           | Contains                                                                   |
+| ----- | ----------------------------------------------- | -------------------------------------------------------------------------- |
+| 1     | [#36](https://github.com/doig80/fc94/issues/36) | Draw calls within budget, before 11 v 11 adds 12 players                   |
+| 2     | [#27](https://github.com/doig80/fc94/issues/27) | Character test in the look-test                                            |
+| 3     | [#44](https://github.com/doig80/fc94/issues/44) | 11 v 11 on the full pitch, camera, pace check                              |
+| 4     | [#45](https://github.com/doig80/fc94/issues/45) | Smarter CPU: shape, offside line, crosses; keeper variation, interceptions |
+| 5     | [#46](https://github.com/doig80/fc94/issues/46) | Offside, cards, extra time and shoot-out, no-ref switch                    |
+| 6     | [#47](https://github.com/doig80/fc94/issues/47) | Referee and assistants on the pitch                                        |
+| 7     | [#48](https://github.com/doig80/fc94/issues/48) | Gamepad controls                                                           |
+| 8     | [#28](https://github.com/doig80/fc94/issues/28) | Perfect-timing reward and corner aiming                                    |
+| 9     | [#29](https://github.com/doig80/fc94/issues/29) | Floodlight pools for night matches                                         |
 
 ## 3. Alpha
 
