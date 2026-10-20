@@ -1,1 +1,0 @@
-export{AnimationPropertyInfo,RegisterGLTFLoaderAnimation,TransformNodeAnimationPropertyInfo,WeightAnimationPropertyInfo,getQuaternion,getVector3,getWeights}from"./2.0-Bk-8j8VM.js";

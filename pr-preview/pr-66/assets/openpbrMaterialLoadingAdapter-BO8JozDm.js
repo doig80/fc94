@@ -1,0 +1,1 @@
+export{OpenPBRMaterialLoadingAdapter}from"./2.0-DssQIBrt.js";
