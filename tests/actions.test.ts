@@ -294,6 +294,54 @@ describe("lob, cross and first-time balls", () => {
     expect(s.players[9].action.kind).toBe("header");
   });
 
+  describe("perfect timing (M4)", () => {
+    /** Pass to player 3, press shoot `early` ticks before the ball arrives; the shot's speed and whether it was Perfect. */
+    function firstTime(early: number): { speed: number; perfect: boolean } {
+      const s = setup();
+      onBall(s, 4, -6, 0);
+      s.players[3].pos = { x: 6, z: 0 };
+      s.players[3].facing = { x: 1, z: 0 };
+      tap(s, intent({ pass: true, moveX: 1 }));
+      // Ticks until the ball reaches player 3 (a dry run on a copy).
+      const probe = structuredClone(s);
+      let arrive = 0;
+      while (probe.ball.owner !== 3 && arrive < 200) {
+        run(probe, 1);
+        arrive++;
+      }
+      run(s, arrive - early);
+      run(s, 1, intent({ shoot: true }));
+      let speed = 0;
+      for (let t = 0; t < 40 && speed === 0; t++) {
+        run(s, 1);
+        if (s.ball.lastTouch === 3 && s.ball.owner < 0) speed = Math.hypot(s.ball.vel.x, s.ball.vel.z);
+      }
+      return { speed, perfect: s.lastPerfect?.player === 3 };
+    }
+
+    it("a first-time shot pressed just as the ball arrives is Perfect, and harder than one pressed early", () => {
+      const late = firstTime(2);
+      const early = firstTime(15);
+      expect(late.speed).toBeGreaterThan(0);
+      expect(early.speed).toBeGreaterThan(0);
+      expect(late.perfect).toBe(true);
+      expect(early.perfect).toBe(false);
+      expect(late.speed).toBeGreaterThan(early.speed + 2);
+    });
+
+    it("a volley struck the moment the ball is in reach is Perfect", () => {
+      const s = setup();
+      s.controllers[0].player = 4;
+      s.players[4].pos = { x: L - 6, z: 0 };
+      s.ball.pos = { x: L - 6.8, y: 1.0, z: 0 };
+      s.ball.vel = { x: 0, y: 0, z: 0 };
+      s.ball.owner = -1;
+      tap(s, intent({ shoot: true }));
+      expect(s.players[4].action.kind).toBe("volley");
+      expect(s.lastPerfect?.player).toBe(4);
+    });
+  });
+
   it("plays a first-time pass when pass is pressed just before the ball arrives", () => {
     const s = setup();
     onBall(s, 4, -6, 0);

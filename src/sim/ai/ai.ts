@@ -467,10 +467,18 @@ function takeRestart(state: MatchState, i: number, params: SimParams, rng: Rng):
     plan(state, i, "shot", 0, Math.round(0.75 * params.action.shotChargeTicks));
     return;
   }
-  if (r.kind === "corner") {
-    // Cross towards the penalty spot.
-    const spot = { x: s * (halfL - state.pitch.penaltySpot), z: 0 };
-    steer(state, i, normalize2({ x: spot.x - pl.pos.x, z: spot.z - pl.pos.z }));
+  if (r.kind === "corner" && r.aim) {
+    // Pick a target for the cross, the near post, the penalty spot or the far post, put the marker there and
+    // cross it in (stick centred: it would move the marker).
+    const near = r.spot.z > 0 ? 1 : -1;
+    const pick = rng.next();
+    const gw = state.pitch.goalWidth;
+    r.aim =
+      pick < 0.35
+        ? { x: s * (halfL - 5), z: near * gw * 0.4 }
+        : pick < 0.7
+          ? { x: s * (halfL - state.pitch.penaltySpot), z: 0 }
+          : { x: s * (halfL - 6.5), z: -near * gw * 0.5 };
     plan(state, i, "lob", 0, 1);
     return;
   }

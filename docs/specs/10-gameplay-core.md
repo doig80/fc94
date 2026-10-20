@@ -15,7 +15,9 @@ are starting values in the tuning panel, not final balance.
   the ball, and play resumes on one button press or after 3 seconds _(tune)_.
 - **Set pieces are aimed** with a target marker on the pitch (as in 1994): free kicks and penalties in the
   vertical slice ([#13](https://github.com/doig80/fc94/issues/13)), corners in Full match
-  ([#28](https://github.com/doig80/fc94/issues/28)).
+  ([#28](https://github.com/doig80/fc94/issues/28)). At a corner the marker is a ring on the grass that starts
+  on the penalty spot; the stick moves it anywhere in the box, Lob crosses to it (for the teammate nearest it),
+  and the camera frames the box so you can see it. The CPU picks the near post, the penalty spot or the far post.
 
 ## 2. Camera
 
@@ -146,7 +148,10 @@ How each rule is called ([#46](https://github.com/doig80/fc94/issues/46)):
   short slow motion on a winning goal, controller rumble where the browser supports it
   ([#25](https://github.com/doig80/fc94/issues/25)). Strengths are tuning-panel values.
 - **Perfect timing** — first-time shots and volleys struck in a tight timing window get extra power or
-  accuracy and a flash (Full match, [#28](https://github.com/doig80/fc94/issues/28)).
+  accuracy and a flash (Full match, [#28](https://github.com/doig80/fc94/issues/28)). Built as: Shoot pressed
+  within 0.1 s _(tune)_ of striking the ball (first time, or a volley or header) is **Perfect**: 25% more power
+  _(tune)_, a gold burst around the player, "Perfect!" on screen, and the short freeze of a power shot. Pressed
+  earlier it still works (the 0.3 s buffer), just without the bonus.
 - **Readability** — the ball has a blob shadow that shows its height, fast balls leave a short trail, and
   an off-screen marker shows where your player is ([#25](https://github.com/doig80/fc94/issues/25)).
 

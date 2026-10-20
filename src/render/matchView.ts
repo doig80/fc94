@@ -68,6 +68,8 @@ export class MatchView {
   private readonly stadium: Stadium;
   private readonly weather: WeatherFx;
   private readonly aimMarker: Mesh;
+  /** The burst around a player who struck a "Perfect" first-time shot. */
+  private readonly perfectFlash: Mesh;
   /** Where the offside line was when offside was called, shown on the grass for a moment. */
   private readonly offsideLine: Mesh;
   /** The replay angle shown last frame, to cut (not pan) between angles. */
@@ -127,6 +129,7 @@ export class MatchView {
     this.ballShadow = buildBallShadow(scene);
     this.aimMarker = buildAimMarker(scene);
     this.offsideLine = buildOffsideLine(scene, initial.pitch.width);
+    this.perfectFlash = buildPerfectFlash(scene);
     this.trail = buildTrail(scene, this.ball);
     this.ball.rotationQuaternion = Quaternion.Identity();
 
@@ -259,10 +262,29 @@ export class MatchView {
     this.ballShadow.scaling.setAll(Math.max(0.45, 1 - height * 0.12));
     this.ballShadow.visibility = Math.max(0.25, 0.85 - height * 0.12);
 
-    // Free kicks and penalties: where on the goal the shot will go (docs/specs/10 §1).
-    const aim = curr.phase.kind === "restart" ? curr.phase.restart.aim : null;
+    // Free kicks and penalties: where on the goal the shot will go (docs/specs/10 §1); corners: where the cross
+    // goes, a ring on the grass in the box.
+    const restart = curr.phase.kind === "restart" ? curr.phase.restart : null;
+    const aim = restart?.aim ?? null;
     this.aimMarker.setEnabled(aim !== null);
-    if (aim) this.aimMarker.position.set(aim.x, curr.pitch.goalHeight * 0.5, aim.z);
+    if (aim) {
+      const corner = restart?.kind === "corner";
+      this.aimMarker.position.set(aim.x, corner ? 0.06 : curr.pitch.goalHeight * 0.5, aim.z);
+      this.aimMarker.rotation.set(0, 0, corner ? 0 : Math.PI / 2);
+      this.aimMarker.scaling.setAll(corner ? 1.6 : 1);
+    }
+
+    // A "Perfect" first-time strike (M4): a gold ring bursts out from the striker.
+    const perfect = curr.lastPerfect;
+    const age = perfect ? (curr.tick - perfect.tick) / 60 : Infinity;
+    this.perfectFlash.setEnabled(age < PERFECT_SECONDS);
+    if (perfect && age < PERFECT_SECONDS) {
+      const p = curr.players[perfect.player].pos;
+      const k = age / PERFECT_SECONDS;
+      this.perfectFlash.position.set(p.x, 0.9, p.z);
+      this.perfectFlash.scaling.setAll(1 + k * 3);
+      this.perfectFlash.visibility = 1 - k;
+    }
 
     // Offside: the line across the pitch where it was, fading out.
     const e = curr.lastEvent;
@@ -286,7 +308,11 @@ export class MatchView {
     if (shot) {
       this.rig.cinematic(shot, { x: bx, y: by, z: bz }, dt, this.first || shot.kind !== this.lastShot);
     } else {
-      this.rig.update({ x: bx, z: bz, vx: b1.vel.x, vz: b1.vel.z }, dt, this.first || this.lastShot !== null);
+      // At a corner the camera frames the box, between the flag and the aiming ring, so you can see where you aim.
+      const corner = restart?.kind === "corner" && aim ? aim : null;
+      const fx = corner ? bx + (corner.x - bx) * 0.6 : bx;
+      const fz = corner ? bz + (corner.z - bz) * 0.6 : bz;
+      this.rig.update({ x: fx, z: fz, vx: b1.vel.x, vz: b1.vel.z }, dt, this.first || this.lastShot !== null);
     }
     this.lastShot = shot?.kind ?? null;
     const cam = this.rig.camera;
@@ -360,6 +386,25 @@ function buildAimMarker(scene: Scene): Mesh {
   // Drawn over the net and the keeper, so it never hides.
   ring.renderingGroupId = 1;
   const mat = new StandardMaterial("aimMarkerMat", scene);
+  mat.disableLighting = true;
+  mat.emissiveColor = Color3.FromHexString("#ffd23f");
+  ring.material = mat;
+  ring.isPickable = false;
+  ring.setEnabled(false);
+  return ring;
+}
+
+/** How long the "Perfect" burst lasts. */
+const PERFECT_SECONDS = 0.45;
+
+/** A flat gold ring around a player, waist high, that bursts outwards. */
+function buildPerfectFlash(scene: Scene): Mesh {
+  const ring = MeshBuilder.CreateTorus(
+    "perfectFlash",
+    { diameter: 1.2, thickness: 0.12, tessellation: 32 },
+    scene,
+  );
+  const mat = new StandardMaterial("perfectFlashMat", scene);
   mat.disableLighting = true;
   mat.emissiveColor = Color3.FromHexString("#ffd23f");
   ring.material = mat;
