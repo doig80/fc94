@@ -1,1 +1,0 @@
-export{OpenPBRMaterialLoadingAdapter}from"./2.0-GcwcAzmo.js";
