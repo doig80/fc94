@@ -75,11 +75,49 @@ describe("kick-off", () => {
     expect(dist(s.players[4].pos, { x: 0, z: 0 })).toBeLessThan(0.6);
   });
 
-  it("a pass starts play", () => {
+  const READY = DEFAULT_PARAMS.referee.kickoffReadyTicks;
+
+  it("a pass after the referee's whistle starts play", () => {
     const s = match();
+    run(s, READY);
+    expect(s.lastEvent).toMatchObject({ kind: "kickoff", team: 0, tick: READY });
     run(s, 2, intent({ pass: true, moveZ: 1 }));
     expect(s.phase.kind).toBe("play");
     expect(s.ball.owner).toBe(-1);
+  });
+
+  it("nobody can kick off before the whistle, so the camera is back at the centre", () => {
+    const s = match();
+    run(s, 2, intent({ pass: true }));
+    run(s, 10);
+    run(s, 2, intent({ shoot: true }));
+    run(s, 2, intent({ lob: true }));
+    expect(s.phase.kind).toBe("restart");
+    expect(s.ball.owner).toBe(4);
+    expect(s.lastEvent?.kind).not.toBe("kickoff");
+  });
+
+  it("a button held through the wait doesn't count: it has to be pressed again", () => {
+    const s = match();
+    // Held from before the kick-off was set up (say, from skipping the goal replay) until after the whistle.
+    run(s, READY + 30, intent({ pass: true }));
+    expect(s.phase.kind).toBe("restart");
+    run(s, 1);
+    run(s, 2, intent({ pass: true }));
+    expect(s.phase.kind).toBe("play");
+  });
+
+  it("the computer waits for the whistle too", () => {
+    const s = match();
+    s.controllers = [];
+    const cpu = (m: MatchState) => aiIntents(m, DEFAULT_PARAMS);
+    let taken = -1;
+    for (let t = 0; t < 300 && taken < 0; t++) {
+      stepMatch(s, [], DEFAULT_PARAMS, cpu);
+      if (s.phase.kind === "play") taken = s.tick;
+    }
+    expect(taken).toBeGreaterThan(READY);
+    expect(taken).toBeLessThan(READY + 45);
   });
 
   it("a human who waits too long has it taken for them", () => {

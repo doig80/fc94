@@ -470,7 +470,7 @@ export function placeForKickoff(state: MatchState, team: 0 | 1): void {
     kind: "restart",
     restart: { kind: "kickoff", team, spot: { x: 0, z: 0 }, taker, since: state.tick, aim: null },
   };
-  state.lastEvent = { kind: "kickoff", team, tick: state.tick };
+  // The referee whistles for the kick-off a moment later (see `kickoffReady`).
   for (const c of state.controllers) if (c.team === team) c.player = taker;
 }
 
