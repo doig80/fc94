@@ -482,7 +482,12 @@ function takeRestart(state: MatchState, i: number, params: SimParams, rng: Rng):
   const r = state.phase.restart;
   const pl = state.players[i];
   steer(state, i, { x: 0, z: 0 });
-  if (state.tick - r.since < params.referee.cpuRestartTicks) return;
+  // A kick-off waits for the referee's whistle, then a moment to react.
+  const wait =
+    r.kind === "kickoff"
+      ? params.referee.kickoffReadyTicks + params.ai.reactionTicks
+      : params.referee.cpuRestartTicks;
+  if (state.tick - r.since < wait) return;
   const s = attackSign(state, pl.team);
   const halfL = state.pitch.length / 2;
   const goal = { x: s * halfL, z: 0 };

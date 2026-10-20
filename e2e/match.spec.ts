@@ -28,8 +28,9 @@ test("match boots, the keyboard moves the player, and a shot leaves the foot", a
         }),
       n,
     );
-  // Kick off (a pass), then run.
+  // Kick off (a pass, after the referee's whistle), then run.
   expect(start.phase.kind).toBe("restart");
+  await page.waitForFunction(() => window.__match!.state().lastEvent?.kind === "kickoff");
   await page.keyboard.press("KeyJ");
   await page.waitForFunction(() => window.__match!.state().phase.kind === "play");
   const before = await page.evaluate(() => window.__match!.state());

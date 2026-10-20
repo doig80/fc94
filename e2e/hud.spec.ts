@@ -29,7 +29,8 @@ test("pause stops the match; a goal is replayed and the replay can be skipped", 
   expect(await mode()).toBe("live");
   await waitTicks(5);
 
-  // Score: kick off, then roll the ball into the net.
+  // Score: kick off (after the whistle), then roll the ball into the net.
+  await page.waitForFunction(() => window.__match!.state().lastEvent?.kind === "kickoff");
   await page.keyboard.press("KeyJ");
   await page.waitForFunction(() => window.__match!.state().phase.kind === "play");
   await page.evaluate(() => {

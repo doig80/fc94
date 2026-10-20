@@ -280,6 +280,11 @@ export interface RefereeParams {
   autoRestartTicks: number;
   /** The CPU takes its restarts after this long. */
   cpuRestartTicks: number;
+  /**
+   * Nobody can take a kick-off until this long after it's set up, so the camera is back at the centre; then the
+   * referee whistles. A button held through the wait doesn't count.
+   */
+  kickoffReadyTicks: number;
   /** Pause after a goal before the kick-off. */
   goalPauseTicks: number;
   /** Pause at half-time. */
@@ -489,6 +494,7 @@ export const DEFAULT_PARAMS: SimParams = {
   referee: {
     autoRestartTicks: 180,
     cpuRestartTicks: 45,
+    kickoffReadyTicks: 90,
     goalPauseTicks: 180,
     halftimeTicks: 180,
     foulOnMiss: 0.3,

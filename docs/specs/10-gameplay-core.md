@@ -13,6 +13,10 @@ are starting values in the tuning panel, not final balance.
 - **Kick-off → half-time → second half → full time.** Teams swap ends at half-time.
 - **Restarts** (throw-in, corner, goal kick, free kick, penalty) are quick: the right player auto-runs to
   the ball, and play resumes on one button press or after 3 seconds _(tune)_.
+- **Kick-off:** nobody can play the ball for 1.5 seconds _(tune)_ after a kick-off is set up, so the camera is back
+  at the centre; then the referee whistles ("Kick-off" on screen) and the taker can go
+  ([#60](https://github.com/doig80/fc94/issues/60)). A button still held from before (say, from skipping the replay)
+  doesn't count: press again. The computer waits for the whistle too.
 - **Set pieces are aimed** with a target marker on the pitch (as in 1994): free kicks and penalties in the
   vertical slice ([#13](https://github.com/doig80/fc94/issues/13)), corners in Full match
   ([#28](https://github.com/doig80/fc94/issues/28)). At a corner the marker is a ring on the grass that starts

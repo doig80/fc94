@@ -5,6 +5,7 @@ import { matchMinute, type MatchEvent, type MatchState, type SimParams } from ".
 /** What the banner says for each referee call (none for a kick-off). */
 const CALLS: Partial<Record<MatchEvent["kind"], string>> = {
   goal: "GOAL!",
+  kickoff: "Kick-off",
   foul: "Foul",
   advantage: "Advantage",
   offside: "Offside",

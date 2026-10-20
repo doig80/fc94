@@ -50,7 +50,8 @@ test("a pad plays: A kicks off, the stick runs, Start pauses, and the help shows
 
   await expect(page.locator(".controls-help")).toContainText("Left stick");
 
-  // A (button 0) takes the kick-off: a pass.
+  // A (button 0) takes the kick-off, after the referee's whistle: a pass.
+  await page.waitForFunction(() => window.__match!.state().lastEvent?.kind === "kickoff");
   await press(0, true);
   await page.waitForFunction(() => window.__match!.state().phase.kind === "play");
   await press(0, false);

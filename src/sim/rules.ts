@@ -89,7 +89,11 @@ export function holdRestart(state: MatchState, intents: Intent[], params: SimPar
     taker.facing = { x: mx / len, z: mz / len };
   }
   const human = state.controllers.some((c) => c.player === r.taker);
-  const wait = human ? params.referee.autoRestartTicks : params.referee.cpuRestartTicks * 3;
+  // Never before a kick-off's whistle.
+  const wait = Math.max(
+    human ? params.referee.autoRestartTicks : params.referee.cpuRestartTicks * 3,
+    r.kind === "kickoff" ? params.referee.kickoffReadyTicks + 1 : 0,
+  );
   if (state.tick - r.since >= wait && taker.held === 0) {
     // Taken for them: a short pass the way they face.
     intent.pass = true;
@@ -155,6 +159,16 @@ function keepAway(p: Vec2, from: Vec2, d: number): void {
   p.z = from.z + dz * (len > 1e-6 ? k : 0);
 }
 
+/** Can the kick-off be taken yet? Not until the referee whistles, `kickoffReadyTicks` after it was set up. */
+export function kickoffReady(state: MatchState, params: SimParams): boolean {
+  const phase = state.phase;
+  return !(
+    phase.kind === "restart" &&
+    phase.restart.kind === "kickoff" &&
+    state.tick - phase.restart.since < params.referee.kickoffReadyTicks
+  );
+}
+
 /** After the tick: was the restart taken, is time up, was there a foul, offside, a goal, or did the ball go out? */
 export function referee(state: MatchState, params: SimParams): void {
   const rules = state.rules;
@@ -162,6 +176,14 @@ export function referee(state: MatchState, params: SimParams): void {
   if (state.shootout) return shootoutReferee(state, params);
   const ball = state.ball;
   const phase = state.phase;
+  if (
+    phase.kind === "restart" &&
+    phase.restart.kind === "kickoff" &&
+    state.tick - phase.restart.since === params.referee.kickoffReadyTicks
+  ) {
+    // The whistle: the kick-off can be taken.
+    state.lastEvent = { kind: "kickoff", team: phase.restart.team, tick: state.tick };
+  }
   if (phase.kind === "restart" && ball.owner !== phase.restart.taker) {
     state.phase = { kind: "play" };
     // No offside straight from a kick-in, corner or goal kick.

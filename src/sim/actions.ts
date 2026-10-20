@@ -4,6 +4,7 @@ import { kickBall } from "./physics/dribble";
 import { inOffsidePosition, offsideOn } from "./offside";
 import { keeperHolds } from "./physics/keeper";
 import { Rng } from "./rng";
+import { kickoffReady } from "./rules";
 import {
   attackSign,
   Button,
@@ -64,6 +65,8 @@ export function applyActions(
       return;
     }
     const owns = state.ball.owner === i;
+    // No kick-off before the whistle; a button held until then doesn't count, it has to be pressed again.
+    if (owns && !kickoffReady(state, params)) return;
     const attacking = attackingContext(state, i, params);
     const move = moveDir(intent);
     const assists = assistsFor(i);
