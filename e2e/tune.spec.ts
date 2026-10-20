@@ -16,7 +16,7 @@ test("tuning panel changes the live match and resets", async ({ page }) => {
   await expect(panel.locator("textarea")).toHaveValue(/"passArrivalSpeed": 12/);
 
   await panel.getByRole("button", { name: "Reset all" }).click();
-  expect(await page.evaluate(() => window.__match!.params().action.passArrivalSpeed)).toBe(8);
+  expect(await page.evaluate(() => window.__match!.params().action.passArrivalSpeed)).toBe(9);
   await expect(panel.locator(".tuning-count")).toHaveText("defaults");
 
   // T hides and shows the panel.

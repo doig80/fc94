@@ -30,8 +30,16 @@ export function updatePossession(state: MatchState, params: SimParams): void {
     if (distSq >= bestDistSq) return;
     const rvx = ball.vel.x - pl.vel.x;
     const rvz = ball.vel.z - pl.vel.z;
-    // The intended receiver of a pass always controls it; anyone else only a slow-enough ball.
-    const maxRel = i === ball.intendedReceiver ? d.controlMaxRelSpeed * 2 : d.controlMaxRelSpeed;
+    // The intended receiver of a pass always controls it, and an opponent standing in its way can cut out a firmer
+    // pass than a teammate could take; anyone else only a slow-enough ball.
+    const opponent =
+      ball.intendedReceiver >= 0 && ball.lastTouch >= 0 && state.players[ball.lastTouch].team !== pl.team;
+    const maxRel =
+      i === ball.intendedReceiver
+        ? d.controlMaxRelSpeed * 2
+        : opponent
+          ? d.controlMaxRelSpeed * d.interceptFactor
+          : d.controlMaxRelSpeed;
     if (rvx * rvx + rvz * rvz > maxRel * maxRel) return;
     best = i;
     bestDistSq = distSq;

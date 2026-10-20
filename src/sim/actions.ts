@@ -68,7 +68,7 @@ export function applyActions(
     if (owns && pl.charge >= 0) {
       if (now & Button.shoot) pl.charge = Math.min(pl.charge + 1, params.action.shotChargeTicks);
       if (released & Button.shoot) {
-        shoot(state, i, pl.charge / params.action.shotChargeTicks, move, params, assists);
+        shoot(state, i, pl.charge / params.action.shotChargeTicks, move, params, assists, undefined, rng);
         pl.charge = -1;
         return;
       }
@@ -118,14 +118,24 @@ export function tickActions(state: MatchState, params: SimParams): void {
   });
 }
 
-/** Play a first-time pass or shot that was asked for just before the ball arrived. */
+/**
+ * Play a first-time pass or shot that was asked for just before the ball arrived. A shot asked for as a cross or
+ * lob comes to you is a volley or header, played as soon as the ball is in reach (a loose ball, such as a rebound,
+ * needs the press on time).
+ */
 export function playQueued(
   state: MatchState,
   params: SimParams,
   assistsFor: (i: number) => Assists | null,
 ): void {
   const owner = state.ball.owner;
-  if (owner < 0) return;
+  if (owner < 0) {
+    const i = state.ball.intendedReceiver;
+    const q = i >= 0 ? state.players[i].queued : null;
+    if (q?.kind !== "shoot" || state.tick > q.until || state.players[i].action.kind !== "none") return;
+    if (contactShot(state, i, q.dir, params, assistsFor(i))) state.players[i].queued = null;
+    return;
+  }
   const pl = state.players[owner];
   const q = pl.queued;
   pl.queued = null;
@@ -277,9 +287,18 @@ export function lob(
   const inFinalThird = pl.pos.x * s > halfL / 3;
   const wide = Math.abs(pl.pos.z) > halfW * 0.4;
   if (inFinalThird && wide) {
-    // Cross: to the middle of the box, just beyond the near post.
+    // Cross: to the teammate in the box nearest its middle, a little ahead of their run and dropping a few metres
+    // past them, so it reaches them at volley height; with nobody there, just beyond the near post.
     const spot = { x: s * (halfL - Math.min(6, halfL * 0.3)), z: pl.pos.z > 0 ? -1 : 1 };
-    loftedKick(state, i, from, spot, a.crossLift, params);
+    const receiver = teammateNear(state, i, spot, 12);
+    let to = spot;
+    if (receiver >= 0) {
+      const r = state.players[receiver];
+      const meet = { x: r.pos.x + r.vel.x * 0.5, z: r.pos.z + r.vel.z * 0.5 };
+      const on = normalize2({ x: meet.x - from.x, z: meet.z - from.z });
+      to = { x: meet.x + on.x * a.crossBeyond, z: meet.z + on.z * a.crossBeyond };
+    }
+    loftedKick(state, i, from, to, a.crossLift, params, receiver);
     return;
   }
   const runner = choosePassTarget(state, i, dir, params, true);
@@ -293,6 +312,22 @@ export function lob(
       ? leadPoint(state, from, state.players[target], 14, assists?.passLead === false ? 0 : a.passLead)
       : { x: from.x + dir.x * 15, z: from.z + dir.z * 15 };
   loftedKick(state, i, from, to, a.lobLift, params, target);
+}
+
+/** The outfield teammate of player `i` nearest `spot`, if one is within `within` metres; otherwise −1. */
+function teammateNear(state: MatchState, i: number, spot: Vec2, within: number): number {
+  const team = state.players[i].team;
+  let best = -1;
+  let bestDist = within;
+  state.players.forEach((t, j) => {
+    if (j === i || t.team !== team || t.role === "gk") return;
+    const d = Math.sqrt((t.pos.x - spot.x) * (t.pos.x - spot.x) + (t.pos.z - spot.z) * (t.pos.z - spot.z));
+    if (d < bestDist) {
+      best = j;
+      bestDist = d;
+    }
+  });
+  return best;
 }
 
 /** A ball in the air that comes down at `to` (drag is made up for by `loftDragComp`). */
@@ -337,6 +372,7 @@ export function shoot(
   params: SimParams,
   assists: Assists | null,
   lift?: number,
+  rng?: Rng,
 ): void {
   const pl = state.players[i];
   const a = params.action;
@@ -365,6 +401,9 @@ export function shoot(
     const keeper = state.players.find((p) => p.team !== pl.team && p.role === "gk");
     aimZ = (keeper && keeper.pos.z >= 0 ? -1 : 1) * gw * 0.32;
   }
+  // Full-power shots are harder to place (docs/specs/11 §4): no shot is quite the same twice.
+  const wild = (p - 0.6) / 0.4;
+  if (rng && wild > 0) aimZ += (rng.next() * 2 - 1) * a.powerShotSpread * wild;
   const dir = normalize2({ x: goalX - ball.pos.x, z: aimZ - ball.pos.z });
   const rise =
     lift ?? a.shotMinLift + (a.shotMaxLift - a.shotMinLift) * p + (p > a.overpowerAt ? a.overpowerLift : 0);

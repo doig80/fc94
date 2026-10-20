@@ -18,7 +18,7 @@ export const DIFFICULTY: Record<Difficulty, Preset> = {
   easy: {
     ai: {
       reactionTicks: 18,
-      keeperReactionTicks: 20,
+      keeperReactionTicks: 16,
       aimError: 0.35,
       tackleChance: 0.15,
       slideChance: 0,
@@ -26,7 +26,7 @@ export const DIFFICULTY: Record<Difficulty, Preset> = {
       shotCurl: 0,
       passWillingness: 0.2,
     },
-    keeper: { reach: 0.56, diveSpeed: 6.6, catchSpeed: 15 },
+    keeper: { reach: 0.6, diveSpeed: 7, catchSpeed: 15 },
     assists: { autoSwitch: true, aimHelp: true, passLead: true, autoSprint: true },
   },
   normal: {
@@ -37,15 +37,15 @@ export const DIFFICULTY: Record<Difficulty, Preset> = {
   hard: {
     ai: {
       reactionTicks: 5,
-      keeperReactionTicks: 13,
+      keeperReactionTicks: 10,
       aimError: 0.06,
-      tackleChance: 0.55,
+      tackleChance: 0.4,
       slideChance: 0.1,
       telegraphTicks: 4,
       shotCurl: 0.7,
       passWillingness: 0.5,
     },
-    keeper: { reach: 0.62, diveSpeed: 7.3, catchSpeed: 21 },
+    keeper: { reach: 0.69, diveSpeed: 7.8, catchSpeed: 21 },
     assists: { autoSwitch: true, aimHelp: false, passLead: false, autoSprint: false },
   },
 };

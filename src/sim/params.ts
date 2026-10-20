@@ -111,6 +111,13 @@ export interface DribbleParams {
   controlMaxHeight: number;
   /** ...and not moving faster than this relative to them. */
   controlMaxRelSpeed: number;
+  /** An opponent in a pass's path can cut it out at this many times `controlMaxRelSpeed` (passes only). */
+  interceptFactor: number;
+  /** A defender in their own area heads a high ball clear when it comes this close (see physics/clearance.ts). */
+  clearReach: number;
+  /** Speed and upward speed of that clearance. */
+  clearSpeed: number;
+  clearLift: number;
   /** Distance the ball is kept ahead of the feet. */
   distance: number;
   /** Distance while sprinting (easier to steal). */
@@ -146,6 +153,8 @@ export interface ActionParams {
   /** Upward speed of a lob and of a cross. */
   lobLift: number;
   crossLift: number;
+  /** A cross to a teammate comes down this far beyond them, so it reaches them at volley height. */
+  crossBeyond: number;
   /** Lofted balls are hit a bit harder to make up for air drag. */
   loftDragComp: number;
   /** Shoot button: ticks to reach full power. */
@@ -157,6 +166,8 @@ export interface ActionParams {
   /** Above this power the shot rises extra (risk of going over the bar). */
   overpowerAt: number;
   overpowerLift: number;
+  /** Full-power shots are harder to place: a random miss of up to this many metres at the goal line, from 60% up. */
+  powerShotSpread: number;
   /** Spin from steering sideways at the moment of the shot. */
   curlSpin: number;
   /** A curled shot is aimed outside its target by this many times the curl it will pick up, so it bends back in. */
@@ -229,6 +240,11 @@ export interface AiParams {
   reactionTicks: number;
   /** How long after a shot is struck the keeper reacts to it. */
   keeperReactionTicks: number;
+  /**
+   * How much a keeper varies from shot to shot, like a human (0 = a robot): the reaction time changes by up to
+   * this share, and the read of where the shot is going is off by up to 1.5 m times this.
+   */
+  keeperVariation: number;
   /** Random error in CPU passes and shots (0 = perfect). */
   aimError: number;
   /** Chance per decision that a CPU defender in range goes for a standing tackle. */
@@ -352,6 +368,10 @@ export const DEFAULT_PARAMS: SimParams = {
     controlRadius: 0.7,
     controlMaxHeight: 0.6,
     controlMaxRelSpeed: 9,
+    interceptFactor: 1.6,
+    clearReach: 1.4,
+    clearSpeed: 16,
+    clearLift: 6,
     distance: 0.55,
     sprintDistance: 1.1,
     stiffness: 12,
@@ -362,8 +382,8 @@ export const DEFAULT_PARAMS: SimParams = {
     touchDelayTicks: 8,
   },
   action: {
-    // 8 m/s meets the feel target in docs/specs/10 §8: 10 m in ≤ 1 s, 20 m in ≤ 2 s.
-    passArrivalSpeed: 8,
+    // 9 m/s keeps 9 in 10 short passes in CPU matches under 1 s (docs/specs/10 §8: 10 m in ≤ 1 s, 20 m in ≤ 2 s).
+    passArrivalSpeed: 9,
     passMinSpeed: 7,
     passMaxSpeed: 24,
     passConeCos: 0.45,
@@ -371,6 +391,7 @@ export const DEFAULT_PARAMS: SimParams = {
     throughLead: 1.4,
     lobLift: 8,
     crossLift: 6.5,
+    crossBeyond: 3,
     loftDragComp: 1.12,
     shotChargeTicks: 45,
     shotMinSpeed: 17,
@@ -380,6 +401,7 @@ export const DEFAULT_PARAMS: SimParams = {
     overpowerAt: 0.92,
     // With the 2 m small-sided goals, an overpowered shot from 8 m or further clears the bar (as drawn).
     overpowerLift: 6.5,
+    powerShotSpread: 1.4,
     curlSpin: 14,
     curlAimOffset: 1,
     contextShotPower: 0.6,
@@ -409,10 +431,10 @@ export const DEFAULT_PARAMS: SimParams = {
     aftertouchLift: 20,
   },
   keeper: {
-    reach: 0.6,
+    reach: 0.66,
     handHeight: 2.5,
     catchSpeed: 18,
-    diveSpeed: 7,
+    diveSpeed: 7.5,
     diveTicks: 24,
     diveLeadTicks: 18,
     recoverTicks: 30,
@@ -422,9 +444,10 @@ export const DEFAULT_PARAMS: SimParams = {
   },
   ai: {
     reactionTicks: 10,
-    keeperReactionTicks: 15,
+    keeperReactionTicks: 12,
+    keeperVariation: 0.2,
     aimError: 0.15,
-    tackleChance: 0.35,
+    tackleChance: 0.25,
     slideChance: 0.05,
     telegraphTicks: 6,
     shootRange: 22,
@@ -436,7 +459,7 @@ export const DEFAULT_PARAMS: SimParams = {
     cpuRestartTicks: 45,
     goalPauseTicks: 180,
     halftimeTicks: 180,
-    foulOnMiss: 0.35,
+    foulOnMiss: 0.3,
     aimSpeed: 2.5,
   },
   juice: {

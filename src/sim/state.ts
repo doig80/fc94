@@ -89,10 +89,21 @@ export interface AiMemory {
   nextThink: number;
   /** A button the CPU will press at `pressAt` and let go at `releaseAt` (a tap, a held shot, a wound-up tackle). */
   plan: AiPlan | null;
+  /** Keepers: how they read the current shot (`kickedAt` identifies it); it varies from shot to shot. */
+  read: ShotRead | null;
+}
+
+export interface ShotRead {
+  kickedAt: number;
+  /** Ticks after the kick before the keeper reacts. */
+  delay: number;
+  /** How far off (m, across the goal) the keeper's guess of where the shot is going is. */
+  error: number;
 }
 
 export interface AiPlan {
-  kind: "pass" | "shot" | "lob" | "tackle" | "slide" | "dive";
+  /** `volley`: shoot at a ball in the air as it arrives (a volley or header). */
+  kind: "pass" | "shot" | "lob" | "volley" | "tackle" | "slide" | "dive";
   pressAt: number;
   releaseAt: number;
 }
@@ -306,6 +317,7 @@ export function createMatch(config: MatchConfig, params: SimParams = DEFAULT_PAR
       // one side always decides a tick after its opponents and wins more often (found by the balance runs).
       nextThink: i % formation.length,
       plan: null,
+      read: null,
     })),
     rules: config.rules ?? null,
     phase: { kind: "play" },

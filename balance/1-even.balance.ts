@@ -74,7 +74,23 @@ it("an even match plays like football (docs/specs/10 §8)", () => {
       { label: "Passes per match", value: tried / MATCHES, unit: "", enforced: false },
       {
         label: "Passes that reach a teammate",
+        note: "defenders also win the ball by reading play",
         value: passes.length / Math.max(1, tried),
+        unit: "%",
+        min: 0.75,
+        max: 0.85,
+        enforced: true,
+      },
+      { label: "Crosses per match", value: mean(all.map((m) => m.crosses)), unit: "", enforced: false },
+      {
+        label: "Crosses that reach a teammate",
+        note: "defenders head the rest away",
+        value:
+          all.reduce((n, m) => n + m.crossesReached, 0) /
+          Math.max(
+            1,
+            all.reduce((n, m) => n + m.crosses, 0),
+          ),
         unit: "%",
         enforced: false,
       },
@@ -85,7 +101,14 @@ it("an even match plays like football (docs/specs/10 §8)", () => {
         unit: "%",
         enforced: false,
       },
-      { label: "Fouls per match", value: mean(all.map(fouls)), unit: "", enforced: false },
+      {
+        label: "Fouls per match",
+        value: mean(all.map(fouls)),
+        unit: "",
+        min: 4,
+        max: 8,
+        enforced: true,
+      },
       {
         label: "Penalties per match",
         value: mean(all.map((m) => m.calls.penalty ?? 0)),
