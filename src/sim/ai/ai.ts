@@ -143,7 +143,7 @@ function carry(state: MatchState, i: number, params: SimParams, rng: Rng): void 
   const goal = { x: s * halfL, z: 0 };
   const toGoal = normalize2({ x: goal.x - pl.pos.x, z: goal.z - pl.pos.z });
   const goalDist = dist(pl.pos, goal);
-  const range = ai.shootRange * state.pitch.length;
+  const range = ai.shootRange;
 
   if (goalDist < range && (Math.abs(pl.pos.z) < halfW * 0.6 || goalDist < range * 0.6)) {
     // Shoot across the keeper, curled towards the far post; never hard enough to balloon it.
@@ -204,7 +204,7 @@ function defend(state: MatchState, i: number, params: SimParams, rng: Rng): void
   const carrier = state.players[state.ball.owner];
   const s = attackSign(state, pl.team);
   const ownGoal = { x: (-s * state.pitch.length) / 2, z: 0 };
-  if (closestTo(state, pl.team, carrier.pos) === i) {
+  if (presser(state, pl.team, carrier) === i) {
     const d = dist(pl.pos, carrier.pos);
     const toCarrier = normalize2({ x: carrier.pos.x - pl.pos.x, z: carrier.pos.z - pl.pos.z });
     const facing = toCarrier.x * pl.facing.x + toCarrier.z * pl.facing.z;
@@ -244,6 +244,26 @@ function defend(state: MatchState, i: number, params: SimParams, rng: Rng): void
   } else {
     goTo(state, i, spot, 0.5);
   }
+}
+
+/**
+ * Who closes down the ball carrier: the nearest defender, but one who is goal side counts as much closer than one
+ * chasing from behind (who can't tackle without fouling), so the carrier always meets someone in front.
+ */
+function presser(state: MatchState, team: 0 | 1, carrier: PlayerState): number {
+  const s = attackSign(state, team);
+  let best = -1;
+  let bestScore = Infinity;
+  state.players.forEach((pl, j) => {
+    if (pl.team !== team || pl.role === "gk") return;
+    const behind = (pl.pos.x - carrier.pos.x) * s > 0; // further up the pitch than the carrier
+    const score = dist(pl.pos, carrier.pos) + (behind ? 6 : 0);
+    if (score < bestScore) {
+      best = j;
+      bestScore = score;
+    }
+  });
+  return best;
 }
 
 /** Score the teammates as pass targets: forward progress and space count, a blocked lane rules one out. */
@@ -293,7 +313,7 @@ function takeRestart(state: MatchState, i: number, params: SimParams, rng: Rng):
   const s = attackSign(state, pl.team);
   const halfL = state.pitch.length / 2;
   const goal = { x: s * halfL, z: 0 };
-  const range = params.ai.shootRange * state.pitch.length;
+  const range = params.ai.shootRange;
   if (r.aim && (r.kind === "penalty" || (dist(r.spot, goal) < range && Math.abs(r.spot.z) < 4))) {
     // Pick a corner for the aiming marker, then shoot at it.
     const side = rng.next() < 0.5 ? -1 : 1;
@@ -349,12 +369,13 @@ function thinkKeeper(state: MatchState, i: number, params: SimParams, rng: Rng):
   if (shot) {
     const dz = shot.z - gk.pos.z;
     const reachable = Math.abs(dz) <= k.reach * 0.8;
-    const runTime = Math.abs(dz) / params.player.runSpeed;
-    if (!reachable && runTime > shot.t * 0.8 && ball.owner < 0) {
+    // Shuffle across first; dive only in the last moment, when running won't get there in time.
+    if (!reachable && shot.t * 60 <= k.diveLeadTicks && ball.owner < 0) {
       steer(state, i, { x: 0, z: dz > 0 ? 1 : -1 });
       plan(state, i, "dive", 0, 1);
     } else {
-      goTo(state, i, { x: gk.pos.x, z: shot.z }, 1);
+      goTo(state, i, { x: gk.pos.x, z: shot.z }, 0.3);
+      mem.sprint = !reachable;
     }
     return;
   }
@@ -395,7 +416,9 @@ function incomingShot(
   if (vIn < 4) return null;
   const t = ((ball.pos.x - gk.pos.x) * s) / vIn;
   if (t <= 0 || t > 1.5) return null;
-  const z = ball.pos.z + ball.vel.z * t;
+  // Read the curl, as a keeper watching the ball would: sideways acceleration = magnus × (spin × velocity).
+  const curl = params.ball.magnus * (ball.spin.x * ball.vel.y - ball.spin.y * ball.vel.x);
+  const z = ball.pos.z + ball.vel.z * t + 0.5 * curl * t * t;
   const y = ball.pos.y + ball.vel.y * t - 0.5 * params.ball.gravity * t * t;
   if (Math.abs(z) > state.pitch.goalWidth / 2 + 1.5 || y > params.keeper.handHeight + 0.5) return null;
   return { t, z, y };
@@ -412,11 +435,9 @@ function anchor(state: MatchState, i: number, attacking: boolean): Vec2 {
   const halfL = state.pitch.length / 2;
   const halfW = state.pitch.width / 2;
   const ballX = state.ball.pos.x * s; // in this team's attacking frame
-  const x = clamp(
-    base[0] * halfL + ballX * 0.55 + (attacking ? 0.18 : -0.05) * halfL,
-    -0.92 * halfL,
-    0.85 * halfL,
-  );
+  const shifted = base[0] * halfL + ballX * 0.55 + (attacking ? 0.18 : -0.05) * halfL;
+  // Defenders stay within a few metres goal side of the ball rather than retreating onto their own line.
+  const x = clamp(Math.max(shifted, ballX - 10), -0.92 * halfL, 0.85 * halfL);
   const z = clamp(
     base[1] * halfW * (attacking ? 1.15 : 0.85) + state.ball.pos.z * 0.35,
     -0.9 * halfW,

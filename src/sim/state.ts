@@ -228,6 +228,20 @@ export const FORMATIONS: Record<number, [number, number][]> = {
     [-0.3, 0.5],
     [-0.08, 0],
   ],
+  // 4-4-2 (docs/specs/10 §1): keeper, back four, midfield four, two forwards. The last one kicks off.
+  11: [
+    [-0.95, 0],
+    [-0.62, -0.62],
+    [-0.66, -0.2],
+    [-0.66, 0.2],
+    [-0.62, 0.62],
+    [-0.32, -0.66],
+    [-0.36, -0.2],
+    [-0.36, 0.2],
+    [-0.32, 0.66],
+    [-0.1, -0.22],
+    [-0.08, 0.12],
+  ],
 };
 
 export function createMatch(config: MatchConfig, params: SimParams = DEFAULT_PARAMS): MatchState {

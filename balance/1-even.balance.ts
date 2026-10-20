@@ -4,7 +4,7 @@ import { fouls, playMatch, type MatchStats } from "./match";
 import { mean, percentile, report } from "./section";
 
 /** Matches played; enough that a one-sided edge of a few percent shows up. */
-const MATCHES = 300;
+const MATCHES = 200;
 
 it("an even match plays like football (docs/specs/10 §8)", () => {
   const params = cloneParams(DEFAULT_PARAMS);

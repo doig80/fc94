@@ -26,7 +26,7 @@ export const DIFFICULTY: Record<Difficulty, Preset> = {
       shotCurl: 0,
       passWillingness: 0.2,
     },
-    keeper: { reach: 0.5, diveSpeed: 5, catchSpeed: 15 },
+    keeper: { reach: 0.56, diveSpeed: 6.6, catchSpeed: 15 },
     assists: { autoSwitch: true, aimHelp: true, passLead: true, autoSprint: true },
   },
   normal: {
@@ -45,7 +45,7 @@ export const DIFFICULTY: Record<Difficulty, Preset> = {
       shotCurl: 0.7,
       passWillingness: 0.5,
     },
-    keeper: { reach: 0.65, diveSpeed: 6.5, catchSpeed: 21 },
+    keeper: { reach: 0.62, diveSpeed: 7.3, catchSpeed: 21 },
     assists: { autoSwitch: true, aimHelp: false, passLead: false, autoSprint: false },
   },
 };

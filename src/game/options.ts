@@ -21,6 +21,8 @@ export interface MatchOptions {
   seed: number;
   /** `?difficulty=easy|normal|hard` (docs/specs/11 §2). */
   difficulty: Difficulty;
+  /** `?size=5` plays 5-a-side on the small pitch (quick tests); the default is 11 v 11 (docs/specs/10 §1). */
+  teamSize: 5 | 11;
   /** `?minutes=2|3|5|10`: real minutes per half (docs/specs/10 §1). */
   halfMinutes: number;
   /** `?debug=1`: renderer, quality, fps and draw calls in a corner overlay. */
@@ -53,6 +55,7 @@ export function parseMatchOptions(search: string, isMobile: boolean): MatchOptio
     renderer: pick(RENDERERS, params.get("renderer"), "auto"),
     seed: Number.isFinite(seed) ? seed : 1994,
     difficulty: pick(DIFFICULTIES, params.get("difficulty"), "normal"),
+    teamSize: params.get("size") === "5" ? 5 : 11,
     halfMinutes: Number(pick(["2", "3", "5", "10"] as const, params.get("minutes"), "5")),
     debug: flag(params, "debug"),
     inspector: flag(params, "inspector"),

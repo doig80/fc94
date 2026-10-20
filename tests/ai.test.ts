@@ -10,6 +10,7 @@ import {
   isInGoal,
   kickBall,
   PITCH_5_A_SIDE,
+  PITCH_FULL,
   Rng,
   skill,
   skillFor,
@@ -30,23 +31,29 @@ function paramsFor(d: Difficulty): SimParams {
   return p;
 }
 
-/** A CPU-vs-CPU match; goals restart from the kick-off, balls out of play come back 1 m inside. */
+/**
+ * A CPU-vs-CPU 11 v 11 match on the full pitch (the game's default); goals restart from the kick-off, balls out
+ * of play come back 1 m inside.
+ */
 function cpuMatch(seed: number, ticks: number, p: SimParams): { state: MatchState; goals: number } {
-  let s = createMatch({ seed, pitch: PITCH_5_A_SIDE, teamSize: 5, humans: [] });
+  const fresh = (s: number) => createMatch({ seed: s, pitch: PITCH_FULL, teamSize: 11, humans: [] });
+  const FL = PITCH_FULL.length / 2;
+  const FW = PITCH_FULL.width / 2;
+  let s = fresh(seed);
   let goals = 0;
   for (let t = 0; t < ticks; t++) {
     stepMatch(s, [], p, (m) => aiIntents(m, p));
     const b = s.ball;
     if (isInGoal(b, s.pitch, R) !== 0) {
       goals++;
-      s = createMatch({ seed: s.rng, pitch: PITCH_5_A_SIDE, teamSize: 5, humans: [] });
-    } else if (Math.abs(b.pos.x) > L + 0.2 || Math.abs(b.pos.z) > W + 0.2) {
+      s = fresh(s.rng);
+    } else if (Math.abs(b.pos.x) > FL + 0.2 || Math.abs(b.pos.z) > FW + 0.2) {
       b.owner = -1;
       b.vel = { x: 0, y: 0, z: 0 };
       b.pos = {
-        x: Math.max(-L + 1, Math.min(L - 1, b.pos.x)),
+        x: Math.max(-FL + 1, Math.min(FL - 1, b.pos.x)),
         y: R,
-        z: Math.max(-W + 1, Math.min(W - 1, b.pos.z)),
+        z: Math.max(-FW + 1, Math.min(FW - 1, b.pos.z)),
       };
     }
   }

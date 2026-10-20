@@ -14,6 +14,7 @@ import {
   DIFFICULTY,
   DT,
   PITCH_5_A_SIDE,
+  PITCH_FULL,
   stepMatch,
   TICK_RATE,
   type MatchState,
@@ -56,7 +57,7 @@ const REPLAY_SECONDS = 5;
 /** The last part of a replay runs in slow motion. */
 const SLOW_FROM = 0.75;
 
-/** The vertical-slice match: 5-a-side on a small pitch, 1 player vs CPU on the keyboard (docs/specs/30 §1). */
+/** The match: 11 v 11 on a full pitch (`?size=5`: 5-a-side), 1 player vs CPU on the keyboard (docs/specs/30). */
 export async function startMatch(): Promise<void> {
   const options = parseMatchOptions(window.location.search, window.matchMedia("(pointer: coarse)").matches);
   document.getElementById("panel")?.remove();
@@ -165,7 +166,7 @@ export async function startMatch(): Promise<void> {
     if (replay) {
       const r = replay.player;
       const speed = replay.slow ? 0.4 : r.progress > SLOW_FROM ? 0.5 : 1;
-      const alpha = replayStepper.advance(dt * speed, () => r.step());
+      const alpha = replayStepper.advance(dt * speed * params.juice.gameSpeed, () => r.step());
       const shot = { kind: r.progress < 0.55 ? ("side" as const) : ("goal" as const), goalX: replay.goalX };
       view.render(r.prev, r.state, alpha, dt, [], shot);
       if (r.done && (replay.hold += dt) > 0.8) endReplay();
@@ -174,7 +175,7 @@ export async function startMatch(): Promise<void> {
       if (freeze > 0) {
         freeze -= dt;
       } else if (!paused) {
-        alpha = stepper.advance(dt, () => {
+        alpha = stepper.advance(dt * params.juice.gameSpeed, () => {
           prev = cloneState(state);
           const intents = [keyboard.read(view.rig.yaw)];
           recorder.record(state, intents);
@@ -211,8 +212,8 @@ export async function startMatch(): Promise<void> {
 function newMatch(options: MatchOptions): MatchState {
   const state = createMatch({
     seed: options.seed,
-    pitch: PITCH_5_A_SIDE,
-    teamSize: 5,
+    pitch: options.teamSize === 5 ? PITCH_5_A_SIDE : PITCH_FULL,
+    teamSize: options.teamSize,
     weather: options.weather,
     rules: { halfTicks: options.halfMinutes * 60 * TICK_RATE, fouls: true },
   });

@@ -10,9 +10,9 @@ const SCENES: { name: string; query: string; views: [string, number, number, num
     query: "time=day",
     views: [
       ["centre", 0, 0.11, 0],
-      ["near-corner", -18, 0.11, -11],
-      ["far-goal", 17, 0.11, 2],
-      ["ball-in-air", 10, 2.2, 0],
+      ["near-corner", -48, 0.11, -30],
+      ["far-goal", 45, 0.11, 3],
+      ["ball-in-air", 20, 2.2, 0],
     ],
   },
   { name: "night-rain", query: "time=night&weather=rain", views: [["centre", 0, 0.11, 0]] },
@@ -56,7 +56,7 @@ function placeBall(page: Page, x: number, y: number, z: number): Promise<void> {
       s.ball.vel = { x: 0, y: by > 0.2 ? 0.1 : 0, z: 0 };
       s.ball.spin = { x: 0, y: 0, z: 0 };
       // Move players out of the way so nobody picks the ball up.
-      s.players.forEach((p, i) => (p.pos = { x: -16 + i * 3.4, z: 11 }));
+      s.players.forEach((p, i) => (p.pos = { x: -21 + i * 2, z: 12 }));
     },
     [x, y, z],
   );

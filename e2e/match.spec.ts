@@ -16,7 +16,7 @@ test("match boots, the keyboard moves the player, and a shot leaves the foot", a
   await page.goto(`./?renderer=webgl&quality=${process.env.SHOT_QUALITY ?? "low"}&cpu=0`);
   await page.waitForFunction(() => window.__match?.ready === true, null, { timeout: 60_000 });
   const start = await page.evaluate(() => window.__match!.state());
-  expect(start.players).toHaveLength(10);
+  expect(start.players).toHaveLength(22); // 11 v 11 (docs/specs/10 §1)
 
   // Wait for simulation ticks rather than wall time: software rendering in CI can be very slow.
   const ticks = (n: number) =>

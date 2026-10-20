@@ -34,11 +34,13 @@ test("pause stops the match; a goal is replayed and the replay can be skipped", 
   await page.waitForFunction(() => window.__match!.state().phase.kind === "play");
   await page.evaluate(() => {
     const s = window.__match!.state();
+    const goalX = s.pitch.length / 2;
+    const keeper = s.players.length / 2; // team 1's keeper
     s.ball.owner = -1;
-    s.ball.pos = { x: 16, y: 0.5, z: 0 };
+    s.ball.pos = { x: goalX - 4, y: 0.5, z: 0 };
     s.ball.vel = { x: 15, y: 0, z: 0 };
-    s.ball.lastTouch = 4;
-    s.players[5].pos = { x: 19, z: 6 }; // keeper out of the way
+    s.ball.lastTouch = keeper - 1;
+    s.players[keeper].pos = { x: goalX - 1, z: 6 }; // keeper out of the way
   });
   await page.waitForFunction(() => window.__match!.state().score[0] === 1, null, { timeout: 60_000 });
   await page.waitForFunction(() => window.__match!.mode() === "replay", null, { timeout: 60_000 });
