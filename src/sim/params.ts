@@ -265,6 +265,13 @@ export interface AiParams {
   shotCurl: number;
   /** How willing the CPU is to pass to a better-placed teammate rather than keep dribbling (chance per second). */
   passWillingness: number;
+  /**
+   * How far (m) a CPU player can misjudge the offside line, running and passing (0 = always reads it right). Each
+   * player's read of the line is off by up to this much either way, and changes every
+   * `lineReadTicks`: a forward who reads it too far forward runs offside, a passer who does plays him in.
+   */
+  lineMisread: number;
+  lineReadTicks: number;
 }
 
 /** The referee's timings (docs/specs/10 §1, §6). */
@@ -476,6 +483,8 @@ export const DEFAULT_PARAMS: SimParams = {
     shootRange: 22,
     shotCurl: 0.4,
     passWillingness: 0.35,
+    lineMisread: 2.5,
+    lineReadTicks: 120,
   },
   referee: {
     autoRestartTicks: 180,

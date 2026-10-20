@@ -4,7 +4,7 @@ import { inOwnBox } from "../physics/keeper";
 import { Rng } from "../rng";
 import { attackSign, type AiPlan, type MatchState, type PlayerState, type ShotRead } from "../state";
 import { clamp, normalize2, type Vec2 } from "../vec";
-import { inOffsidePosition, offsideOn } from "../offside";
+import { offsideLine, offsideOn } from "../offside";
 import { isWide, keepOnside, lineOf, shapeSpot } from "./shape";
 
 /**
@@ -24,7 +24,14 @@ export function aiIntents(state: MatchState, params: SimParams): Intent[] {
     if (state.tick >= mem.nextThink) {
       const p = teams[pl.team];
       if (pl.role === "gk") thinkKeeper(state, i, p, rng);
-      else thinkOutfield(state, i, p, rng);
+      else {
+        if (state.tick >= mem.lineReadUntil) {
+          // How this player reads the offside line for a while: mostly about right, now and then off by more.
+          mem.lineRead = p.ai.lineMisread * (rng.next() + rng.next() - 1);
+          mem.lineReadUntil = state.tick + p.ai.lineReadTicks;
+        }
+        thinkOutfield(state, i, p, rng);
+      }
       // Keepers watch all the time; their reaction time applies to shots (see incomingShot).
       mem.nextThink = state.tick + (pl.role === "gk" ? 2 : p.ai.reactionTicks);
     }
@@ -148,7 +155,7 @@ function thinkOutfield(state: MatchState, i: number, params: SimParams, rng: Rng
     return;
   }
   // Get into shape: in possession, offer the carrier an option or attack the box; out of it, hold the line.
-  const spot = ours ? keepOnside(state, pl.team, supportSpot(state, i)) : shapeSpot(state, i, false);
+  const spot = ours ? runSpot(state, i) : shapeSpot(state, i, false);
   goTo(state, i, spot, 0.5);
   mem.sprint = dist(pl.pos, spot) > 8 && pl.stamina > 0.6;
 }
@@ -222,6 +229,20 @@ function supportSpot(state: MatchState, i: number): Vec2 {
   return best;
 }
 
+/**
+ * Where a teammate of the carrier runs: its support spot, with the forwards on the shoulder of the offside line as
+ * they read it, and nobody beyond that line. A forward who reads it too far forward drifts offside.
+ */
+function runSpot(state: MatchState, i: number): Vec2 {
+  const spot = supportSpot(state, i);
+  if (!offsideOn(state)) return spot;
+  const pl = state.players[i];
+  const read = state.ai[i].lineRead;
+  const shifted =
+    lineOf(state, i) === "attack" ? { x: spot.x + read * attackSign(state, pl.team), z: spot.z } : spot;
+  return keepOnside(state, pl.team, shifted, read);
+}
+
 /** Meeting a cross in the opponents' box: press shoot just before the ball arrives, for a header or volley. */
 function attackCross(state: MatchState, i: number, params: SimParams): void {
   const pl = state.players[i];
@@ -268,14 +289,13 @@ function carry(state: MatchState, i: number, params: SimParams, rng: Rng): void 
   // Wide in the final third with a teammate in the box: cross (the lob button crosses from out wide).
   if (goalDist < 30 && Math.abs(pl.pos.z) > halfW * 0.5) {
     const other = pl.team === 0 ? 1 : 0;
-    const offside = offsideOn(state);
     const waiting = state.players.some(
       (t, j) =>
         t.team === pl.team &&
         t !== pl &&
         !t.sentOff &&
         inOwnBox(state, other, t.pos.x, t.pos.z) &&
-        !(offside && inOffsidePosition(state, j, params)),
+        !looksOffside(state, i, j, params),
     );
     if (waiting && rng.next() < 0.6) {
       steer(state, i, toGoal);
@@ -415,12 +435,11 @@ function bestPassTarget(
   const pl = state.players[i];
   const s = attackSign(state, pl.team);
   let best: { index: number; score: number } | null = null;
-  const offside = offsideOn(state);
   state.players.forEach((t, j) => {
     if (j === i || t.team !== pl.team || t.sentOff) return;
     if (t.role === "gk" && !(pressure && (pl.pos.x - t.pos.x) * s > 0)) return;
-    // Never to a teammate standing offside.
-    if (offside && inOffsidePosition(state, j, params)) return;
+    // Never to a teammate who looks offside.
+    if (looksOffside(state, i, j, params)) return;
     const d = dist(pl.pos, t.pos);
     if (d < 4 || d > 25) return;
     let space = 6;
@@ -435,6 +454,17 @@ function bestPassTarget(
     if (!best || score > best.score) best = { index: j, score };
   });
   return best;
+}
+
+/**
+ * Does teammate `j` look offside to `i`? Only as well as `i` reads the line (docs/specs/10 §6): a passer who
+ * reads it too far forward plays in a teammate who is offside, one who reads it too deep holds back an onside one.
+ */
+function looksOffside(state: MatchState, i: number, j: number, params: SimParams): boolean {
+  if (!offsideOn(state)) return false;
+  const t = state.players[j];
+  const line = offsideLine(state, t.team) + params.referee.offsideMargin + state.ai[i].lineRead;
+  return t.pos.x * attackSign(state, t.team) > line;
 }
 
 // --- Restarts -------------------------------------------------------------------------------------

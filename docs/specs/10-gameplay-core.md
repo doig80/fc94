@@ -124,8 +124,11 @@ How each rule is called ([#46](https://github.com/doig80/fc94/issues/46)):
   both the ball and the second-last opponent (the keeper counts) is offside if they're the next to touch it.
   Level is onside, with a 0.2 m margin _(tune)_ in the attacker's favour. Never from a kick-in, corner or goal
   kick. The defending team gets a free kick where the offside player was, and a yellow line on the grass shows
-  for 3 seconds where the line was. The computer players don't pass to a teammate standing offside, and their
-  runs stop at the line.
+  for 3 seconds where the line was. The computer players read the line as a player would: about right most of
+  the time, now and then wrong by a metre or two (up to 2.5 m on Normal, 4 m on Easy and 1 m on Hard _(tune)_).
+  A forward who reads it too far forward runs offside, and a passer who does plays him in, so the computer is
+  caught offside now and then: about once every two or three matches, because it seldom plays the ball behind
+  the defence.
 - **Cards** follow fixed rules, the same every time: a foul that stops a player who is through on goal (on the
   ball, within 30 m _(tune)_, no defender but the keeper goal side) is a **red**, or a yellow if it gives away a
   penalty; a **slide from behind** is a yellow; other fouls get no card. Two yellows make a red. A sent-off

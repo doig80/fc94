@@ -95,6 +95,9 @@ export interface AiMemory {
   plan: AiPlan | null;
   /** Keepers: how they read the current shot (`kickedAt` identifies it); it varies from shot to shot. */
   read: ShotRead | null;
+  /** Outfield players: how far forward (m) they think the offside line is, until tick `lineReadUntil`. */
+  lineRead: number;
+  lineReadUntil: number;
 }
 
 export interface ShotRead {
@@ -392,6 +395,8 @@ export function createMatch(config: MatchConfig, params: SimParams = DEFAULT_PAR
       nextThink: i % formation.length,
       plan: null,
       read: null,
+      lineRead: 0,
+      lineReadUntil: 0,
     })),
     rules: config.rules ?? null,
     phase: { kind: "play" },

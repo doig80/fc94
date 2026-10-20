@@ -14,18 +14,26 @@ function versus(level: Difficulty) {
   let wins = 0;
   let scored = 0;
   let conceded = 0;
+  let offsides = 0;
   for (let seed = 1; seed <= MATCHES; seed++) {
     const cpu = (seed % 2) as 0 | 1;
     const params = cloneParams(DEFAULT_PARAMS);
     applyDifficulty(params, level, cpu);
-    const { score } = playMatch(seed, params);
+    const stats = playMatch(seed, params);
+    const score = stats.score;
     const us = score[cpu === 1 ? 0 : 1];
     const them = score[cpu];
     if (us > them) wins++;
     scored += us;
     conceded += them;
+    offsides += stats.offsides[cpu];
   }
-  return { wins: wins / MATCHES, scored: scored / MATCHES, conceded: conceded / MATCHES };
+  return {
+    wins: wins / MATCHES,
+    scored: scored / MATCHES,
+    conceded: conceded / MATCHES,
+    offsides: offsides / MATCHES,
+  };
 }
 
 it("Easy is beatable and Hard is hard (docs/specs/11 §2)", () => {
@@ -38,6 +46,13 @@ it("Easy is beatable and Hard is hard (docs/specs/11 §2)", () => {
       { label: "Wins against Easy", value: easy.wins, unit: "%", min: 0.7, enforced: true },
       { label: "Goals per match against Easy", value: easy.scored, unit: "", enforced: false },
       { label: "Goals conceded per match against Easy", value: easy.conceded, unit: "", enforced: false },
+      {
+        label: "Times Easy is caught offside per match",
+        note: "offside is off on Easy unless switched on",
+        value: easy.offsides,
+        unit: "",
+        enforced: false,
+      },
       { label: "Wins against Hard", value: hard.wins, unit: "%", max: 0.35, enforced: true },
       {
         label: "Goals per match against Hard",
@@ -48,6 +63,7 @@ it("Easy is beatable and Hard is hard (docs/specs/11 §2)", () => {
         enforced: true,
       },
       { label: "Goals conceded per match against Hard", value: hard.conceded, unit: "", enforced: false },
+      { label: "Times Hard is caught offside per match", value: hard.offsides, unit: "", enforced: false },
     ],
   });
 });
