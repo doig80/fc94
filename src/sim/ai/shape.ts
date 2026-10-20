@@ -60,10 +60,13 @@ export function shapeSpot(state: MatchState, i: number, attacking: boolean): Vec
   return { x: x * s, z };
 }
 
-/** `spot` for a player of `team`, held back level with the offside line when offside is on, so runs stay onside. */
-export function keepOnside(state: MatchState, team: 0 | 1, spot: Vec2): Vec2 {
+/**
+ * `spot` for a player of `team`, held back level with the offside line when offside is on, so runs stay onside.
+ * `read` is how far forward the player thinks the line is: read too far forward, the run goes offside.
+ */
+export function keepOnside(state: MatchState, team: 0 | 1, spot: Vec2, read = 0): Vec2 {
   if (!offsideOn(state)) return spot;
   const s = attackSign(state, team);
-  const limit = offsideLine(state, team) - 0.5;
+  const limit = offsideLine(state, team) - 0.5 + read;
   return spot.x * s > limit ? { x: limit * s, z: spot.z } : spot;
 }

@@ -5,9 +5,11 @@ import {
   cloneParams,
   createMatch,
   DEFAULT_PARAMS,
+  DIFFICULTIES,
   DIFFICULTY,
   IDLE,
   isInGoal,
+  offsideLine,
   kickBall,
   PITCH_5_A_SIDE,
   PITCH_FULL,
@@ -159,6 +161,57 @@ describe("CPU players (docs/specs/11)", () => {
       expect({ ai: cpu.ai, keeper: cpu.keeper }).toEqual(skillFor(d));
       expect(cpu.keeper).toBe(p.keeper); // the tuning panel tunes the opponent
     }
+  });
+});
+
+describe("reading the offside line (docs/specs/10 §6)", () => {
+  const RULES = { halfTicks: 18000, fouls: true, offside: true, cards: true };
+
+  it("each CPU player reads it its own way, within its level's misjudging, and the read changes", () => {
+    for (const d of DIFFICULTIES) {
+      const p = paramsFor(d);
+      const s = createMatch({ seed: 5, pitch: PITCH_FULL, teamSize: 11, humans: [], rules: RULES });
+      const reads = new Set<number>();
+      const changes = s.ai.map(() => new Set<number>());
+      for (let t = 0; t < 600; t++) {
+        stepMatch(s, [], p, (m) => aiIntents(m, p));
+        s.ai.forEach((mem, i) => {
+          const limit = skill(p, s.players[i].team).ai.lineMisread;
+          expect(Math.abs(mem.lineRead)).toBeLessThanOrEqual(limit);
+          reads.add(mem.lineRead);
+          changes[i].add(mem.lineRead);
+        });
+      }
+      expect(reads.size).toBeGreaterThan(20); // players differ
+      expect(changes[10].size).toBeGreaterThan(2); // and change their minds
+    }
+    const perfect = cloneParams(DEFAULT_PARAMS);
+    perfect.ai.lineMisread = 0;
+    const s = createMatch({ seed: 5, pitch: PITCH_FULL, teamSize: 11, humans: [], rules: RULES });
+    for (let t = 0; t < 300; t++) stepMatch(s, [], perfect, (m) => aiIntents(m, perfect));
+    expect(s.ai.every((mem) => mem.lineRead === 0)).toBe(true);
+  });
+
+  /** Where a CPU forward aims to run, relative to the offside line, when he reads it `read` m too far forward. */
+  function runBeyondLine(read: number): number {
+    const p = paramsFor("normal");
+    const s = createMatch({ seed: 1, pitch: PITCH_FULL, teamSize: 11, humans: [], rules: RULES });
+    s.phase = { kind: "play" };
+    s.players[6].pos = { x: 0, z: 0 };
+    s.ball.pos = { x: 0.5, y: R, z: 0 };
+    s.ball.owner = 6;
+    s.ball.lastTouch = 6;
+    s.players[10].pos = { x: offsideLine(s, 0) - 2, z: 4 };
+    s.ai[10] = { ...s.ai[10], nextThink: 0, lineRead: read, lineReadUntil: Infinity };
+    aiIntents(s, p);
+    return s.ai[10].target!.x - offsideLine(s, 0);
+  }
+
+  it("a forward plays on the shoulder of the line as he reads it: read too far forward, he runs offside", () => {
+    const margin = DEFAULT_PARAMS.referee.offsideMargin;
+    expect(runBeyondLine(0)).toBeLessThan(0);
+    expect(runBeyondLine(-1.5)).toBeLessThan(runBeyondLine(0));
+    expect(runBeyondLine(2)).toBeGreaterThan(margin);
   });
 });
 

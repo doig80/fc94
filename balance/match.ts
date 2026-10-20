@@ -30,6 +30,8 @@ export interface MatchStats {
   crossesReached: number;
   /** Cards shown: yellow (including a second one) and red (straight or second yellow). */
   cards: { yellow: number; red: number };
+  /** Times each team was caught offside. */
+  offsides: [number, number];
 }
 
 /** The game's default match: 11 v 11 on the full pitch, 5 minutes a half (docs/specs/10 §1). */
@@ -77,6 +79,7 @@ export function statsWatcher(): ((s: MatchState) => void) & { stats: MatchStats 
     crosses: 0,
     crossesReached: 0,
     cards: { yellow: 0, red: 0 },
+    offsides: [0, 0],
   };
   let pass: { to: number; tick: number; dist: number; cross: boolean } | null = null;
   const arrived = (s: MatchState, p: NonNullable<typeof pass>) => {
@@ -122,6 +125,8 @@ export function statsWatcher(): ((s: MatchState) => void) & { stats: MatchStats 
       stats.calls[e.kind] = (stats.calls[e.kind] ?? 0) + 1;
       if (e.card?.red) stats.cards.red++;
       else if (e.card) stats.cards.yellow++;
+      // The free kick goes to the team that wasn't offside.
+      if (e.kind === "offside") stats.offsides[e.team === 0 ? 1 : 0]++;
     }
     stats.score = [s.score[0], s.score[1]];
     charging = s.players.map((p) => p.charge >= 0);
