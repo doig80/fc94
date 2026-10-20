@@ -27,13 +27,32 @@ test("the character test's new players load, in their kits, and run", async ({ p
   });
   await page.goto("./?mode=looktest&renderer=webgl&quality=low&players=both");
   await page.waitForFunction(() => window.__looktest?.ready === true, null, { timeout: 150_000 });
-  const players = await page.evaluate(() => {
-    const scene = window.__looktest!.scene!;
-    const bodies = scene.meshes.filter((m) => m.name.endsWith(":SuperHero_Male"));
-    // Running: the striker's animations are blended, at least one of them weighted in.
-    const striker = scene.animationGroups.filter((g) => g.name.startsWith("new-striker:"));
-    return { bodies: bodies.length, gaits: striker.length, moving: striker.some((g) => g.weight > 0) };
-  });
-  expect(players).toEqual({ bodies: 3, gaits: 4, moving: true });
+  const bodies = await page.evaluate(
+    () => window.__looktest!.scene!.meshes.filter((m) => m.name.endsWith(":SuperHero_Male")).length,
+  );
+  expect(bodies).toBe(3);
+  // Running: the striker's legs swing from frame to frame (the animations play, not just switch on). Over a few
+  // frames, as a leg barely moves at the turn of its swing.
+  const thigh = () =>
+    page.evaluate(() => {
+      const scene = window.__looktest!.scene!;
+      return new Promise<number[]>((resolve) => {
+        // After the next drawn frame.
+        scene.onAfterRenderObservable.addOnce(() => {
+          const q = scene.getTransformNodeByName("new-striker:thigh_r")!.rotationQuaternion!;
+          resolve([q.x, q.y, q.z, q.w]);
+        });
+      });
+    });
+  const frames = [await thigh()];
+  for (let k = 0; k < 6; k++) frames.push(await thigh());
+  const swing = Math.max(...frames.slice(1).map((q) => turned(frames[0], q)));
+  expect(swing).toBeGreaterThan(0.2);
   expect(errors).toEqual([]);
 });
+
+/** How far apart two rotations are (radians). */
+function turned(a: number[], b: number[]): number {
+  const dot = Math.abs(a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3]);
+  return 2 * Math.acos(Math.min(1, dot));
+}
