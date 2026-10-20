@@ -73,7 +73,7 @@ export class CharacterRig implements Rig {
     this.meshes = this.character.meshes;
     this.shadowCaster = this.character.shadowCaster;
     this.armature = this.character.bones.get("Armature")!;
-    // The poses go on after the animations have set the bones for this frame.
+    // The poses go on just before drawing, after `pose` and `poseAction` (or `signal`) this frame.
     scene.onAfterAnimationsObservable.add(() => this.applyTurns());
   }
 
@@ -99,29 +99,30 @@ export class CharacterRig implements Rig {
     switch (kind) {
       case "volley":
       case "kick":
-        // Back-swing, strike, follow through; the body leans back a little and the left arm goes out.
-        b.rotation.z = 0.12 * ease;
+        // As the placeholder's: the leg starts drawn back with the knee bent, swings through to strike and holds
+        // the follow-through; the body leans back a little and the left arm goes out.
+        b.rotation.z = 0.15 * ease;
         this.turns = [
           [
             "thigh_r",
             LEFT,
             keys(progress, [
-              [0, 0],
-              [0.25, 0.6],
-              [0.55, -1.3],
-              [1, 0],
+              [0, 0.7],
+              [0.6, -1.4],
+              [0.85, -1.3],
+              [1, -0.7],
             ]),
           ],
           [
             "calf_r",
             LEFT,
             keys(progress, [
-              [0, 0],
-              [0.25, 1.1],
-              [0.55, 0.1],
-              [1, 0],
+              [0, 1.3],
+              [0.5, 0.1],
+              [1, 0.3],
             ]),
           ],
+          ["thigh_l", LEFT, 0.2],
           ["upperarm_l", FORWARD, 0.9 * ease],
         ];
         break;
@@ -229,7 +230,8 @@ export class CharacterRig implements Rig {
   /**
    * Turn each bone about its axis in model space: its new local rotation is G⁻¹ · R · G · L, where G is the model-space
    * rotation of its parent (from the armature down) and L its rotation from the animations. Parents come first in the
-   * lists, so a child's G already includes its parent's turn.
+   * lists, so a child's G already includes its parent's turn. Each pose's turns go on once: a rig that isn't posed
+   * again (an official while there's no referee) keeps its bones as they are.
    */
   private applyTurns(): void {
     for (const [name, axis, angle] of this.turns) {
@@ -241,6 +243,7 @@ export class CharacterRig implements Rig {
       const turn = Quaternion.RotationAxis(axis, angle);
       bone.rotationQuaternion = Quaternion.Inverse(g).multiply(turn).multiply(g).multiply(local);
     }
+    this.turns = [];
   }
 
   /** The rotation from `node`'s space to the model's, multiplying from the armature down. */

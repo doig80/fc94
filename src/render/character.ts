@@ -1,9 +1,10 @@
 import {
-  AnimationGroup,
+  Animation,
   Color3,
   Constants,
   LoadAssetContainerAsync,
   PBRMaterial,
+  Quaternion,
   RawTexture,
   Scene,
   TransformNode,
@@ -39,11 +40,26 @@ export const HAIRSTYLES = ["Hair_SimpleParted", "Hair_Buzzed"] as const;
 /** Region numbers in player-kit.png (grey level ÷ 50). */
 const REGION = { skin: 0, shirt: 1, shorts: 2, socks: 3, boots: 4 } as const;
 
+/**
+ * One gait's motion, sampled when the model loads: for each animated bone property ("thigh_r rotationQuaternion",
+ * "pelvis position"), its value at every frame of the loop, first to last (4 numbers a frame for a rotation, 3 for
+ * a position).
+ */
+export interface GaitClip {
+  name: string;
+  /** The ground speed it was made for (m/s), and one loop's length (s). */
+  speed: number;
+  seconds: number;
+  tracks: Map<string, Float32Array>;
+}
+
 export interface CharacterAssets {
   container: AssetContainer;
   /** The body's colour texture and the kit map, as RGBA pixels. */
   skin: ImageData;
   kit: ImageData;
+  /** `GAITS`, in the same order. */
+  gaits: GaitClip[];
 }
 
 async function pixels(url: string): Promise<ImageData> {
@@ -66,7 +82,42 @@ export async function loadCharacterAssets(scene: Scene): Promise<CharacterAssets
     pixels(`${FOLDER}player-skin.jpg`),
     pixels(`${FOLDER}player-kit.png`),
   ]);
-  return { container, skin, kit };
+  const gaits = sampleGaits(container);
+  // The characters are posed by `Character.run`, not by Babylon's animation player: the copies don't need them.
+  for (const group of [...container.animationGroups]) group.dispose();
+  return { container, skin, kit, gaits };
+}
+
+/** Sample each of `GAITS` from the model's animations, frame by frame (see `GaitClip`). */
+function sampleGaits(container: AssetContainer): GaitClip[] {
+  return GAITS.map((g) => {
+    const group = container.animationGroups.find((a) => a.name.endsWith(g.name));
+    if (!group) throw new Error(`Character animation ${g.name} is missing`);
+    const fps = group.targetedAnimations[0]?.animation.framePerSecond ?? 60;
+    const frames = Math.max(1, Math.round(group.to - group.from));
+    const tracks = new Map<string, Float32Array>();
+    for (const { target, animation } of group.targetedAnimations) {
+      const size = animation.dataType === Animation.ANIMATIONTYPE_QUATERNION ? 4 : 3;
+      const values = new Float32Array((frames + 1) * size);
+      for (let f = 0; f <= frames; f++) {
+        const v = animation.evaluate(group.from + ((group.to - group.from) * f) / frames) as Record<
+          string,
+          number
+        >;
+        const at = f * size;
+        values.set(size === 4 ? [v.x, v.y, v.z, v.w] : [v.x, v.y, v.z], at);
+        // A rotation and its negative are the same turn: keep each frame on the same side as the one before, so
+        // the frames in between blend the short way round.
+        if (size === 4 && f > 0) {
+          let dot = 0;
+          for (let k = 0; k < 4; k++) dot += values[at + k] * values[at - 4 + k];
+          if (dot < 0) for (let k = 0; k < 4; k++) values[at + k] = -values[at + k];
+        }
+      }
+      tracks.set(`${(target as { name: string }).name} ${animation.targetProperty}`, values);
+    }
+    return { name: g.name, speed: g.speed, seconds: frames / fps, tracks };
+  });
 }
 
 /** The body texture with `kit` painted on: flat colours for the kit, the skin as it is everywhere else. */
@@ -131,6 +182,51 @@ export function blendGaits(
   return { weights, perMetre, perSecond };
 }
 
+const sample = [0, 0, 0, 0];
+
+/**
+ * One bone property's value from the gaits: each gait with a weight is read at `phase` (0 → 1 through its loop,
+ * between its sampled frames) and they are mixed by `weights` into `out`, a rotation (4 numbers, kept unit length)
+ * or a position (3). `tracks[i]` is gait i's samples (see `GaitClip`), if it moves this property. Returns false, and
+ * leaves `out` alone, when no gait with a weight moves it.
+ */
+export function blendTrack(
+  tracks: readonly (Float32Array | undefined)[],
+  size: 3 | 4,
+  weights: readonly number[],
+  phase: number,
+  out: number[],
+): boolean {
+  let total = 0;
+  for (let g = 0; g < tracks.length; g++) {
+    const values = tracks[g];
+    const w = weights[g];
+    if (!values || !(w > 0)) continue;
+    const frames = values.length / size - 1;
+    const f = phase * frames;
+    const i = Math.min(Math.floor(f), frames - 1);
+    const t = f - i;
+    let dot = 0;
+    for (let k = 0; k < size; k++) {
+      const a = values[i * size + k];
+      sample[k] = a + (values[(i + 1) * size + k] - a) * t;
+      dot += sample[k] * (total > 0 ? out[k] : 0);
+    }
+    // A rotation and its negative are the same turn: add this one on the same side as the mix so far.
+    const sign = size === 4 && dot < 0 ? -1 : 1;
+    for (let k = 0; k < size; k++) out[k] = (total > 0 ? out[k] : 0) + sign * w * sample[k];
+    total += w;
+  }
+  if (total === 0) return false;
+  if (size === 4) {
+    const len = Math.hypot(out[0], out[1], out[2], out[3]);
+    for (let k = 0; k < 4; k++) out[k] /= len;
+  } else {
+    for (let k = 0; k < 3; k++) out[k] /= total;
+  }
+  return true;
+}
+
 /** One player: a copy of the model in a team's kit, running with the animations blended by speed. */
 export class Character {
   /** Move and turn this; the model sits under it. */
@@ -140,7 +236,15 @@ export class Character {
   readonly shadowCaster: AbstractMesh;
   /** The skeleton's nodes by bone name ("thigh_r"…), and the model's own top node ("Armature"). */
   readonly bones = new Map<string, TransformNode>();
-  private readonly gaits: { group: AnimationGroup; speed: number; frames: number; seconds: number }[];
+  private readonly gaits: GaitClip[];
+  /** Every bone property the gaits move, on this player's own skeleton, with each gait's samples of it. */
+  private readonly channels: {
+    node: TransformNode;
+    property: "rotationQuaternion" | "position" | "scaling";
+    size: 3 | 4;
+    tracks: (Float32Array | undefined)[];
+  }[] = [];
+  private readonly value = [0, 0, 0, 0];
   private phase = 0;
 
   constructor(
@@ -185,14 +289,22 @@ export class Character {
         }
       }
     }
-    this.gaits = GAITS.map((g) => {
-      const group = copy.animationGroups.find((a) => a.name.endsWith(g.name));
-      if (!group) throw new Error(`Character animation ${g.name} is missing`);
-      // Every gait plays at once, frozen in place: `place` picks the frame and the weights each tick.
-      group.start(true, 0, group.from, group.to);
-      const fps = group.targetedAnimations[0]?.animation.framePerSecond ?? 60;
-      return { group, speed: g.speed, frames: group.to - group.from, seconds: (group.to - group.from) / fps };
-    });
+    this.gaits = assets.gaits;
+    const keys = new Set(this.gaits.flatMap((g) => [...g.tracks.keys()]));
+    for (const key of keys) {
+      const [bone, property] = key.split(" ");
+      const node = this.bones.get(bone);
+      if (!node || (property !== "rotationQuaternion" && property !== "position" && property !== "scaling"))
+        continue;
+      node.rotationQuaternion ??= Quaternion.FromEulerVector(node.rotation);
+      this.channels.push({
+        node,
+        property,
+        size: property === "rotationQuaternion" ? 4 : 3,
+        tracks: this.gaits.map((g) => g.tracks.get(key)),
+      });
+    }
+    this.run(0, 0);
   }
 
   /**
@@ -212,15 +324,15 @@ export class Character {
   run(speed: number, dt: number, distance = speed * dt): void {
     const { weights, perMetre, perSecond } = blendGaits(this.gaits, speed);
     this.phase = (this.phase + perMetre * distance + perSecond * dt) % 1;
-    this.gaits.forEach((gait, i) => {
-      gait.group.weight = weights[i];
-      // Only the (at most two) gaits shown are worked out: Babylon skips the rest, so moving them is wasted.
-      if (weights[i] > 0) gait.group.goToFrame(gait.group.from + this.phase * gait.frames);
-    });
+    const v = this.value;
+    for (const c of this.channels) {
+      if (!blendTrack(c.tracks, c.size, weights, this.phase, v)) continue;
+      if (c.size === 4) c.node.rotationQuaternion!.set(v[0], v[1], v[2], v[3]);
+      else c.node[c.property as "position" | "scaling"].set(v[0], v[1], v[2]);
+    }
   }
 
   dispose(): void {
-    for (const gait of this.gaits) gait.group.dispose();
     this.root.dispose(false, true);
   }
 }
