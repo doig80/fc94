@@ -99,6 +99,17 @@ All rules default **on** at Normal/Hard and can be toggled in match settings.
 **Referee:** a visible ref character on the pitch, **fair and consistent** (no random cards).
 Can be switched to "no ref" for arcade chaos (no fouls, offside or cards at all).
 
+**The officials on the pitch** ([#47](https://github.com/doig80/fc94/issues/47)), so you can tell what was
+decided without reading the banner. They're presentation only: the ball and the players pass straight by.
+
+- The **referee**, in black, follows play on a diagonal about 11 m from the ball, towards the middle, facing it.
+- He **signals** each call: the whistle to his mouth first, then pointing the way of a free kick or kick-in, to
+  the spot for a penalty, corner or goal kick, to the centre after a goal; both arms forward for **advantage**;
+  the **card** held up towards the player.
+- Two **assistants** run opposite touchlines, one per half, level with the offside line, and raise the **flag**
+  for offside.
+- With no referee, none of them are there.
+
 How each rule is called ([#46](https://github.com/doig80/fc94/issues/46)):
 
 - **Offside** is judged the moment a teammate plays the ball: a player in the opponents' half who is beyond
