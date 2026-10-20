@@ -1,1 +1,0 @@
-export{PBRMaterialLoadingAdapter}from"./2.0-DG1xzZEy.js";
