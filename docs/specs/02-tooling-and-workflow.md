@@ -20,7 +20,7 @@ src/
   audio/  ui/        sound, menus, HUD, tuning panel
   looktest/          art-direction look-test (temporary)
   sandbox/           top-down physics debug view (?mode=physics)
-public/assets/       runtime assets (GLB, KTX2, audio)
+public/assets/       runtime assets (GLB, KTX2, audio), made from the sources by scripts/assets/
 assets/LICENSES.md   licence register for every third-party asset
 tests/               Vitest unit tests
 e2e/                 Playwright smoke tests + screenshot scripts

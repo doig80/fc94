@@ -1,5 +1,6 @@
 import { AbstractEngine, ArcRotateCamera, Color3, Mesh, Scene, Vector3 } from "@babylonjs/core";
 import { Atmosphere } from "../render/atmosphere";
+import { Character, HAIRSTYLES, loadCharacterAssets } from "../render/character";
 import { SurfaceLibrary } from "../render/materials";
 import { buildPitch } from "../render/pitch";
 import { buildBall, KITS, Player } from "../render/players";
@@ -23,8 +24,17 @@ export class LookTest {
   private readonly defender: Player;
   private readonly keeper: Player;
   private readonly ball: Mesh;
+  /** The character test's new players (issue #27), once loaded: in the placeholders' places, or beside them. */
+  private characters: { striker: Character; defender: Character; keeper: Character } | null = null;
+  /** Resolves when the scene has everything it was asked for (the new players load separately). */
+  readonly loaded: Promise<void>;
   private time = 0;
   private ballSpin = 0;
+  private readonly hair = [
+    Color3.FromHexString("#2b1d14"),
+    Color3.FromHexString("#e8c872"),
+    Color3.FromHexString("#120c08"),
+  ];
 
   constructor(
     engine: AbstractEngine,
@@ -53,11 +63,7 @@ export class LookTest {
       Color3.FromHexString("#8d5524"),
       Color3.FromHexString("#c68642"),
     ];
-    const hair = [
-      Color3.FromHexString("#2b1d14"),
-      Color3.FromHexString("#e8c872"),
-      Color3.FromHexString("#120c08"),
-    ];
+    const hair = this.hair;
     this.striker = new Player(scene, this.lib, "striker", KITS.home, skin[0], hair[0]);
     this.defender = new Player(scene, this.lib, "defender", KITS.away, skin[1], hair[2]);
     this.keeper = new Player(scene, this.lib, "keeper", KITS.keeper, skin[2], hair[1]);
@@ -79,6 +85,8 @@ export class LookTest {
 
     this.weather = new WeatherFx(scene, options.quality);
 
+    this.loaded = options.players === "old" ? Promise.resolve() : this.loadCharacters();
+
     this.setCamera(options.camera);
     this.refresh();
     this.animate(options.freeze ? FROZEN_TIME : 0, 0);
@@ -88,6 +96,30 @@ export class LookTest {
       if (!this.options.freeze) this.time += dt;
       this.animate(this.options.freeze ? FROZEN_TIME : this.time, this.options.freeze ? 0 : dt);
     });
+  }
+
+  /** The character test: the new model in each kit, in the placeholders' places ("new") or beside them ("both"). */
+  private async loadCharacters(): Promise<void> {
+    const assets = await loadCharacterAssets(this.scene);
+    const make = (
+      name: string,
+      kit: (typeof KITS)[string],
+      hair: Color3,
+      hairstyle: (typeof HAIRSTYLES)[number],
+    ) => {
+      const c = new Character(this.scene, assets, name, kit, { hair, hairstyle });
+      this.atmosphere.addShadowCasters(c.meshes);
+      for (const m of c.meshes) m.receiveShadows = true;
+      return c;
+    };
+    this.characters = {
+      striker: make("new-striker", KITS.home, this.hair[0], "Hair_SimpleParted"),
+      defender: make("new-defender", KITS.away, this.hair[2], "Hair_Buzzed"),
+      keeper: make("new-keeper", KITS.keeper, this.hair[1], "Hair_SimpleParted"),
+    };
+    if (this.options.players === "new")
+      for (const p of [this.striker, this.defender, this.keeper]) p.root.setEnabled(false);
+    this.animate(this.options.freeze ? FROZEN_TIME : this.time, 0);
   }
 
   update(patch: Partial<LookTestOptions>): void {
@@ -167,6 +199,17 @@ export class LookTest {
 
     const keeperPos = new Vector3(51.3, 0, Math.max(-2.5, Math.min(2.5, ballPos.z * 0.25)));
     place(this.keeper, keeperPos, new Vector3(-1, 0, 0), t * 3, 0.12);
+
+    const c = this.characters;
+    if (c) {
+      // Side by side, the new players run 2.5 m to the placeholders' left; otherwise in their places.
+      const beside = this.options.players === "both" ? 2.5 : 0;
+      const left = (h: Vector3) => new Vector3(-h.z, 0, h.x).scale(beside);
+      c.striker.place(s.pos.add(left(dir)), dir, speed, dt);
+      const dHeading = Vector3.Lerp(dDir, toBall, 0.5).normalize();
+      c.defender.place(defPos.add(left(dHeading)), dHeading, d.vel.length(), dt);
+      c.keeper.place(keeperPos.add(new Vector3(0, 0, beside)), new Vector3(-1, 0, 0), 0, dt);
+    }
 
     this.weather.follow(ballPos);
     if (this.options.view) {

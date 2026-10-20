@@ -1,6 +1,6 @@
-import { CAMERAS, LOOKS, QUALITIES, TIMES, WEATHERS, type LookTestOptions } from "./options";
+import { CAMERAS, LOOKS, PLAYER_SETS, QUALITIES, TIMES, WEATHERS, type LookTestOptions } from "./options";
 
-type Key = "look" | "time" | "weather" | "quality" | "camera";
+type Key = "look" | "time" | "weather" | "quality" | "camera" | "players";
 
 const GROUPS: { key: Key; label: string; values: readonly string[]; names: Record<string, string> }[] = [
   { key: "look", label: "Look", values: LOOKS, names: { stylised: "Stylised", toon: "Toon" } },
@@ -18,6 +18,12 @@ const GROUPS: { key: Key; label: string; values: readonly string[]; names: Recor
     names: { classic: "Classic '94", broadcast: "Broadcast", orbit: "Orbit" },
   },
   { key: "quality", label: "Quality", values: QUALITIES, names: { low: "Low", high: "High" } },
+  {
+    key: "players",
+    label: "Players",
+    values: PLAYER_SETS,
+    names: { old: "Today's", new: "New", both: "Both" },
+  },
 ];
 
 /** The settings panel: segmented buttons for every look-test option. */

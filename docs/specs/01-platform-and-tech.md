@@ -124,9 +124,30 @@ later for purely cosmetic effects (net cloth, debris) that never feed back into 
 
 ## 8. Risks
 
-| Risk                                             | Mitigation                                                                                                                                                                                     |
-| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Mobile GPUs struggle with lighting/weather       | Quality presets, auto-detect, Low preset tested on real phones                                                                                                                                 |
-| iOS Safari quirks (audio unlock, memory limits)  | Tap-to-start screen, memory budget, regular iPhone playtests                                                                                                                                   |
-| Animation quality (few football moves in Mixamo) | Early character test in Full match ([#27](https://github.com/doig80/fc94/issues/27)); stylised characters hide imperfections; procedural blending (aimed kicks, leaning); animation spec in 20 |
-| WebGPU/WebGL2 visual differences                 | CI screenshot tests run on WebGL2 (CI has no GPU); WebGPU is checked by the product owner on real devices from the checklist in [02](02-tooling-and-workflow.md#playtesting)                   |
+| Risk                                             | Mitigation                                                                                                                                                                                                        |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mobile GPUs struggle with lighting/weather       | Quality presets, auto-detect, Low preset tested on real phones                                                                                                                                                    |
+| iOS Safari quirks (audio unlock, memory limits)  | Tap-to-start screen, memory budget, regular iPhone playtests                                                                                                                                                      |
+| Animation quality (few football moves in Mixamo) | Early character test in Full match ([#27](https://github.com/doig80/fc94/issues/27)); stylised characters hide imperfections; procedural blending (aimed kicks, leaning); animation spec in 20. Test status below |
+| WebGPU/WebGL2 visual differences                 | CI screenshot tests run on WebGL2 (CI has no GPU); WebGPU is checked by the product owner on real devices from the checklist in [02](02-tooling-and-workflow.md#playtesting)                                      |
+
+### Character test ([#27](https://github.com/doig80/fc94/issues/27))
+
+A real player model next to today's placeholders, in the look-test: `?mode=looktest&players=both` (or `new` for the
+new model only; the panel has a **Players** switch).
+
+- **Model:** Quaternius's _Universal Base Characters_ man (CC0), about 14,000 triangles and a 65-bone skeleton, with
+  two short hairstyles from the same pack. The kit is painted onto his body texture when he loads: a map made from
+  which bone moves each part of the body says where the shirt (short sleeves), shorts, socks and boots go, so any
+  team's colours work.
+- **Animation:** idle, walk, jog and sprint from Quaternius's _Universal Animation Library_ (CC0), made for the same
+  skeleton, so no retargeting. The two gaits around the player's speed are blended, and the stride cycles as fast as
+  it covers the ground, so the feet don't slide.
+- **Still to come:** the football moves (shot, pass, header, slide tackle, keeper dive) from Mixamo, which the
+  product owner downloads (Mixamo needs their login; the raw files stay in a private repository, see
+  [03](03-legal-and-ip.md)).
+- **Assets:** `scripts/assets/prepare_player.py` builds `public/assets/characters/` (the model and animations,
+  0.96 MB; the body texture and kit map, 75 kB) from the two packs, which are downloaded from quaternius.itch.io and
+  not kept in the repo. They load only when the new players are shown, so the match's download doesn't change.
+- **For a full roll-out** (Beta, if the test is chosen): 25 such players are about 350,000 triangles and 100 draw
+  calls, so they would need a lighter version and fewer pieces per player.

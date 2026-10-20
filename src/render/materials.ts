@@ -26,7 +26,7 @@ interface Built {
   spec: SurfaceSpec;
 }
 
-const MAX_LIGHTS = 8;
+export const MAX_LIGHTS = 8;
 
 export class SurfaceLibrary {
   private readonly specs = new Map<string, SurfaceSpec>();
