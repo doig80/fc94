@@ -125,6 +125,8 @@ export class SurfaceLibrary {
     m.roughness = spec.roughness;
     m.metallic = spec.metallic ?? 0;
     m.maxSimultaneousLights = MAX_LIGHTS;
+    // The floodlights' falloff over their range (the physical one ignores range, which clustered lighting needs).
+    m.usePhysicalLightFalloff = false;
     m.realTimeFiltering = true;
     if (spec.emissive) {
       m.emissiveColor = spec.emissive;
