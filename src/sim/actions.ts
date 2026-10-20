@@ -82,6 +82,19 @@ export function applyActions(
     } else if (!owns) {
       pl.charge = -1;
     }
+    // Lob: on release, a lob after a tap, a long ball as far as the bar shows after holding it.
+    if (owns && pl.lobCharge >= 0) {
+      if (now & Button.lob) pl.lobCharge = Math.min(pl.lobCharge + 1, params.action.longBallChargeTicks);
+      if (released & Button.lob) {
+        const held = pl.lobCharge;
+        pl.lobCharge = -1;
+        if (held < params.action.lobTapTicks) lob(state, i, move, params, assists);
+        else longBall(state, i, move, longBallPower(held, params), params, assists);
+        return;
+      }
+    } else if (!owns) {
+      pl.lobCharge = -1;
+    }
 
     if (pl.role === "gk" && !owns) {
       // Keepers (always AI) dive instead of sliding.
@@ -90,9 +103,11 @@ export function applyActions(
       return;
     }
     if (owns) {
-      if (pressed & Button.pass) pass(state, i, move, params, assists, false);
-      else if (pressed & Button.lob) lob(state, i, move, params, assists);
-      else if (pressed & Button.shoot) pl.charge = 0;
+      if (pressed & Button.pass) {
+        pl.lobCharge = -1;
+        pass(state, i, move, params, assists, false);
+      } else if (pressed & Button.lob && pl.charge < 0) pl.lobCharge = 0;
+      else if (pressed & Button.shoot && pl.lobCharge < 0) pl.charge = 0;
       return;
     }
     if (attacking) {
@@ -352,6 +367,60 @@ export function lob(
   loftedKick(state, i, from, to, a.lobLift, params, target);
 }
 
+/** How full the long-ball bar is (0..1) after Lob has been held `held` ticks; it starts filling after a tap's length. */
+export function longBallPower(held: number, params: SimParams): number {
+  const a = params.action;
+  const p = (held - a.lobTapTicks) / Math.max(1, a.longBallChargeTicks - a.lobTapTicks);
+  return p < 0 ? 0 : p > 1 ? 1 : p;
+}
+
+/**
+ * Lob held, then let go (docs/specs/10 §3): a lofted long ball as far as the bar shows, `longBallMin` to
+ * `longBallMax` metres, to the teammate the way you steer whose distance is nearest it, leading their run; with
+ * nobody that way, into space at that distance. A corner still goes to its aiming marker.
+ */
+export function longBall(
+  state: MatchState,
+  i: number,
+  move: Vec2 | null,
+  power: number,
+  params: SimParams,
+  assists: Assists | null,
+): void {
+  const restart = state.phase.kind === "restart" ? state.phase.restart : null;
+  if (restart?.kind === "corner") return lob(state, i, move, params, assists);
+  const pl = state.players[i];
+  const a = params.action;
+  const dir = move ?? pl.facing;
+  const want = a.longBallMin + power * (a.longBallMax - a.longBallMin);
+  const from = { x: state.ball.pos.x, z: state.ball.pos.z };
+  let target = -1;
+  let bestScore = -Infinity;
+  state.players.forEach((t, j) => {
+    if (j === i || t.team !== pl.team || t.sentOff || t.role === "gk") return;
+    const dx = t.pos.x - from.x;
+    const dz = t.pos.z - from.z;
+    const dist = Math.sqrt(dx * dx + dz * dz);
+    if (dist < 2) return;
+    const cos = (dx * dir.x + dz * dir.z) / dist;
+    if (cos < a.passConeCos) return;
+    const score = cos * 2 - Math.abs(dist - want) / 10;
+    if (score > bestScore) {
+      target = j;
+      bestScore = score;
+    }
+  });
+  const halfL = state.pitch.length / 2;
+  const halfW = state.pitch.width / 2;
+  const to =
+    target >= 0
+      ? leadPoint(state, from, state.players[target], 18, assists?.passLead === false ? 0 : a.passLead)
+      : { x: clampAbs(from.x + dir.x * want, halfL - 0.5), z: clampAbs(from.z + dir.z * want, halfW - 0.5) };
+  const dist = Math.sqrt((to.x - from.x) * (to.x - from.x) + (to.z - from.z) * (to.z - from.z));
+  const lift = Math.max(a.lobLift, dist * a.longBallLift);
+  loftedKick(state, i, from, to, lift, params, target, true);
+}
+
 /**
  * The outfield teammate of player `i` nearest `spot`, if one is within `within` metres (onside, when offside is
  * played); otherwise −1.
@@ -373,7 +442,10 @@ function teammateNear(state: MatchState, i: number, spot: Vec2, within: number, 
   return best;
 }
 
-/** A ball in the air that comes down at `to` (drag is made up for by `loftDragComp`). */
+/**
+ * A ball in the air that comes down at `to` (drag is made up for by `loftDragComp`; `exact` flies it with the real
+ * drag instead, for long balls, which lose too much to it for the simple allowance).
+ */
 function loftedKick(
   state: MatchState,
   i: number,
@@ -382,13 +454,16 @@ function loftedKick(
   lift: number,
   params: SimParams,
   receiver = -1,
+  exact = false,
 ): void {
   const dx = to.x - from.x;
   const dz = to.z - from.z;
   const dist = Math.sqrt(dx * dx + dz * dz);
   const dir = normalize2({ x: dx, z: dz }, state.players[i].facing);
   const flight = (2 * lift) / params.ball.gravity;
-  const speed = Math.min((dist / flight) * params.action.loftDragComp, 28);
+  const speed = exact
+    ? loftSpeed(dist, lift, params)
+    : Math.min((dist / flight) * params.action.loftDragComp, 28);
   face(state.players[i], dir);
   kickBall(state, i, { x: dir.x * speed, y: lift, z: dir.z * speed }, undefined, {
     blockTicks: params.dribble.kickCooldownTicks,
@@ -619,6 +694,38 @@ function moveDir(intent: Intent | undefined): Vec2 | null {
 
 function face(pl: PlayerState, dir: Vec2): void {
   pl.facing = { x: dir.x, z: dir.z };
+}
+
+/**
+ * The forward speed that carries a ball kicked up at `lift` exactly `distance` metres before it comes down: found
+ * by flying it with the ball's own gravity and air drag (no spin), as `groundPassSpeed` does for rolling.
+ */
+function loftSpeed(distance: number, lift: number, params: SimParams): number {
+  const b = params.ball;
+  const dt = 1 / 60;
+  const carry = (forward: number) => {
+    let vx = forward;
+    let vy = lift;
+    let x = 0;
+    let y = b.radius;
+    for (let n = 0; n < 900; n++) {
+      const speed = Math.sqrt(vx * vx + vy * vy);
+      vx -= vx * speed * b.airDrag * dt;
+      vy -= (vy * speed * b.airDrag + b.gravity) * dt;
+      x += vx * dt;
+      y += vy * dt;
+      if (y <= b.radius && vy < 0) break;
+    }
+    return x;
+  };
+  let lo = 0;
+  let hi = 45;
+  for (let n = 0; n < 20; n++) {
+    const mid = (lo + hi) / 2;
+    if (carry(mid) < distance) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
 }
 
 function clampAbs(v: number, max: number): number {

@@ -1,4 +1,4 @@
-import { matchMinute, type MatchEvent, type MatchState, type SimParams } from "../sim";
+import { longBallPower, matchMinute, type MatchEvent, type MatchState, type SimParams } from "../sim";
 
 /** On-screen match information (docs/specs/10 §7): scoreboard, referee calls, meters, pause menu, replay badge. */
 
@@ -139,7 +139,10 @@ export function perfectPop(): { update(s: MatchState): void } {
   };
 }
 
-/** Shot power (fills while shoot is held, docs/specs/10 §3) and sprint stamina of the controlled player. */
+/**
+ * Shot power (fills while shoot is held, docs/specs/10 §3), the long ball's distance (while lob is held) and sprint
+ * stamina of the controlled player.
+ */
 export function hudMeters(params: SimParams): { update(s: MatchState): void } {
   const el = element(
     "hud-meters",
@@ -151,10 +154,14 @@ export function hudMeters(params: SimParams): { update(s: MatchState): void } {
   return {
     update(s) {
       const p = s.players[s.controllers[0].player];
-      power.hidden = p.charge < 0;
-      const level = Math.max(0, p.charge) / params.action.shotChargeTicks;
+      const shooting = p.charge >= 0;
+      // The long-ball bar shows once lob is held longer than a tap.
+      const long = !shooting && p.lobCharge >= params.action.lobTapTicks;
+      power.hidden = !shooting && !long;
+      const level = shooting ? p.charge / params.action.shotChargeTicks : longBallPower(p.lobCharge, params);
       powerFill.style.width = `${level * 100}%`;
-      power.classList.toggle("over", level > params.action.overpowerAt);
+      power.classList.toggle("over", shooting && level > params.action.overpowerAt);
+      power.classList.toggle("long", long);
       staminaFill.style.width = `${p.stamina * 100}%`;
       staminaFill.classList.toggle("low", p.stamina < 0.25);
     },
@@ -164,7 +171,7 @@ export function hudMeters(params: SimParams): { update(s: MatchState): void } {
 const KEYBOARD_HELP = `<strong>Controls</strong> <span class="muted">(H hides)</span><br>
     <kbd>W A S D</kbd> run · <kbd>Space</kbd> sprint<br>
     <b>With the ball:</b> <kbd>J</kbd> pass (tap twice: one-two) · hold <kbd>K</kbd> shoot (steer to curl) ·
-    <kbd>L</kbd> lob / cross / through ball<br>
+    <kbd>L</kbd> lob / cross / through ball (hold: long ball)<br>
     <b>Just after a shot:</b> steer to bend it · pull back to lift · push on to dip<br>
     <b>Free kicks and penalties:</b> steer to move the yellow ring, hold <kbd>K</kbd> to shoot at it ·
     <b>corners:</b> steer the ring, <kbd>L</kbd> to cross to it<br>
@@ -175,7 +182,7 @@ const KEYBOARD_HELP = `<strong>Controls</strong> <span class="muted">(H hides)</
 const PAD_HELP = `<strong>Controls</strong> <span class="muted">(Y hides)</span><br>
     <kbd>Left stick</kbd> run · <kbd>RT</kbd> (R2) sprint<br>
     <b>With the ball:</b> <kbd>A</kbd> (✕) pass (tap twice: one-two) · hold <kbd>B</kbd> (○) shoot (steer to curl) ·
-    <kbd>X</kbd> (□) lob / cross / through ball<br>
+    <kbd>X</kbd> (□) lob / cross / through ball (hold: long ball)<br>
     <b>Just after a shot:</b> steer to bend it · pull back to lift · push on to dip<br>
     <b>Free kicks and penalties:</b> steer to move the yellow ring, hold <kbd>B</kbd> (○) to shoot at it ·
     <b>corners:</b> steer the ring, <kbd>X</kbd> (□) to cross to it<br>

@@ -50,6 +50,7 @@ export function updateControl(state: MatchState, humanIntents: readonly Intent[]
 function switchTo(state: MatchState, c: Controller, next: number, held: number, params: SimParams): void {
   const old = state.players[c.player];
   old.charge = -1;
+  old.lobCharge = -1;
   old.queued = null;
   c.player = next;
   // The button that caused the switch counts as already held, so it doesn't also act for the new player.

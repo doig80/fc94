@@ -17,6 +17,8 @@ export interface PlayerState {
   held: number;
   /** Ticks the shoot button has been held while on the ball, or -1. */
   charge: number;
+  /** Ticks the lob button has been held while on the ball, or -1: a tap lobs, holding it plays a long ball. */
+  lobCharge: number;
   /** What the player is busy with; most actions stop normal running for a moment. */
   action: PlayerAction;
   /** A pass or shot asked for just before the ball arrived: played first time on the next touch. */
@@ -356,6 +358,7 @@ export function createMatch(config: MatchConfig, params: SimParams = DEFAULT_PAR
         stamina: 1,
         held: 0,
         charge: -1,
+        lobCharge: -1,
         action: { kind: "none", ticks: 0, total: 0, dir: { x: dir, z: 0 } },
         queued: null,
         yellows: 0,
@@ -457,6 +460,7 @@ export function placeForKickoff(state: MatchState, team: 0 | 1): void {
     pl.facing = { x: s, z: 0 };
     pl.held = 0;
     pl.charge = -1;
+    pl.lobCharge = -1;
     pl.queued = null;
     pl.action = { kind: "none", ticks: 0, total: 0, dir: { x: s, z: 0 } };
   });
