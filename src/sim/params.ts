@@ -152,6 +152,14 @@ export interface ActionParams {
   throughLead: number;
   /** Upward speed of a lob and of a cross. */
   lobLift: number;
+  /** Lob held for less than this is a tap (a lob, cross or through ball); held longer, it's a long ball. */
+  lobTapTicks: number;
+  /** Lob held this long fills the long-ball bar: from `longBallMin` to `longBallMax` metres. */
+  longBallChargeTicks: number;
+  longBallMin: number;
+  longBallMax: number;
+  /** A long ball's upward speed per metre it travels (never less than `lobLift`): longer balls go higher. */
+  longBallLift: number;
   crossLift: number;
   /** A cross to a teammate comes down this far beyond them, so it reaches them at volley height. */
   crossBeyond: number;
@@ -423,6 +431,11 @@ export const DEFAULT_PARAMS: SimParams = {
     passLead: 0.8,
     throughLead: 1.4,
     lobLift: 8,
+    lobTapTicks: 10,
+    longBallChargeTicks: 45,
+    longBallMin: 20,
+    longBallMax: 50,
+    longBallLift: 0.26,
     crossLift: 6.5,
     crossBeyond: 3,
     loftDragComp: 1.12,

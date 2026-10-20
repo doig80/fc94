@@ -345,6 +345,7 @@ export function sendOff(state: MatchState, i: number): void {
   pl.pos = { x: (pl.team === 0 ? -2 : 2) - off * 0.8, z: state.pitch.width / 2 + 4 };
   pl.vel = { x: 0, z: 0 };
   pl.charge = -1;
+  pl.lobCharge = -1;
   pl.queued = null;
   pl.held = 0;
   pl.action = { kind: "none", ticks: 0, total: 0, dir: pl.facing };
@@ -454,6 +455,7 @@ function nextShootoutKick(state: MatchState): void {
     pl.facing = { x: 1, z: 0 };
     pl.held = 0;
     pl.charge = -1;
+    pl.lobCharge = -1;
     pl.queued = null;
     pl.action = { kind: "none", ticks: 0, total: 0, dir: pl.facing };
   });
@@ -542,6 +544,7 @@ export function startRestart(
   pl.pos = { x: spot.x - pl.facing.x * 0.5, z: spot.z - pl.facing.z * 0.5 };
   pl.vel = { x: 0, z: 0 };
   pl.charge = -1;
+  pl.lobCharge = -1;
   pl.held = 0;
   pl.action = { kind: "none", ticks: 0, total: 0, dir: pl.facing };
   const ball = state.ball;

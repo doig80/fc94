@@ -1,4 +1,4 @@
-export { choosePassTarget, groundPassSpeed } from "./actions";
+export { choosePassTarget, groundPassSpeed, longBallPower } from "./actions";
 export { aiIntents } from "./ai/ai";
 export { applyDifficulty, DIFFICULTIES, DIFFICULTY, skillFor, type Difficulty } from "./ai/difficulty";
 export { controlledPlayers } from "./control";

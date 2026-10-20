@@ -6,7 +6,9 @@ import {
   groundPassSpeed,
   IDLE,
   isInGoal,
+  longBallPower,
   PITCH_5_A_SIDE,
+  PITCH_FULL,
   Rng,
   stepMatch,
   type Intent,
@@ -547,6 +549,83 @@ describe("looser dribbling (docs/specs/10 §5)", () => {
   });
 });
 
+describe("long ball: hold Lob (docs/specs/10 §3)", () => {
+  const FW = PITCH_FULL.width / 2;
+  const START = -30;
+
+  /** 11 v 11 on the full pitch, everyone parked by the touchlines; player 6 on the ball at (−30, 0) facing +x. */
+  function full(teammates: [number, number][]): MatchState {
+    const s = createMatch({ seed: 5, pitch: PITCH_FULL, teamSize: 11 });
+    // Parked behind the passer by the touchlines, out of the way.
+    s.players.forEach((p, i) => (p.pos = { x: -52 + (i % 11), z: p.team === 0 ? FW + 1.5 : -FW - 1.5 }));
+    teammates.forEach(([x, z], k) => (s.players[7 + k].pos = { x, z }));
+    s.players[6].pos = { x: START, z: 0 };
+    s.players[6].facing = { x: 1, z: 0 };
+    s.ball.pos = { x: START + 0.5, y: DEFAULT_PARAMS.ball.radius, z: 0 };
+    s.ball.owner = 6;
+    s.ball.lastTouch = 6;
+    s.controllers[0].player = 6;
+    return s;
+  }
+
+  /** Hold Lob (steering +x) for `ticks`, let go, and follow the ball until it comes down: where, and how high. */
+  function holdLob(
+    s: MatchState,
+    ticks: number,
+  ): { receiver: number; landed: { x: number; z: number }; top: number } {
+    run(s, ticks, intent({ lob: true, moveX: 1 }));
+    run(s, 1, intent({ moveX: 1 }));
+    const receiver = s.ball.intendedReceiver;
+    let top = 0;
+    for (let t = 0; t < 240; t++) {
+      const high = s.ball.pos.y > 0.5;
+      run(s, 1);
+      top = Math.max(top, s.ball.pos.y);
+      if (high && s.ball.pos.y <= 0.5) return { receiver, landed: { x: s.ball.pos.x, z: s.ball.pos.z }, top };
+    }
+    return { receiver, landed: { x: s.ball.pos.x, z: s.ball.pos.z }, top };
+  }
+
+  const TEAMMATES: [number, number][] = [
+    [START + 15, 2], // player 7, 15 m
+    [START + 35, -3], // player 8, 35 m
+    [START + 50, 4], // player 9, 50 m
+  ];
+  const FULL_BAR = DEFAULT_PARAMS.action.longBallChargeTicks + 5;
+
+  it("held to a full bar, it goes long: to the teammate 50 m away, in the air, landing at his feet", () => {
+    const s = full(TEAMMATES);
+    const { receiver, landed, top } = holdLob(s, FULL_BAR);
+    expect(receiver).toBe(9);
+    expect(top).toBeGreaterThan(3); // well over the players' heads
+    expect(Math.hypot(landed.x - (START + 50), landed.z - 4)).toBeLessThan(4);
+  });
+
+  it("half a bar picks the teammate at middle distance", () => {
+    const a = DEFAULT_PARAMS.action;
+    const half = Math.round(a.lobTapTicks + 0.5 * (a.longBallChargeTicks - a.lobTapTicks)) + 1;
+    expect(holdLob(full(TEAMMATES), half).receiver).toBe(8);
+  });
+
+  it("a tap still lobs, to the nearest teammate that way", () => {
+    const { receiver, top } = holdLob(full(TEAMMATES), 1);
+    expect(receiver).toBe(7);
+    expect(top).toBeGreaterThan(2);
+  });
+
+  it("with nobody that way, it lands in space as far as the bar shows", () => {
+    const { receiver, landed } = holdLob(full([]), FULL_BAR);
+    expect(receiver).toBe(-1);
+    expect(Math.abs(landed.x - START - DEFAULT_PARAMS.action.longBallMax)).toBeLessThan(5);
+  });
+
+  it("the bar starts filling after a tap's length and is full at the end", () => {
+    const a = DEFAULT_PARAMS.action;
+    expect(longBallPower(a.lobTapTicks, DEFAULT_PARAMS)).toBe(0);
+    expect(longBallPower(a.longBallChargeTicks, DEFAULT_PARAMS)).toBe(1);
+  });
+});
+
 describe("responsive controls (docs/specs/10 §8: button to kick ≤ 50 ms)", () => {
   // At 60 ticks per second, 50 ms is 3 ticks. Input is read every tick, so a key press waits at most one tick
   // before the simulation sees it; the kick itself must then follow within the remaining budget.
@@ -575,11 +654,12 @@ describe("responsive controls (docs/specs/10 §8: button to kick ≤ 50 ms)", ()
     expect(ticksUntil(s, intent(), kicked)).toBeLessThanOrEqual(BUDGET);
   });
 
-  it("lob", () => {
+  it("lob, from letting go of Lob (a tap lobs, holding it plays a long ball)", () => {
     const s = setup();
     onBall(s, 4, 0, 0);
     s.players[3].pos = { x: 12, z: 0 };
-    expect(ticksUntil(s, intent({ lob: true }), kicked)).toBeLessThanOrEqual(BUDGET);
+    run(s, 1, intent({ lob: true }));
+    expect(ticksUntil(s, intent(), kicked)).toBeLessThanOrEqual(BUDGET);
   });
 
   it("standing and slide tackles", () => {

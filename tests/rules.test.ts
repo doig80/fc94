@@ -591,7 +591,9 @@ describe("corner aiming (M7)", () => {
     const s = corner();
     if (s.phase.kind !== "restart") return;
     s.phase.restart.aim = { x: L - 5, z: -2 };
+    // A tap: the lob leaves when it's let go.
     run(s, 1, intent({ lob: true }));
+    run(s, 1);
     expect(s.ball.intendedReceiver).toBe(3);
     let landed: { x: number; z: number } | null = null;
     for (let t = 0; t < 120 && !landed; t++) {

@@ -224,6 +224,9 @@ body {
 .meter.power.over span {
   background: #ff5a3c;
 }
+.meter.power.long span {
+  background: #4fc3ff;
+}
 .meter span.low {
   background: #ff5a3c;
 }

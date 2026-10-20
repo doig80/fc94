@@ -35,14 +35,14 @@ are starting values in the tuning panel, not final balance.
 
 Three action buttons + sprint, with meanings that depend on whether your team has the ball (like 1994).
 
-| Button     | Gamepad    | Keyboard (P1) | Attacking                            | Defending                             |
-| ---------- | ---------- | ------------- | ------------------------------------ | ------------------------------------- |
-| **A**      | A / ✕      | `J`           | Pass (ground) — aims where you steer | Switch to the player nearest the ball |
-| **B**      | B / ○      | `K`           | Shoot — hold to power up             | Tackle (standing)                     |
-| **C**      | X / □      | `L`           | Lob / cross / through ball           | Slide tackle                          |
-| **Sprint** | RT / R2    | `Space`       | Sprint (limited stamina)             | Sprint                                |
-| Move       | Left stick | `WASD`        | Run / dribble                        | Run / jockey                          |
-| Pause      | Start      | `Esc`         | Pause menu                           | Pause menu                            |
+| Button     | Gamepad    | Keyboard (P1) | Attacking                                   | Defending                             |
+| ---------- | ---------- | ------------- | ------------------------------------------- | ------------------------------------- |
+| **A**      | A / ✕      | `J`           | Pass (ground) — aims where you steer        | Switch to the player nearest the ball |
+| **B**      | B / ○      | `K`           | Shoot — hold to power up                    | Tackle (standing)                     |
+| **C**      | X / □      | `L`           | Lob / cross / through ball; hold: long ball | Slide tackle                          |
+| **Sprint** | RT / R2    | `Space`       | Sprint (limited stamina)                    | Sprint                                |
+| Move       | Left stick | `WASD`        | Run / dribble                               | Run / jockey                          |
+| Pause      | Start      | `Esc`         | Pause menu                                  | Pause menu                            |
 
 - Keyboard player 2 uses the arrow keys + `1` `2` `3` + `0` (numpad), all remappable.
 - **Gamepad** ([#48](https://github.com/doig80/fc94/issues/48)): any standard pad (Xbox, PlayStation and most
@@ -64,6 +64,11 @@ Three action buttons + sprint, with meanings that depend on whether your team ha
     assist, [11 §3](11-ai.md#3-assists-toggle-at-any-level)).
 - **Passing direction:** a pass goes to the teammate in the direction you steer; with no direction held, to
   the teammate you're facing. So you can pass sideways without turning first.
+- **Long ball** ([#62](https://github.com/doig80/fc94/issues/62)): a tap on Lob lobs, crosses or plays a through
+  ball, as above. Hold it and a blue bar fills; let go and a lofted long ball goes to the teammate the way you steer
+  whose distance is nearest what the bar shows, from 20 m (empty) to 50 m (full) _(tune)_, leading his run; with
+  nobody that way, it lands in space at that distance. Longer balls go higher. Like a shot, a lob leaves when you let
+  go of the button.
 - **Curl & power shots:** holding Shoot fills a power bar; the direction you steer at the moment you
   **release** Shoot curls the ball. Overpowering sends it over the bar.
 - **Aftertouch** (on by default, switchable while being tested, [#24](https://github.com/doig80/fc94/issues/24)):
