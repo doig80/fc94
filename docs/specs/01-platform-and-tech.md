@@ -155,14 +155,16 @@ new model only; the panel has a **Players** switch).
   until the Mixamo moves arrive. Only the body casts a shadow. Today's players stay the default.
 - **What it costs** (measured in a live 11 v 11 match, software rendering in CI):
 
-  |                                                              | Today's players | New players              |
-  | ------------------------------------------------------------ | --------------- | ------------------------ |
-  | Draw calls, High (budget 300)                                | 96              | 175–200                  |
-  | Draw calls, Low (budget 120)                                 | 36              | 70–95                    |
-  | Triangles, High (the shadow cascades draw each player again) | 176,000         | 1,360,000                |
-  | Triangles, Low                                               | 75,000          | 340,000                  |
-  | Animation work per frame (processor)                         | under 0.1 ms    | 5–6 ms on the CI machine |
+  |                                                              | Today's players | New players                    |
+  | ------------------------------------------------------------ | --------------- | ------------------------------ |
+  | Draw calls, High (budget 300)                                | 96              | 175–200                        |
+  | Draw calls, Low (budget 120)                                 | 36              | 70–95                          |
+  | Triangles, High (the shadow cascades draw each player again) | 176,000         | 1,360,000                      |
+  | Triangles, Low                                               | 75,000          | 340,000                        |
+  | Animation work per frame (processor)                         | under 0.1 ms    | about 1.4 ms on the CI machine |
 
-- **For a full roll-out** (Beta, if the test is chosen): blend the gaits in our own code rather than Babylon's
-  general animation system (most of the 5–6 ms), a lighter version of the model for players far from the camera and
-  for shadows, and fewer pieces per player (eyes, eyebrows and hair are separate draws today).
+- **Animation:** the gaits are sampled once when the model loads and blended per bone in our own code
+  (`blendTrack`), not played by Babylon's animation system: held still and moved by hand, Babylon put them back on
+  their first frame every frame (the legs didn't move), and it cost 5–6 ms a frame.
+- **For a full roll-out** (Beta, if the test is chosen): a lighter version of the model for players far from the
+  camera and for shadows, and fewer pieces per player (eyes, eyebrows and hair are separate draws today).
