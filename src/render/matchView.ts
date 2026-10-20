@@ -16,7 +16,8 @@ import { Atmosphere } from "./atmosphere";
 import { CameraRig, type CinematicShot, type MatchCamera } from "./cameraRig";
 import { SurfaceLibrary } from "./materials";
 import { buildPitch } from "./pitch";
-import { buildBall, KITS, Player, type PoseAction } from "./players";
+import { buildBall, KITS, type PoseAction } from "./players";
+import { Squad } from "./squad";
 import { buildStadium, type Stadium } from "./stadium";
 import type { Quality, TimeOfDay, Weather } from "./types";
 import { WeatherFx } from "./weather";
@@ -50,7 +51,10 @@ export class MatchView {
   readonly scene: Scene;
   readonly rig: CameraRig;
   private readonly lib: SurfaceLibrary;
-  private readonly players: Player[] = [];
+  /** Every player, drawn together; `squad.rigs[i]` is player i. */
+  private readonly squad: Squad;
+  /** Low quality: a soft spot under each player instead of shadow maps (docs/specs/01 §4). */
+  private readonly blobs: Mesh | null;
   private readonly phases: number[] = [];
   /** Render-only kick swings: seconds left per player (kicks are instant in the simulation). */
   private readonly kickTimers: number[] = [];
@@ -86,24 +90,23 @@ export class MatchView {
     const stadium = buildStadium(scene, this.lib, options.quality, initial.pitch);
     this.stadium = stadium;
 
-    initial.players.forEach((pl, i) => {
-      const kit =
-        pl.team === 0
-          ? pl.role === "gk"
-            ? KITS.keeper
-            : KITS.home
-          : pl.role === "gk"
-            ? KITS.keeperAway
-            : KITS.away;
-      const player = new Player(
-        scene,
-        this.lib,
-        `player${i}`,
-        kit,
-        SKINS[i % SKINS.length],
-        HAIR[(i * 3) % HAIR.length],
-      );
-      this.players.push(player);
+    this.squad = new Squad(
+      scene,
+      this.lib,
+      initial.players.map((pl, i) => ({
+        kit:
+          pl.team === 0
+            ? pl.role === "gk"
+              ? KITS.keeper
+              : KITS.home
+            : pl.role === "gk"
+              ? KITS.keeperAway
+              : KITS.away,
+        skin: SKINS[i % SKINS.length],
+        hair: HAIR[(i * 3) % HAIR.length],
+      })),
+    );
+    initial.players.forEach((_, i) => {
       this.phases.push(i * 0.7);
       this.kickTimers.push(0);
     });
@@ -128,16 +131,17 @@ export class MatchView {
       this.rings.push(ring);
     });
 
-    this.atmosphere = new Atmosphere(scene, this.rig.camera, stadium.lamps, options.quality);
+    const shadowMaps = options.quality !== "low";
+    this.atmosphere = new Atmosphere(scene, this.rig.camera, stadium.lamps, options.quality, shadowMaps);
+    this.blobs = shadowMaps ? null : buildBlobShadows(scene, initial.players.length);
     this.lib.syncPrePassExclusions();
     this.atmosphere.addShadowCasters([
       ...pitch.shadowCasters,
       ...stadium.shadowCasters,
       // Not the ball: its spot on the grass (ballShadow) shows its height; a second, sun-angled shadow confuses.
-      ...this.players.flatMap((p) => p.meshes),
+      ...this.squad.meshes,
     ]);
-    for (const m of [...pitch.receivers, ...stadium.receivers]) m.receiveShadows = true;
-    for (const p of this.players) for (const m of p.meshes) m.receiveShadows = true;
+    for (const m of [...pitch.receivers, ...stadium.receivers, ...this.squad.meshes]) m.receiveShadows = true;
 
     this.weather = new WeatherFx(scene, options.quality);
     this.lib.setLook("stylised");
@@ -178,7 +182,7 @@ export class MatchView {
     this.rippleNets(dt);
     curr.players.forEach((pl, i) => {
       const before = prev.players[i];
-      const view = this.players[i];
+      const view = this.squad.rigs[i];
       const x = lerp(before.pos.x, pl.pos.x);
       const z = lerp(before.pos.z, pl.pos.z);
       const moved = Math.hypot(x - view.root.position.x, z - view.root.position.z);
@@ -198,7 +202,9 @@ export class MatchView {
         view.poseAction("kick", 1 - this.kickTimers[i] / KICK_SECONDS);
         this.kickTimers[i] -= dt;
       }
+      this.blobs?.thinInstanceSetMatrixAt(i, Matrix.Translation(x, 0.015, z), i === curr.players.length - 1);
     });
+    this.squad.update();
 
     const b0 = prev.ball;
     const b1 = curr.ball;
@@ -234,7 +240,7 @@ export class MatchView {
       const index = controlled[slot] ?? -1;
       ring.setEnabled(index >= 0);
       if (index >= 0) {
-        const p = this.players[index].root.position;
+        const p = this.squad.rigs[index].root.position;
         ring.position.set(p.x, 0.04, p.z);
       }
     });
@@ -325,7 +331,27 @@ function buildAimMarker(scene: Scene): Mesh {
   return ring;
 }
 
+/** A soft round shadow under each player (Low quality), one thin instance per player. */
+function buildBlobShadows(scene: Scene, count: number): Mesh {
+  const disc = MeshBuilder.CreateGround("playerShadows", { width: 1.3, height: 1.3 }, scene);
+  disc.material = shadowSpotMaterial(scene);
+  disc.isPickable = false;
+  disc.thinInstanceSetBuffer("matrix", new Float32Array(count * 16), 16, false);
+  disc.alwaysSelectAsActiveMesh = true;
+  return disc;
+}
+
 function buildBallShadow(scene: Scene): Mesh {
+  const disc = MeshBuilder.CreateGround("ballShadow", { width: 0.6, height: 0.6 }, scene);
+  disc.material = shadowSpotMaterial(scene);
+  disc.isPickable = false;
+  return disc;
+}
+
+/** A dark spot that fades out at the edge, drawn on the grass. */
+function shadowSpotMaterial(scene: Scene): StandardMaterial {
+  const cached = scene.getMaterialByName("shadowSpotMat");
+  if (cached instanceof StandardMaterial) return cached;
   const size = 64;
   const tex = new DynamicTexture("ballShadowTex", { width: size, height: size }, scene, false);
   const ctx = tex.getContext() as CanvasRenderingContext2D;
@@ -337,14 +363,11 @@ function buildBallShadow(scene: Scene): Mesh {
   ctx.fillRect(0, 0, size, size);
   tex.hasAlpha = true;
   tex.update();
-  const mat = new StandardMaterial("ballShadowMat", scene);
+  const mat = new StandardMaterial("shadowSpotMat", scene);
   mat.diffuseTexture = tex;
   mat.useAlphaFromDiffuseTexture = true;
   mat.disableLighting = true;
   mat.emissiveColor = Color3.Black();
   mat.zOffset = -2;
-  const disc = MeshBuilder.CreateGround("ballShadow", { width: 0.6, height: 0.6 }, scene);
-  disc.material = mat;
-  disc.isPickable = false;
-  return disc;
+  return mat;
 }

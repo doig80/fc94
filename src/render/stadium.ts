@@ -10,7 +10,7 @@ import {
   Vector3,
 } from "@babylonjs/core";
 import { Rng } from "../sim/rng";
-import type { SurfaceLibrary } from "./materials";
+import { mergeSurface, type SurfaceLibrary } from "./materials";
 import type { PitchSpec } from "../sim/params";
 import { boxesHidingPlay, type Box, type CameraView } from "./occlusion";
 import { pitchMargin } from "./pitch";
@@ -63,6 +63,7 @@ export function buildStadium(scene: Scene, lib: SurfaceLibrary, quality: Quality
   const casters: Mesh[] = [];
   const receivers: Mesh[] = [];
   const roofs: Mesh[] = [];
+  const stands: Mesh[] = [];
   const crowdMatrices: number[] = [];
   const crowdColors: number[] = [];
   const rng = new Rng(1994);
@@ -104,12 +105,8 @@ export function buildStadium(scene: Scene, lib: SurfaceLibrary, quality: Quality
     back.position.set(0, (TIER_H * TIERS + 6) / 2, side.offset + TIER_D * TIERS + 0.3);
     parts.push(back);
     const stand = Mesh.MergeMeshes(parts, true, true)!;
-    stand.name = "stand";
     stand.rotation.y = side.rot;
-    lib.assign(stand, "concrete");
-    stand.receiveShadows = true;
-    receivers.push(stand);
-    casters.push(stand);
+    stands.push(stand);
 
     const roof = MeshBuilder.CreateBox(
       "roof",
@@ -149,6 +146,12 @@ export function buildStadium(scene: Scene, lib: SurfaceLibrary, quality: Quality
       }
     }
   }
+
+  // All four stands are one mesh (roofs stay separate: each fades on its own when it blocks the view).
+  const allStands = mergeSurface(stands, "stands", lib, "concrete");
+  allStands.receiveShadows = true;
+  receivers.push(allStands);
+  casters.push(allStands);
 
   // One low-poly spectator mesh, instanced thousands of times.
   const body = MeshBuilder.CreateBox("spectatorBody", { width: 0.42, height: 0.62, depth: 0.3 }, scene);
@@ -192,14 +195,13 @@ export function buildStadium(scene: Scene, lib: SurfaceLibrary, quality: Quality
     endBoard.rotation.y = s > 0 ? Math.PI / 2 : -Math.PI / 2;
     boards.push(longBoard, endBoard);
   }
-  for (const b of boards) {
-    lib.assign(b, "adboard");
-    casters.push(b);
-  }
+  casters.push(mergeSurface(boards, "adboards", lib, "adboard"));
 
   // Floodlight towers in the corners.
   lib.define("lamp", { color: new Color3(1, 1, 1), roughness: 0.2, emissive: new Color3(1, 0.97, 0.9) });
   const lamps: Vector3[] = [];
+  const towers: Mesh[] = [];
+  const panels: Mesh[] = [];
   for (const sx of [-1, 1]) {
     for (const sz of [-1, 1]) {
       const base = new Vector3(sx * (halfL + (big ? 9 : 5)), 0, sz * (halfW + (big ? 9 : 5)));
@@ -209,15 +211,16 @@ export function buildStadium(scene: Scene, lib: SurfaceLibrary, quality: Quality
         scene,
       );
       tower.position.set(base.x, towerHeight / 2, base.z);
-      lib.assign(tower, "steel");
-      casters.push(tower);
+      towers.push(tower);
       const panel = MeshBuilder.CreateBox("lampPanel", { width: 7, height: 3.5, depth: 0.5 }, scene);
       panel.position.set(base.x, towerHeight + 1, base.z);
       panel.lookAt(new Vector3(0, 0, 0));
-      lib.assign(panel, "lamp");
+      panels.push(panel);
       lamps.push(new Vector3(base.x * 0.97, towerHeight, base.z * 0.97));
     }
   }
+  casters.push(mergeSurface(towers, "towers", lib, "steel"));
+  mergeSurface(panels, "lampPanels", lib, "lamp");
 
   // Roof outlines in world space, for testing which roofs hide the pitch from the camera.
   const roofBoxes: Box[] = roofs.map((r) => {

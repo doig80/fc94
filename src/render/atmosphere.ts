@@ -77,7 +77,8 @@ export class Atmosphere {
   private readonly hemi: HemisphericLight;
   private readonly spots: SpotLight[];
   private readonly probe: ReflectionProbe;
-  readonly shadows: ShadowGenerator;
+  /** Null without shadow maps (Low quality in the match draws blob shadows instead). */
+  readonly shadows: ShadowGenerator | null;
   private readonly pipeline: DefaultRenderingPipeline;
   /** Floodlight power, 0..1 (drives lamp panels and LED boards). */
   floodPower = 0;
@@ -87,6 +88,7 @@ export class Atmosphere {
     camera: Camera,
     lamps: Vector3[],
     quality: Quality,
+    shadowMaps = true,
   ) {
     this.sky = MeshBuilder.CreateSphere(
       "sky",
@@ -109,7 +111,9 @@ export class Atmosphere {
     this.sun.renderPriority = 2;
     this.hemi.renderPriority = 1;
 
-    if (quality === "high") {
+    if (!shadowMaps) {
+      this.shadows = null;
+    } else if (quality === "high") {
       const csm = new CascadedShadowGenerator(2048, this.sun);
       csm.numCascades = 3;
       csm.shadowMaxZ = 160;
@@ -227,7 +231,7 @@ export class Atmosphere {
   }
 
   addShadowCasters(meshes: Mesh[]): void {
-    for (const m of meshes) this.shadows.addShadowCaster(m, false);
+    for (const m of meshes) this.shadows?.addShadowCaster(m, false);
   }
 
   private paintSky(top: Color3, horizon: Color3): void {

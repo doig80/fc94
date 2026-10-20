@@ -178,3 +178,15 @@ export class SurfaceLibrary {
     }
   }
 }
+
+/**
+ * Bake `meshes` into one mesh in world space with the surface `id`: one draw call instead of several (docs/specs/01
+ * §4). For parts that never move.
+ */
+export function mergeSurface(meshes: Mesh[], name: string, lib: SurfaceLibrary, id: string): Mesh {
+  for (const m of meshes) m.computeWorldMatrix(true);
+  const merged = Mesh.MergeMeshes(meshes, true, true)!;
+  merged.name = name;
+  lib.assign(merged, id);
+  return merged;
+}

@@ -10,7 +10,7 @@ import {
 } from "@babylonjs/core";
 import type { PitchSpec } from "../sim/params";
 import { Rng } from "../sim/rng";
-import type { SurfaceLibrary } from "./materials";
+import { mergeSurface, type SurfaceLibrary } from "./materials";
 
 /** Grass around the lines, in metres. */
 export function pitchMargin(pitch: PitchSpec): number {
@@ -40,10 +40,14 @@ export function buildPitch(
   lib.assign(ground, "grass");
   ground.receiveShadows = true;
 
-  const casters: Mesh[] = [];
+  // Posts, bars and corner poles; corner flags; and the nets' fixed panels. Each group is merged into one mesh
+  // below, so the whole goal frame costs a few draw calls (docs/specs/01 §4).
+  const frame: Mesh[] = [];
+  const flags: Mesh[] = [];
+  const netPanels: Mesh[] = [];
   // Back nets of the goals at −x and +x, in that order (they bulge when the ball goes in).
   const nets: Mesh[] = [];
-  for (const side of [-1, 1]) casters.push(...buildGoal(scene, lib, pitch, side, nets));
+  for (const side of [-1, 1]) buildGoal(scene, lib, pitch, side, frame, netPanels, nets);
   for (const x of [-1, 1]) {
     for (const z of [-1, 1]) {
       const pole = MeshBuilder.CreateCylinder(
@@ -61,14 +65,32 @@ export function buildPitch(
       flag.parent = pole;
       flag.position.set(0.23, 0.6, 0);
       lib.assign(flag, "flag");
-      casters.push(pole, flag);
+      frame.push(pole);
+      flags.push(flag);
     }
   }
+  // Flags first: they hang from the poles, which merging removes.
+  const casters = [
+    mergeSurface(flags, "cornerFlags", lib, "flag"),
+    mergeSurface(frame, "goalFrames", lib, "post"),
+  ];
+  mergeSurface(netPanels, "netPanels", lib, "net");
   return { shadowCasters: casters, receivers: [ground], nets };
 }
 
-/** The goal at `side` (−1 or +1): posts and bar (returned), and the net (its back panel goes in `nets`). */
-function buildGoal(scene: Scene, lib: SurfaceLibrary, pitch: PitchSpec, side: number, nets: Mesh[]): Mesh[] {
+/**
+ * The goal at `side` (−1 or +1): posts and bars go in `frame`, the net's fixed panels in `panels`, and its back
+ * panel (which bulges) in `nets`.
+ */
+function buildGoal(
+  scene: Scene,
+  lib: SurfaceLibrary,
+  pitch: PitchSpec,
+  side: number,
+  frame: Mesh[],
+  panels: Mesh[],
+  nets: Mesh[],
+): void {
   const root = new TransformNode(`goal${side}`, scene);
   root.position.x = (side * pitch.length) / 2;
   root.rotation.y = side > 0 ? 0 : Math.PI;
@@ -85,14 +107,14 @@ function buildGoal(scene: Scene, lib: SurfaceLibrary, pitch: PitchSpec, side: nu
   const hw = pitch.goalWidth / 2;
   const h = pitch.goalHeight;
   const d = pitch.goalDepth;
-  const meshes = [
+  frame.push(
     post("postL", new Vector3(0, 0, -hw), new Vector3(0, h, -hw)),
     post("postR", new Vector3(0, 0, hw), new Vector3(0, h, hw)),
     post("bar", new Vector3(0, h, -hw), new Vector3(0, h, hw)),
     post("backBarTop", new Vector3(d, h * 0.8, -hw), new Vector3(d, h * 0.8, hw)),
-  ];
+  );
   // Net: back, roof and two side panels (open at the goal mouth).
-  const panels: [string, number, number, Vector3, Vector3][] = [
+  const shapes: [string, number, number, Vector3, Vector3][] = [
     ["netBack", pitch.goalWidth, h * 0.8, new Vector3(d, h * 0.4, 0), new Vector3(0, Math.PI / 2, 0)],
     [
       "netRoof",
@@ -104,17 +126,17 @@ function buildGoal(scene: Scene, lib: SurfaceLibrary, pitch: PitchSpec, side: nu
     ["netSideL", d, h, new Vector3(d / 2, h / 2, -hw), new Vector3(0, 0, 0)],
     ["netSideR", d, h, new Vector3(d / 2, h / 2, hw), new Vector3(0, 0, 0)],
   ];
-  for (const [name, width, height, pos, rot] of panels) {
+  for (const [name, width, height, pos, rot] of shapes) {
     const panel = MeshBuilder.CreatePlane(name, { width, height, sideOrientation: Mesh.DOUBLESIDE }, scene);
     panel.parent = root;
     panel.position.copyFrom(pos);
     panel.rotation.copyFrom(rot);
     lib.assign(panel, "net");
     if (name === "netBack") nets.push(panel);
+    else panels.push(panel);
     // Nets are deliberately not shadow casters: the shadow map ignores transparency, so a net would
     // cast a solid black shadow over the inside of the goal.
   }
-  return meshes;
 }
 
 function grassTexture(scene: Scene, pitch: PitchSpec, totalL: number, totalW: number): Texture {

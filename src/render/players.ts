@@ -36,88 +36,142 @@ export const KITS: Record<string, Kit> = {
   },
 };
 
-/** A procedurally built low-poly footballer with a simple run cycle (placeholder until real models). */
-export class Player {
+/** Which colour a body part takes. */
+export type PartColour = "shirt" | "shorts" | "socks" | "skin" | "hair" | "boots";
+/** The joint a body part hangs from: the body, or one of the hips or shoulders. */
+type Joint = "body" | "hip" | "shoulder";
+
+export interface PartSpec {
+  name: string;
+  colour: PartColour;
+  joint: Joint;
+  position: Vector3;
+  scaling?: Vector3;
+  build(scene: Scene): Mesh;
+}
+
+const cylinder =
+  (height: number, top: number, bottom: number, tessellation = 6) =>
+  (scene: Scene): Mesh =>
+    MeshBuilder.CreateCylinder(
+      "part",
+      { height, diameterTop: top, diameterBottom: bottom, tessellation },
+      scene,
+    );
+
+/** The placeholder footballer, part by part. Cartoon proportions: big head, compact torso, sturdy legs. */
+export const PARTS: PartSpec[] = [
+  {
+    name: "torso",
+    colour: "shirt",
+    joint: "body",
+    position: new Vector3(0, 1.28, 0),
+    build: cylinder(0.62, 0.56, 0.42),
+  },
+  {
+    name: "shorts",
+    colour: "shorts",
+    joint: "body",
+    position: new Vector3(0, 0.9, 0),
+    build: cylinder(0.26, 0.44, 0.48),
+  },
+  {
+    name: "head",
+    colour: "skin",
+    joint: "body",
+    position: new Vector3(0, 1.84, 0),
+    build: (scene) => MeshBuilder.CreateIcoSphere("part", { radius: 0.21, subdivisions: 1 }, scene),
+  },
+  {
+    name: "hair",
+    colour: "hair",
+    joint: "body",
+    position: new Vector3(0, 1.9, -0.02),
+    scaling: new Vector3(1, 0.7, 1.02),
+    build: (scene) => MeshBuilder.CreateIcoSphere("part", { radius: 0.225, subdivisions: 1 }, scene),
+  },
+  {
+    name: "neck",
+    colour: "skin",
+    joint: "body",
+    position: new Vector3(0, 1.64, 0),
+    build: cylinder(0.12, 0.12, 0.14, 5),
+  },
+  {
+    name: "thigh",
+    colour: "skin",
+    joint: "hip",
+    position: new Vector3(0, -0.2, 0),
+    build: cylinder(0.38, 0.18, 0.15, 5),
+  },
+  {
+    name: "sock",
+    colour: "socks",
+    joint: "hip",
+    position: new Vector3(0, -0.58, 0),
+    build: cylinder(0.42, 0.15, 0.12, 5),
+  },
+  {
+    name: "boot",
+    colour: "boots",
+    joint: "hip",
+    position: new Vector3(0.05, -0.82, 0),
+    build: (scene) => MeshBuilder.CreateBox("part", { width: 0.26, height: 0.1, depth: 0.12 }, scene),
+  },
+  {
+    name: "sleeve",
+    colour: "shirt",
+    joint: "shoulder",
+    position: new Vector3(0, -0.1, 0),
+    build: cylinder(0.24, 0.16, 0.14, 5),
+  },
+  {
+    name: "arm",
+    colour: "skin",
+    joint: "shoulder",
+    position: new Vector3(0, -0.4, 0),
+    build: cylinder(0.4, 0.12, 0.1, 5),
+  },
+];
+
+export const BOOTS = new Color3(0.08, 0.08, 0.09);
+
+/**
+ * A footballer's skeleton: the joints the run cycle and actions move. It has no meshes of its own; body parts
+ * hang from `joints(part)` (see `Player`, and `Squad` for many players drawn in one go).
+ */
+export class PlayerRig {
   readonly root: TransformNode;
-  readonly meshes: Mesh[] = [];
   private readonly body: TransformNode;
   private readonly legs: TransformNode[] = [];
   private readonly arms: TransformNode[] = [];
 
-  constructor(scene: Scene, lib: SurfaceLibrary, name: string, kit: Kit, skin: Color3, hair: Color3) {
-    const k = `kit:${kit.id}`;
-    lib.define(`${k}:shirt`, { color: kit.shirt, roughness: 0.7, outline: true, wettable: 0.6 });
-    lib.define(`${k}:shorts`, { color: kit.shorts, roughness: 0.7, outline: true, wettable: 0.6 });
-    lib.define(`${k}:socks`, { color: kit.socks, roughness: 0.8, outline: true, wettable: 0.4 });
-    const skinId = `skin:${skin.toHexString()}`;
-    const hairId = `hair:${hair.toHexString()}`;
-    lib.define(skinId, { color: skin, roughness: 0.6, outline: true, wettable: 0.5 });
-    lib.define(hairId, { color: hair, roughness: 0.5, outline: true, wettable: 0.8 });
-    lib.define("boots", {
-      color: new Color3(0.08, 0.08, 0.09),
-      roughness: 0.3,
-      outline: true,
-      wettable: 0.6,
-    });
-
+  constructor(scene: Scene, name: string) {
     this.root = new TransformNode(name, scene);
     this.body = new TransformNode(`${name}:body`, scene);
     this.body.parent = this.root;
-
-    const part = (mesh: Mesh, surface: string, parent: TransformNode, pos: Vector3): Mesh => {
-      mesh.convertToFlatShadedMesh();
-      mesh.parent = parent;
-      mesh.position.copyFrom(pos);
-      lib.assign(mesh, surface);
-      this.meshes.push(mesh);
-      return mesh;
-    };
-    const cyl = (n: string, height: number, top: number, bottom: number, tess = 6) =>
-      MeshBuilder.CreateCylinder(
-        n,
-        { height, diameterTop: top, diameterBottom: bottom, tessellation: tess },
-        scene,
-      );
-
-    // Cartoon proportions: big head, compact torso, sturdy legs.
-    part(cyl("torso", 0.62, 0.56, 0.42), `${k}:shirt`, this.body, new Vector3(0, 1.28, 0));
-    part(cyl("shorts", 0.26, 0.44, 0.48), `${k}:shorts`, this.body, new Vector3(0, 0.9, 0));
-    part(
-      MeshBuilder.CreateIcoSphere("head", { radius: 0.21, subdivisions: 1 }, scene),
-      skinId,
-      this.body,
-      new Vector3(0, 1.84, 0),
-    );
-    const hairMesh = part(
-      MeshBuilder.CreateIcoSphere("hair", { radius: 0.225, subdivisions: 1 }, scene),
-      hairId,
-      this.body,
-      new Vector3(0, 1.9, -0.02),
-    );
-    hairMesh.scaling.set(1, 0.7, 1.02);
-    part(cyl("neck", 0.12, 0.12, 0.14, 5), skinId, this.body, new Vector3(0, 1.64, 0));
-
     for (const side of [-1, 1]) {
       const hip = new TransformNode(`${name}:hip${side}`, scene);
       hip.parent = this.body;
       hip.position.set(0, 0.86, side * 0.12);
-      part(cyl("thigh", 0.38, 0.18, 0.15, 5), skinId, hip, new Vector3(0, -0.2, 0));
-      part(cyl("sock", 0.42, 0.15, 0.12, 5), `${k}:socks`, hip, new Vector3(0, -0.58, 0));
-      part(
-        MeshBuilder.CreateBox("boot", { width: 0.26, height: 0.1, depth: 0.12 }, scene),
-        "boots",
-        hip,
-        new Vector3(0.05, -0.82, 0),
-      );
       this.legs.push(hip);
-
       const shoulder = new TransformNode(`${name}:shoulder${side}`, scene);
       shoulder.parent = this.body;
       shoulder.position.set(0, 1.52, side * 0.31);
-      part(cyl("sleeve", 0.24, 0.16, 0.14, 5), `${k}:shirt`, shoulder, new Vector3(0, -0.1, 0));
-      part(cyl("arm", 0.4, 0.12, 0.1, 5), skinId, shoulder, new Vector3(0, -0.4, 0));
       this.arms.push(shoulder);
     }
+  }
+
+  /** Bring the joints' world matrices up to date with the pose, parents first. */
+  computeWorldMatrices(): void {
+    this.root.computeWorldMatrix(true);
+    this.body.computeWorldMatrix(true);
+    for (const joint of [...this.legs, ...this.arms]) joint.computeWorldMatrix(true);
+  }
+
+  /** The joints a part hangs from: one for the body, one per side for hips and shoulders. */
+  joints(part: PartSpec): TransformNode[] {
+    return part.joint === "body" ? [this.body] : part.joint === "hip" ? this.legs : this.arms;
   }
 
   /** Pose the run cycle. `phase` advances with distance travelled; `effort` 0 = idle, 1 = sprint. */
@@ -203,6 +257,47 @@ export class Player {
     }
   }
 }
+
+/** One footballer with its own meshes (the look-test). The match draws all players at once with `Squad`. */
+export class Player extends PlayerRig {
+  readonly meshes: Mesh[] = [];
+
+  constructor(scene: Scene, lib: SurfaceLibrary, name: string, kit: Kit, skin: Color3, hair: Color3) {
+    super(scene, name);
+    const colours: Record<PartColour, Color3> = {
+      shirt: kit.shirt,
+      shorts: kit.shorts,
+      socks: kit.socks,
+      skin,
+      hair,
+      boots: BOOTS,
+    };
+    for (const part of PARTS) {
+      const id = `${part.colour}:${colours[part.colour].toHexString()}`;
+      lib.define(id, { color: colours[part.colour], ...PART_SURFACE[part.colour], outline: true });
+      for (const joint of this.joints(part)) {
+        const mesh = part.build(scene);
+        mesh.name = part.name;
+        mesh.convertToFlatShadedMesh();
+        mesh.parent = joint;
+        mesh.position.copyFrom(part.position);
+        if (part.scaling) mesh.scaling.copyFrom(part.scaling);
+        lib.assign(mesh, id);
+        this.meshes.push(mesh);
+      }
+    }
+  }
+}
+
+/** How each kind of part responds to light and rain. */
+export const PART_SURFACE: Record<PartColour, { roughness: number; wettable: number }> = {
+  shirt: { roughness: 0.7, wettable: 0.6 },
+  shorts: { roughness: 0.7, wettable: 0.6 },
+  socks: { roughness: 0.8, wettable: 0.4 },
+  skin: { roughness: 0.6, wettable: 0.5 },
+  hair: { roughness: 0.5, wettable: 0.8 },
+  boots: { roughness: 0.3, wettable: 0.6 },
+};
 
 export type PoseAction =
   "slide" | "recover" | "stumble" | "header" | "bicycle" | "volley" | "kick" | "tackle" | "dive";
