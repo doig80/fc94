@@ -144,10 +144,23 @@ export const PARTS: PartSpec[] = [
 export const BOOTS = new Color3(0.08, 0.08, 0.09);
 
 /**
+ * What the match and the officials drive to show a person: the placeholder `PlayerRig`, or the new model's
+ * `CharacterRig` (characterRig.ts, the character test). `root` faces +x at no rotation.
+ */
+export interface Rig {
+  readonly root: TransformNode;
+  /** The run cycle: `phase` advances with distance, `effort` 0 = idle, 1 = sprint; `dt` is seconds this frame. */
+  pose(phase: number, effort: number, dt?: number): void;
+  poseAction(kind: PoseAction, progress: number): void;
+  signal(kind: Signal, progress: number): void;
+  hand(): TransformNode;
+}
+
+/**
  * A footballer's skeleton: the joints the run cycle and actions move. It has no meshes of its own; body parts
  * hang from `joints(part)` (see `Player`, and `Squad` for many players drawn in one go).
  */
-export class PlayerRig {
+export class PlayerRig implements Rig {
   readonly root: TransformNode;
   private readonly body: TransformNode;
   private readonly legs: TransformNode[] = [];
