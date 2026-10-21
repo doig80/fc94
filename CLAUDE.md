@@ -38,7 +38,8 @@ Use the Context7 MCP for current Babylon.js/Vite/Playwright APIs instead of rely
 - `pnpm check:size` (after a build: startup download vs budget) · `pnpm check:licences` (dependency licences)
 - `pnpm e2e e2e/smoke.spec.ts` — boots the game in headless Chromium
 - Pages: `/` the match, 11 v 11 (`src/game/matchApp.ts`; `?size=5` plays 5-a-side), `?mode=looktest` the look-test, `?mode=physics` the physics sandbox
-- Character test (#27): `?players=new` in the match (everyone in the new model), `?mode=looktest&players=both` beside the placeholders
+- Players (#27): the new model by default; `?players=old` shows the old placeholders, `?mode=looktest&players=both` both side by side
+- Player model: `python3 scripts/assets/prepare_player.py <base-characters.zip> <ual1.zip> <ual2.zip>`, then `node scripts/assets/player_lods.ts` (the free Quaternius packs, not kept in the repo)
 - Match rules from the URL: `?offside=0` · `?cards=0` · `?winner=1` (extra time + shoot-out) · `?ref=0` (no fouls/offside/cards) · `?runon=0` (no "Run onto the pass" assist)
 - `?mode=physics` — top-down physics sandbox (debug view of `src/sim`); `pnpm e2e e2e/sandbox.spec.ts` tests it
 - `pnpm screenshots` — renders look-test screenshots into `screenshots/` (slow: software rendering)

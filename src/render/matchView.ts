@@ -32,7 +32,7 @@ export interface MatchViewOptions {
   camera: MatchCamera;
   /** Game-feel strengths (read live, so the tuning panel applies at once). */
   juice: JuiceParams;
-  /** The character test (issue #27): "new" swaps in the new player model once it has loaded. */
+  /** "new" swaps in the new player model once it has loaded (issue #27); "old" keeps the placeholders. */
   players?: "old" | "new";
 }
 

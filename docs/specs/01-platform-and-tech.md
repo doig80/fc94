@@ -131,40 +131,45 @@ later for purely cosmetic effects (net cloth, debris) that never feed back into 
 | Animation quality (few football moves in Mixamo) | Early character test in Full match ([#27](https://github.com/doig80/fc94/issues/27)); stylised characters hide imperfections; procedural blending (aimed kicks, leaning); animation spec in 20. Test status below |
 | WebGPU/WebGL2 visual differences                 | CI screenshot tests run on WebGL2 (CI has no GPU); WebGPU is checked by the product owner on real devices from the checklist in [02](02-tooling-and-workflow.md#playtesting)                                      |
 
-### Character test ([#27](https://github.com/doig80/fc94/issues/27))
+### Players ([#27](https://github.com/doig80/fc94/issues/27))
 
-A real player model next to today's placeholders, in the look-test: `?mode=looktest&players=both` (or `new` for the
-new model only; the panel has a **Players** switch).
+Every player, the referee and his assistants are a real model with real animation, chosen after the character test
+(2026-10-21). `?players=old` still shows the old placeholder players; the look-test compares them with
+`?mode=looktest&players=both` (the panel has a **Players** switch).
 
-- **Model:** Quaternius's _Universal Base Characters_ man (CC0), about 14,000 triangles and a 65-bone skeleton, with
-  two short hairstyles from the same pack. The kit is painted onto his body texture when he loads: a map made from
-  which bone moves each part of the body says where the shirt (short sleeves), shorts, socks and boots go, so any
-  team's colours work.
-- **Animation:** idle, walk, jog and sprint from Quaternius's _Universal Animation Library_ (CC0), made for the same
+- **Model:** Quaternius's _Universal Base Characters_ man (CC0), with a 65-bone skeleton and two short hairstyles from
+  the same pack. The kit is painted onto his body texture when he loads: a map made from which bone moves each part
+  of the body says where the shirt (short sleeves), shorts, socks and boots go, so any team's colours work.
+- **Two levels of detail** (§4): close up he is about 2,800 triangles (the original is 15,400), made by
+  `scripts/assets/player_lods.ts` with meshoptimizer, which keeps the texture seams and the skinning. Beyond 24 m from
+  the camera (`FAR`, most players in the match camera) a far version is drawn: about 800 triangles, body and hair
+  only, as the eyes and eyebrows are a pixel or two from there. Shadows use the same version. Only the body casts a
+  shadow.
+- **Running:** idle, walk, jog and sprint from Quaternius's _Universal Animation Library_ (CC0), made for the same
   skeleton, so no retargeting. The two gaits around the player's speed are blended, and the stride cycles as fast as
-  it covers the ground, so the feet don't slide.
-- **Still to come:** the football moves (shot, pass, header, slide tackle, keeper dive) from Mixamo, which the
-  product owner downloads (Mixamo needs their login; the raw files stay in a private repository, see
-  [03](03-legal-and-ip.md)).
-- **Assets:** `scripts/assets/prepare_player.py` builds `public/assets/characters/` (the model and animations,
-  0.96 MB; the body texture and kit map, 75 kB) from the two packs, which are downloaded from quaternius.itch.io and
-  not kept in the repo. They load only when the new players are shown, so the match's download doesn't change.
-- **In the match:** `?players=new` puts every player, the referee and his assistants in the new model
-  (`src/render/characterRig.ts`, behind the same controls as the placeholders). Running is the blended gaits; kicks,
-  tackles, slides, headers, dives and the officials' signals are simple poses laid over them (bones turned in code)
-  until the Mixamo moves arrive. Only the body casts a shadow. Today's players stay the default.
+  he covers the ground, so the feet don't slide and the legs slow down in slow motion and hold still in a freeze.
+- **Moves** (`MOVES`, CC0, the same skeleton): the slide tackle and getting up from it (_Universal Animation Library
+  2_), the keeper's dive and getting up (a dive roll: the flight, then rolling over and standing), and a leap for
+  headers (a jump, lifted off the ground in code, with a nod through the ball). Each is laid over the running with a
+  short blend in and out.
+- **Still code-made poses:** kicks, the standing tackle, the bicycle kick, a stumble and the officials' signals, until
+  the football moves arrive: from Anderson Rohr's free soccer motion-capture pack (made for the UE5 Manny skeleton,
+  whose bone names match ours; free for games, its raw files stay in a private repository, see
+  [03](03-legal-and-ip.md)), and from Mixamo for any move it lacks.
+- **How it's driven:** `src/render/characterRig.ts` puts the model behind the same controls as the placeholders, so the
+  match and the officials drive either. The animations are sampled once when the model loads and blended per bone in
+  our own code (`blendTrack`), not played by Babylon's animation system: held still and moved by hand, Babylon put
+  them back on their first frame every frame (the legs didn't move), and it cost 5–6 ms a frame.
+- **Assets:** `scripts/assets/prepare_player.py` builds `public/assets/characters/` from the three Quaternius packs
+  (downloaded from quaternius.itch.io, not kept in the repo), then `node scripts/assets/player_lods.ts` makes the two
+  levels of detail: the model and animations are 0.66 MB, the body texture and kit map 75 kB. They load after the
+  match has started (the placeholders show until then), so the wait to play doesn't change.
 - **What it costs** (measured in a live 11 v 11 match, software rendering in CI):
 
-  |                                                              | Today's players | New players                    |
-  | ------------------------------------------------------------ | --------------- | ------------------------------ |
-  | Draw calls, High (budget 300)                                | 96              | 175–200                        |
-  | Draw calls, Low (budget 120)                                 | 36              | 70–95                          |
-  | Triangles, High (the shadow cascades draw each player again) | 176,000         | 1,360,000                      |
-  | Triangles, Low                                               | 75,000          | 340,000                        |
-  | Animation work per frame (processor)                         | under 0.1 ms    | about 1.4 ms on the CI machine |
-
-- **Animation:** the gaits are sampled once when the model loads and blended per bone in our own code
-  (`blendTrack`), not played by Babylon's animation system: held still and moved by hand, Babylon put them back on
-  their first frame every frame (the legs didn't move), and it cost 5–6 ms a frame.
-- **For a full roll-out** (Beta, if the test is chosen): a lighter version of the model for players far from the
-  camera and for shadows, and fewer pieces per player (eyes, eyebrows and hair are separate draws today).
+  |                                     | Old players  | New players |
+  | ----------------------------------- | ------------ | ----------- |
+  | Draw calls, High (budget 300)       | 96           | 175         |
+  | Draw calls, Low (budget 120)        | 36           | 70          |
+  | Triangles, High                     | 176,000      | 250,000     |
+  | Triangles, Low                      | 75,000       | 89,000      |
+  | Posing the players, per frame (CPU) | under 0.1 ms | about 1 ms  |

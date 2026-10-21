@@ -46,10 +46,10 @@ describe("match options: the rules (docs/specs/10 §6)", () => {
     expect(parseMatchOptions("?difficulty=easy&offside=1", false).rules.offside).toBe(true);
   });
 
-  it("shows today's players unless the new model is asked for (?players=new)", () => {
-    expect(parseMatchOptions("", false).players).toBe("old");
-    expect(parseMatchOptions("?players=new", false).players).toBe("new");
-    expect(parseMatchOptions("?players=both", false).players).toBe("old");
+  it("shows the new player model unless the old placeholders are asked for (?players=old)", () => {
+    expect(parseMatchOptions("", false).players).toBe("new");
+    expect(parseMatchOptions("?players=old", false).players).toBe("old");
+    expect(parseMatchOptions("?players=both", false).players).toBe("new");
   });
 
   it("can start straight at a penalty shoot-out, for playtests", () => {
