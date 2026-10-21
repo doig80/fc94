@@ -1,0 +1,1 @@
+export{AnimationPropertyInfo,RegisterGLTFLoaderAnimation,TransformNodeAnimationPropertyInfo,WeightAnimationPropertyInfo,getQuaternion,getVector3,getWeights}from"./2.0-D_On4Ekp.js";
