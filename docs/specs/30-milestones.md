@@ -71,6 +71,8 @@ interceptions, too many fouls).
 | 7     | [#48](https://github.com/doig80/fc94/issues/48) | Gamepad controls                                                           |
 | 8     | [#28](https://github.com/doig80/fc94/issues/28) | Perfect-timing reward and corner aiming                                    |
 | 9     | [#29](https://github.com/doig80/fc94/issues/29) | Floodlight pools for night matches                                         |
+| 10    | [#27](https://github.com/doig80/fc94/issues/27) | The new players in the match: lighter model, default for everyone, moves   |
+| 11    | [#27](https://github.com/doig80/fc94/issues/27) | Football moves: kicks and keeper saves from motion capture                 |
 
 ## 3. Alpha
 
@@ -81,7 +83,7 @@ weather and time of day affecting the match, quality presets, celebrations.
 
 ## 4. Beta
 
-Final player models and animations, stadium art, kits and flags, crowd and stadium audio, UI polish,
+Animation polish (the player model itself arrived in Full match, [#27](https://github.com/doig80/fc94/issues/27)), stadium art, kits and flags, crowd and stadium audio, UI polish,
 accessibility pass, performance work (including the smaller download, [#6](https://github.com/doig80/fc94/issues/6)),
 phone testing, graphics polish: TAA and wet-pitch reflections, grass, animated crowd, light beams on Ultra
 ([#32](https://github.com/doig80/fc94/issues/32)).

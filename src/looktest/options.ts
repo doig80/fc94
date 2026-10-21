@@ -16,7 +16,7 @@ export { LOOKS, QUALITIES, RENDERERS, TIMES, WEATHERS };
 export type { Look, Quality, RendererPref, TimeOfDay, Weather };
 export const CAMERAS = ["classic", "broadcast", "orbit"] as const;
 export type CameraMode = (typeof CAMERAS)[number];
-/** The character test (issue #27): today's placeholder players, the new model, or both side by side. */
+/** The players (issue #27): the new model, the old placeholder players, or both side by side. */
 export const PLAYER_SETS = ["old", "new", "both"] as const;
 export type PlayerSet = (typeof PLAYER_SETS)[number];
 
@@ -26,7 +26,7 @@ export interface LookTestOptions {
   weather: Weather;
   quality: Quality;
   camera: CameraMode;
-  /** `?players=new|both`: the character test's new player model instead of, or next to, the placeholders. */
+  /** `?players=old|both`: the old placeholder players instead of, or next to, the new model. */
   players: PlayerSet;
   renderer: RendererPref;
   /** Freeze animation at a fixed moment (used for repeatable screenshots). */
@@ -45,7 +45,7 @@ export const DEFAULTS: Omit<LookTestOptions, "quality"> = {
   time: "day",
   weather: "clear",
   camera: "classic",
-  players: "old",
+  players: "new",
   renderer: "auto",
   freeze: false,
   hideUi: false,
@@ -101,7 +101,7 @@ export function toSearch(o: LookTestOptions): string {
     weather: o.weather,
     quality: o.quality,
     camera: o.camera,
-    ...(o.players === "old" ? {} : { players: o.players }),
+    ...(o.players === "new" ? {} : { players: o.players }),
   });
   return `?${params.toString()}`;
 }

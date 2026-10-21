@@ -13,6 +13,13 @@ import type { Kit, PoseAction, Rig, Signal } from "./players";
 /** The speed (m/s) a rig's `effort` of 1 stands for: a sprint. */
 const SPRINT = 8.5;
 
+/**
+ * The dive roll (s into it): the keeper's dive is its launch, up to flying flat with his arms out (held for the rest
+ * of the dive); getting up is the roll that follows.
+ */
+const DIVE_START = 0.05;
+const DIVE_END = 0.26;
+
 /** Axes in the model's own space (glTF: he faces +z, +x is his left, +y is up). */
 const LEFT = new Vector3(1, 0, 0);
 const FORWARD = new Vector3(0, 0, 1);
@@ -40,9 +47,10 @@ function keys(t: number, points: [number, number][]): number {
 
 /**
  * The new player model (issue #27) behind the same controls as the placeholder players' `PlayerRig`, so the match
- * and the officials drive it the same way: running comes from the animations, blended by speed; kicks, tackles,
- * slides, dives and the referee's signals are simple poses laid over them until the football moves from Mixamo
- * arrive. The body tilts like the placeholder's (same numbers); arms and legs are turned bone by bone.
+ * and the officials drive it the same way: running comes from the animations, blended by speed. The slide tackle,
+ * the keeper's dive and the header are real animations (`MOVES`) laid over the running; kicks, tackles and the
+ * referee's signals are simple poses until the football moves arrive. The posed body tilts like the placeholder's
+ * (same numbers); arms and legs are turned bone by bone.
  */
 export class CharacterRig implements Rig {
   /** Move and turn this, as with the placeholders: it faces +x at no rotation. */
@@ -56,6 +64,8 @@ export class CharacterRig implements Rig {
   private turns: Turn[] = [];
   /** Where the root was at the last `pose`, to stride by the distance covered. */
   private readonly last = new Vector3(Number.NaN, 0, 0);
+  /** The last action before getting up, which decides how he gets up: from a slide, or from a keeper's dive. */
+  private before: PoseAction | null = null;
 
   constructor(
     scene: Scene,
@@ -95,7 +105,12 @@ export class CharacterRig implements Rig {
   /** An action's pose over the run, `progress` 0 → 1 (as `PlayerRig.poseAction`). */
   poseAction(kind: PoseAction, progress: number): void {
     const b = this.body;
+    const c = this.character;
     const ease = Math.sin(Math.min(1, progress) * Math.PI); // 0 → 1 → 0
+    // Into a move from the run, and out of the last one back into it, over a short blend.
+    const into = smoothstep(progress / 0.2);
+    const outOf = 1 - smoothstep((progress - 0.8) / 0.2);
+    if (kind !== "recover") this.before = kind;
     switch (kind) {
       case "volley":
       case "kick":
@@ -132,18 +147,15 @@ export class CharacterRig implements Rig {
         this.turns = [["thigh_l", LEFT, -1.1 * ease]];
         break;
       case "slide":
-      case "recover": {
-        // Lying back with the legs out in front; getting up eases back to standing.
-        const k = kind === "slide" ? 1 : 1 - smoothstep(progress);
-        b.rotation.z = 1.15 * k;
-        b.position.set(0.45 * k, 0, 0);
-        this.turns = [
-          ["thigh_l", LEFT, -0.35 * k],
-          ["upperarm_l", LEFT, 0.9 * k],
-          ["upperarm_r", LEFT, 0.9 * k],
-        ];
+        // Down into a feet-first slide, leaning back on a hand.
+        c.move("Slide_Start", progress * c.duration("Slide_Start"), into);
         break;
-      }
+      case "recover":
+        // Up from the slide; a keeper rolls over from his dive and gets up (the rest of the dive roll).
+        if (this.before === "dive")
+          c.move("Roll", DIVE_END + (c.duration("Roll") - DIVE_END) * progress, outOf);
+        else c.move("Slide_Exit", progress * c.duration("Slide_Exit"), outOf);
+        break;
       case "stumble":
         // Thrown off balance: lurch forward and sway, arms out.
         b.rotation.z = -0.35 * ease - 0.08 * Math.sin(progress * Math.PI * 3);
@@ -154,12 +166,21 @@ export class CharacterRig implements Rig {
         ];
         break;
       case "header":
-        // Diving forwards, flat, arms reaching ahead.
-        b.rotation.z = -1.3 * ease;
-        b.position.set(0.3 * ease, 0.45 * ease, 0);
+        // A leap from both feet (the jump's take-off and flight, lifted off the ground: the animation jumps on the
+        // spot), the head going back then forward through the ball.
+        c.move("Jump_Start", 0.1 + 0.4 * progress, Math.min(into, outOf));
+        b.position.y = 0.35 * ease;
         this.turns = [
-          ["upperarm_l", LEFT, -2.2 * ease],
-          ["upperarm_r", LEFT, -2.2 * ease],
+          [
+            "neck_01",
+            LEFT,
+            keys(progress, [
+              [0, 0],
+              [0.35, -0.35],
+              [0.6, 0.5],
+              [1, 0],
+            ]),
+          ],
         ];
         break;
       case "bicycle":
@@ -171,17 +192,11 @@ export class CharacterRig implements Rig {
           ["thigh_l", LEFT, 0.4 * ease],
         ];
         break;
-      case "dive": {
-        // The keeper launches flat at the ball, arms stretched out, then lands on the grass.
-        const up = Math.min(1, progress * 3);
-        b.rotation.z = -1.45 * up;
-        b.position.set(0.35 * up, 0.55 * ease, 0);
-        this.turns = [
-          ["upperarm_l", LEFT, -2.8 * up],
-          ["upperarm_r", LEFT, -2.8 * up],
-        ];
+      case "dive":
+        // The keeper launches flat at the ball, arms stretched out: the dive roll's first part (the roll and getting
+        // up follow as he recovers).
+        c.move("Roll", DIVE_START + (DIVE_END - DIVE_START) * Math.min(1, progress / 0.6), into);
         break;
-      }
     }
   }
 

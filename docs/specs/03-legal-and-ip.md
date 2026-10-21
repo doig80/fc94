@@ -26,13 +26,14 @@
 
 Every third-party file is recorded in `assets/LICENSES.md` with source URL, author, licence, and date.
 
-| Source                                           | Licence      | Allowed                                      | Notes                                        |
-| ------------------------------------------------ | ------------ | -------------------------------------------- | -------------------------------------------- |
-| Kenney, Quaternius, Poly Haven, ambientCG        | CC0          | Yes                                          | Attribution appreciated, not required        |
-| Mixamo animations/characters                     | Adobe terms  | Yes, inside the game                         | Don't offer raw files as a separate download |
-| CC-BY assets                                     | CC-BY        | Yes, with credits screen                     | Credit in-game and in README                 |
-| CC-BY-NC / -ND, "editorial use", unknown licence | —            | **No**                                       |                                              |
-| AI-generated assets                              | Tool's terms | Yes if the terms allow commercial/public use | Record tool + date                           |
+| Source                                                | Licence          | Allowed                                      | Notes                                                                        |
+| ----------------------------------------------------- | ---------------- | -------------------------------------------- | ---------------------------------------------------------------------------- |
+| Kenney, Quaternius, Poly Haven, ambientCG             | CC0              | Yes                                          | Attribution appreciated, not required                                        |
+| Mixamo animations/characters                          | Adobe terms      | Yes, inside the game                         | Don't offer raw files as a separate download                                 |
+| Free-for-games motion capture (Anderson Rohr's packs) | The pack's terms | Yes, inside the game                         | Raw files only in a private repository; never offered or shared on their own |
+| CC-BY assets                                          | CC-BY            | Yes, with credits screen                     | Credit in-game and in README                                                 |
+| CC-BY-NC / -ND, "editorial use", unknown licence      | —                | **No**                                       |                                                                              |
+| AI-generated assets                                   | Tool's terms     | Yes if the terms allow commercial/public use | Record tool + date                                                           |
 
 Fonts: SIL Open Font License or similar only. Audio: CC0/CC-BY or self-made.
 

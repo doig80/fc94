@@ -22,7 +22,7 @@ const GROUPS: { key: Key; label: string; values: readonly string[]; names: Recor
     key: "players",
     label: "Players",
     values: PLAYER_SETS,
-    names: { old: "Today's", new: "New", both: "Both" },
+    names: { old: "Old", new: "New", both: "Both" },
   },
 ];
 

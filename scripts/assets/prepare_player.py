@@ -3,18 +3,22 @@
 Builds the character-test player (issue #27) from two free Quaternius packs (CC0, https://quaternius.com):
 
 - "Universal Base Characters [Standard]": the male base character (mesh, skeleton, textures);
-- "Universal Animation Library [Standard]": idle, walk, jog and sprint, made for the same 65-bone skeleton.
+- "Universal Animation Library [Standard]": idle, walk, jog and sprint, made for the same 65-bone skeleton, plus a
+  dive roll (the keeper's dive, then rolling over and getting up) and a jump (headers);
+- "Universal Animation Library 2 [Standard]": the slide (a slide tackle) and getting up from it.
 
 Writes, into public/assets/characters/:
 - player.glb: the character with only what the game uses (smaller textures, no spare UV or colour sets), two
-  hairstyles (the game shows one), and the four animations, rotations only plus the pelvis height, so they fit his
+  hairstyles (the game shows one), and the animations, rotations only plus the pelvis height, so they fit his
   proportions;
 - player-skin.jpg: the body's colour texture, kept out of player.glb: the game paints each team's kit onto it;
 - player-kit.png: where the kit goes, in the texture's layout: 0 skin, 1 shirt, 2 shorts, 3 socks, 4 boots
   (times 50, as grey levels), worked out from which bone moves each part of the body.
 
-Usage: python3 scripts/assets/prepare_player.py <base-characters.zip> <animation-library.zip> [out_dir]
+Usage: python3 scripts/assets/prepare_player.py <base-characters.zip> <animation-library.zip>
+       <animation-library-2.zip> [out_dir]
 The packs are downloaded from quaternius.itch.io (name your own price, $0 is fine); they are not kept in the repo.
+Then `node scripts/assets/player_lods.ts` makes the lighter versions of the meshes (spec 01 §4).
 """
 import io
 import json
@@ -30,8 +34,17 @@ CHARACTER = "Universal Base Characters[Standard]/Base Characters/Godot - UE/Supe
 # Hairstyles (separate in the pack), skinned to the head bone; the game shows one per player.
 HAIR_FOLDER = "Universal Base Characters[Standard]/Hairstyles/Rigged to Head Bone/glTF (Godot -Unreal)/"
 HAIRSTYLES = ["Hair_SimpleParted", "Hair_Buzzed"]
-LIBRARY = "Universal Animation Library[Standard]/Unreal-Godot/UAL1_Standard.glb"
-ANIMATIONS = ["Idle_Loop", "Walk_Loop", "Jog_Fwd_Loop", "Sprint_Loop"]
+# The animations taken from each library: the gaits (blended by speed), then the moves.
+LIBRARIES = [
+    (
+        "Universal Animation Library[Standard]/Unreal-Godot/UAL1_Standard.glb",
+        ["Idle_Loop", "Walk_Loop", "Jog_Fwd_Loop", "Sprint_Loop", "Roll", "Jump_Start"],
+    ),
+    (
+        "Universal Animation Library 2[Standard]/Unreal-Godot/UAL2_Standard.glb",
+        ["Slide_Start", "Slide_Exit"],
+    ),
+]
 ATTRIBUTES = ["POSITION", "NORMAL", "TEXCOORD_0", "JOINTS_0", "WEIGHTS_0"]
 # Texture sizes (longest side) and formats; None drops the texture.
 # The body's colour texture goes in its own file (see SKIN_TEXTURE).
@@ -260,14 +273,17 @@ def kit_map(src, prim, regions):
 
 
 def main():
-    if len(sys.argv) < 3:
+    if len(sys.argv) < 4:
         sys.exit(__doc__)
-    out_dir = sys.argv[3] if len(sys.argv) > 3 else os.path.join("public", "assets", "characters")
+    out_dir = sys.argv[4] if len(sys.argv) > 4 else os.path.join("public", "assets", "characters")
     base = zipfile.ZipFile(sys.argv[1])
     folder = os.path.dirname(CHARACTER)
     doc = json.loads(base.read(CHARACTER))
     char = Source(doc, base.read(folder + "/" + doc["buffers"][0]["uri"]))
-    lib = Source(*read_glb(zipfile.ZipFile(sys.argv[2]).read(LIBRARY)))
+    libs = [
+        (Source(*read_glb(zipfile.ZipFile(archive).read(path))), wanted)
+        for archive, (path, wanted) in zip(sys.argv[2:4], LIBRARIES)
+    ]
 
     out = Output()
     gltf = {
@@ -331,30 +347,34 @@ def main():
 
     # Animations: rotations of every bone the character has, and the pelvis's height, moved to his own rest height.
     names = {n.get("name"): i for i, n in enumerate(doc["nodes"])}
-    lib_names = [n.get("name") for n in lib.doc["nodes"]]
-    pelvis_offset = np.array(doc["nodes"][names["pelvis"]]["translation"]) - np.array(
-        lib.doc["nodes"][lib_names.index("pelvis")]["translation"]
-    )
     gltf["animations"] = []
-    for anim in lib.doc["animations"]:
-        if anim["name"] not in ANIMATIONS:
-            continue
-        samplers, channels, times = [], [], {}
-        for ch in anim["channels"]:
-            bone = lib_names[ch["target"]["node"]]
-            path = ch["target"]["path"]
-            if bone not in names or not (path == "rotation" or (path == "translation" and bone == "pelvis")):
-                continue
-            s = anim["samplers"][ch["sampler"]]
-            if s["input"] not in times:
-                times[s["input"]] = out.accessor(lib, s["input"])
-            values = None
-            if path == "translation":
-                values = (lib.array(s["output"]).astype("<f4") + pelvis_offset.astype("<f4")).tobytes()
-            output = out.accessor(lib, s["output"], data=values)
-            samplers.append({"input": times[s["input"]], "output": output, "interpolation": s.get("interpolation", "LINEAR")})
-            channels.append({"sampler": len(samplers) - 1, "target": {"node": names[bone], "path": path}})
-        gltf["animations"].append({"name": anim["name"], "samplers": samplers, "channels": channels})
+    for lib, wanted in libs:
+        lib_names = [n.get("name") for n in lib.doc["nodes"]]
+        pelvis_offset = np.array(doc["nodes"][names["pelvis"]]["translation"]) - np.array(
+            lib.doc["nodes"][lib_names.index("pelvis")]["translation"]
+        )
+        found = {a["name"]: a for a in lib.doc["animations"]}
+        for name in wanted:
+            if name not in found:
+                sys.exit(f"Animation {name} is missing from the library")
+            anim = found[name]
+            samplers, channels, times = [], [], {}
+            for ch in anim["channels"]:
+                bone = lib_names[ch["target"]["node"]]
+                path = ch["target"]["path"]
+                if bone not in names or not (path == "rotation" or (path == "translation" and bone == "pelvis")):
+                    continue
+                s = anim["samplers"][ch["sampler"]]
+                if s["input"] not in times:
+                    times[s["input"]] = out.accessor(lib, s["input"])
+                values = None
+                if path == "translation":
+                    values = (lib.array(s["output"]).astype("<f4") + pelvis_offset.astype("<f4")).tobytes()
+                output = out.accessor(lib, s["output"], data=values)
+                interpolation = s.get("interpolation", "LINEAR")
+                samplers.append({"input": times[s["input"]], "output": output, "interpolation": interpolation})
+                channels.append({"sampler": len(samplers) - 1, "target": {"node": names[bone], "path": path}})
+            gltf["animations"].append({"name": name, "samplers": samplers, "channels": channels})
 
     gltf["accessors"], gltf["bufferViews"] = out.accessors, out.views
     while len(out.buffer) % 4:
